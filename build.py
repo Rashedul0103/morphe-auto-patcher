@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 CONFIG_FILE = "config.json"
 
@@ -13,15 +14,17 @@ def find_cli_jar():
         raise FileNotFoundError("Morphe CLI jar not found in working directory")
     return jars[0]
 
-def run_cmd(cmd):
-    print(f"Running: {cmd}")
+def run_cmd(cmd, silent=False):
+    if not silent:
+        print(f"Running: {cmd}")
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     stdout = result.stdout.strip() if result.stdout else ""
     stderr = result.stderr.strip() if result.stderr else ""
     combined = f"{stdout}\n{stderr}".strip()
     
     if result.returncode != 0:
-        print(f"Warning: Command failed: {cmd}\nStderr: {stderr if stderr else 'None'}")
+        if not silent:
+            print(f"Warning: Command failed: {cmd}\nStderr: {stderr if stderr else 'None'}")
         return False, combined
     return True, stdout
 
@@ -40,6 +43,10 @@ def get_latest_tag(repo, allow_prerelease=False):
     except json.JSONDecodeError:
         return None
     return None
+
+def release_exists(tag):
+    ok, _ = run_cmd(f"gh release view {tag} --json tagName", silent=True)
+    return ok
 
 def parse_versions(output, package_name):
     versions = []
@@ -124,7 +131,7 @@ def parse_patches(output):
     return patches
 
 def main():
-    print("Starting Auto-Patcher Build (Catalog Phase)...")
+    print("Starting Auto-Patcher Build...")
     has_errors = False
 
     if not os.path.exists(CONFIG_FILE):
@@ -144,13 +151,31 @@ def main():
     catalog_dir = "docs/catalog"
     os.makedirs(catalog_dir, exist_ok=True)
 
+    keystore_arg = "--keystore ks.bks" if os.path.exists("ks.bks") else ""
+    if keystore_arg:
+        print("Found ks.bks, will use custom signing key.")
+    else:
+        print("No ks.bks found. Morphe CLI will use temporary signing key.")
+
+    target_app_filter = os.environ.get('TARGET_APP', '').strip()
+    force_build_env = os.environ.get('FORCE_BUILD', '').lower() in ['true', '1']
+
     for app in config.get('apps', []):
         app_id = app['id']
+
+        if target_app_filter and app_id != target_app_filter:
+            print(f"Skipping {app_id} (Target filter is: {target_app_filter})")
+            continue
+
         patches_repo = app['patches_repo']
         package = app['package']
+        arch = app.get('arch', 'arm64-v8a')
         allow_prerelease = app.get('prerelease', False)
+        force = app.get('force', False) or force_build_env
 
-        print(f"\n--- Processing App: {app_id} ---")
+        print(f"\n==========================================")
+        print(f"Processing App: {app_id}")
+        print(f"==========================================")
 
         tag_name = get_latest_tag(patches_repo, allow_prerelease)
         if not tag_name:
@@ -158,43 +183,131 @@ def main():
             has_errors = True
             continue
 
-        print(f"Latest patch tag: {tag_name}")
-        mpp_file = f"{app_id}-patches.mpp"
+        release_tag = f"{app_id}-{tag_name}"
+        if release_exists(release_tag) and not force:
+            print(f"Release {release_tag} already exists. Skipping (set force=true to rebuild).")
+            continue
+        elif release_exists(release_tag) and force:
+            print(f"Force flag active. Deleting existing release {release_tag}...")
+            run_cmd(f"gh release delete {release_tag} --yes --cleanup-tag")
 
+        mpp_file = f"{app_id}-patches.mpp"
         dl_cmd = f"gh release download {tag_name} --pattern \"*.mpp\" -R {patches_repo} -O {mpp_file} --clobber"
-        ok, dl_out = run_cmd(dl_cmd)
+        ok, _ = run_cmd(dl_cmd)
         if not ok or not os.path.exists(mpp_file):
             print(f"Error: Failed to download {mpp_file}")
             has_errors = True
             continue
 
-        versions_cmd = f"java -jar {cli_jar} list-versions --patches {mpp_file} -f {package}"
-        ok_v, versions_out = run_cmd(versions_cmd)
+        # 1. Update Catalog & Retrieve Versions
+        ok_v, versions_out = run_cmd(f"java -jar {cli_jar} list-versions --patches {mpp_file} -f {package}")
         compatible_versions = parse_versions(versions_out, package) if ok_v else []
-        print(f"Found {len(compatible_versions)} compatible versions")
 
-        patches_cmd = f"java -jar {cli_jar} list-patches -o --patches {mpp_file} -f {package}"
-        ok_p, patches_out = run_cmd(patches_cmd)
+        ok_p, patches_out = run_cmd(f"java -jar {cli_jar} list-patches -o --patches {mpp_file} -f {package}")
         patches_list = parse_patches(patches_out) if ok_p else []
 
         catalog_file = os.path.join(catalog_dir, f"{app_id}.json")
-
         if not patches_list:
             raw_file = os.path.join(catalog_dir, f"{app_id}.raw.txt")
             with open(raw_file, 'w') as f:
-                f.write(patches_out if patches_out else "CLI execution produced no output.")
-            print(f"Warning: No patches parsed for {app_id}. Debug details written to {raw_file}")
+                f.write(patches_out if patches_out else "CLI returned no output.")
+            print(f"Warning: No patches parsed. Debug details written to {raw_file}")
             has_errors = True
         else:
             with open(catalog_file, 'w') as f:
                 json.dump(patches_list, f, indent=2)
             print(f"Catalog saved to {catalog_file} ({len(patches_list)} patches)")
 
+        # 2. Resolve App Version & Stock APK
+        app_version = app.get('version', '')
+        if not app_version and compatible_versions:
+            app_version = compatible_versions[0]
+            print(f"Using latest compatible version from patches: {app_version}")
+
+        apk_path = ""
+        if app_version:
+            matches = glob.glob(f"apks/{app_id}-{app_version}.*")
+            if matches:
+                apk_path = matches[0]
+
+        if not apk_path:
+            matches = glob.glob(f"apks/{app_id}.*")
+            if matches:
+                apk_path = matches[0]
+
+        if not apk_path:
+            print(f"Error: Stock APK missing for {app_id}.")
+            print(f"Place APK in 'apks/{app_id}.apk' or 'apks/{app_id}-{app_version}.apk'")
+            has_errors = True
+            continue
+
+        print(f"Resolved stock APK: {apk_path}")
+
+        # 3. Construct and Execute Patch Command
+        output_apk = f"{app_id}-patched.apk"
+        if os.path.exists(output_apk):
+            os.remove(output_apk)
+
+        patch_flags = [f"-p {mpp_file}", f"-o {output_apk}", f"--striplibs {arch}", "--continue-on-error"]
+        if keystore_arg:
+            patch_flags.append(keystore_arg)
+        if force:
+            patch_flags.append("--force")
+
+        for p_name in app.get('enable', []):
+            patch_flags.append(f'-e "{p_name}"')
+        for p_name in app.get('disable', []):
+            patch_flags.append(f'-d "{p_name}"')
+
+        for p_name, opts in app.get('options', {}).items():
+            for key, val in opts.items():
+                patch_flags.append(f'-O "{p_name}:{key}={val}"')
+
+        # Target input APK is passed strictly at the end
+        patch_cmd = f"java -jar {cli_jar} patch {' '.join(patch_flags)} \"{apk_path}\""
+        print("Executing patch command...")
+        ok, patch_out = run_cmd(patch_cmd)
+
+        if not ok or not os.path.exists(output_apk):
+            print(f"Error: Patching failed for {app_id}!")
+            with open(f"{app_id}-patch-error.log", 'w') as f:
+                f.write(patch_out)
+            has_errors = True
+            continue
+
+        print(f"Successfully created: {output_apk}")
+
+        # 4. Create GitHub Release
+        print(f"Publishing release: {release_tag}")
+        release_notes = (
+            f"Auto-patched {app_id}\n\n"
+            f"- **Patch Repository:** {patches_repo}\n"
+            f"- **Patch Version:** {tag_name}\n"
+            f"- **App Version:** {app_version or 'Auto-detected'}\n"
+            f"- **Architecture:** {arch}\n"
+        )
+
+        with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md') as tf:
+            tf.write(release_notes)
+            notes_file = tf.name
+
+        try:
+            create_cmd = f"gh release create {release_tag} \"{output_apk}\" --title \"{app_id} {tag_name}\" --notes-file \"{notes_file}\""
+            ok_rel, rel_err = run_cmd(create_cmd)
+            if ok_rel:
+                print(f"✅ Release {release_tag} published successfully!")
+            else:
+                print(f"Error publishing release {release_tag}:\n{rel_err}")
+                has_errors = True
+        finally:
+            if os.path.exists(notes_file):
+                os.remove(notes_file)
+
     if has_errors:
         print("\nBuild finished with errors.")
         sys.exit(1)
     else:
-        print("\nBuild finished successfully!")
+        print("\n🎉 Build finished successfully!")
 
 if __name__ == "__main__":
     main()
