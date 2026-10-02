@@ -1,0 +1,11 @@
+{
+  "patch_tag": "v1.45.0",
+  "recommended_version": "21.16.256",
+  "compatible_versions": [
+    "21.16.256",
+    "21.13.164",
+    "20.31.42",
+    "20.21.37"
+  ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.16.256"
+}
