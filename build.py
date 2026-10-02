@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 
 CONFIG_FILE = "config.json"
 
@@ -130,6 +131,59 @@ def parse_patches(output):
     push_patch()
     return patches
 
+def resolve_stock_apk(app_id, package, app_version):
+    """Checks local 'apks/' first, then checks for a 'stock-<app_id>' GitHub Release."""
+    os.makedirs("apks", exist_ok=True)
+
+    def find_local():
+        # Priority 1: Exact version match with id or package
+        if app_version:
+            m = glob.glob(f"apks/{app_id}-{app_version}.apk*") + glob.glob(f"apks/{app_id}-{app_version}.apkm*")
+            if m: return m[0]
+            m = glob.glob(f"apks/{package}*{app_version}*.apk*") + glob.glob(f"apks/{package}*{app_version}*.apkm*")
+            if m: return m[0]
+
+        # Priority 2: Generic ID match (e.g. youtube.apk / youtube.apkm)
+        m = glob.glob(f"apks/{app_id}.apk*") + glob.glob(f"apks/{app_id}.apkm*")
+        if m: return m[0]
+
+        # Priority 3: Generic package match (e.g. com.google.android.youtube*.apk)
+        m = glob.glob(f"apks/{package}*.apk*") + glob.glob(f"apks/{package}*.apkm*")
+        if m: return m[0]
+        return None
+
+    local_file = find_local()
+    if local_file:
+        return local_file
+
+    # Remote GitHub Release drop-bucket resolution (stock-<app_id>)
+    stock_release_tag = f"stock-{app_id}"
+    if release_exists(stock_release_tag):
+        print(f"Found remote drop-bucket release: {stock_release_tag}. Downloading...")
+        # Morphe CLI natively accepts .apk and .apkm
+        dl_stock_cmd = (
+            f"gh release download {stock_release_tag} "
+            f"--pattern \"*.apk*\" --pattern \"*.apkm*\" "
+            f"-D apks/ --clobber"
+        )
+        ok, _ = run_cmd(dl_stock_cmd)
+        if ok:
+            downloaded = find_local()
+            if downloaded:
+                return downloaded
+            
+            # Scoped fallback: only look for files related to this app
+            matching_apks = (
+                glob.glob(f"apks/{app_id}*") + 
+                glob.glob(f"apks/{package}*")
+            )
+            matching_apks = [f for f in matching_apks if f.endswith(('.apk', '.apkm'))]
+            if matching_apks:
+                matching_apks.sort(key=os.path.getmtime, reverse=True)
+                return matching_apks[0]
+
+    return None
+
 def main():
     print("Starting Auto-Patcher Build...")
     has_errors = False
@@ -199,7 +253,7 @@ def main():
             has_errors = True
             continue
 
-        # 1. Update Catalog & Retrieve Versions
+        # 1. Update Catalog & Retrieve Compatible Versions
         ok_v, versions_out = run_cmd(f"java -jar {cli_jar} list-versions --patches {mpp_file} -f {package}")
         compatible_versions = parse_versions(versions_out, package) if ok_v else []
 
@@ -207,41 +261,56 @@ def main():
         patches_list = parse_patches(patches_out) if ok_p else []
 
         catalog_file = os.path.join(catalog_dir, f"{app_id}.json")
+        info_file = os.path.join(catalog_dir, f"{app_id}.info.json")
+
         if not patches_list:
             raw_file = os.path.join(catalog_dir, f"{app_id}.raw.txt")
             with open(raw_file, 'w') as f:
                 f.write(patches_out if patches_out else "CLI returned no output.")
             print(f"Warning: No patches parsed. Debug details written to {raw_file}")
             has_errors = True
+            continue
         else:
             with open(catalog_file, 'w') as f:
                 json.dump(patches_list, f, indent=2)
             print(f"Catalog saved to {catalog_file} ({len(patches_list)} patches)")
 
-        # 2. Resolve App Version & Stock APK
+        # Resolve Target App Version
         app_version = app.get('version', '')
         if not app_version and compatible_versions:
             app_version = compatible_versions[0]
-            print(f"Using latest compatible version from patches: {app_version}")
 
-        apk_path = ""
-        if app_version:
-            matches = glob.glob(f"apks/{app_id}-{app_version}.*")
-            if matches:
-                apk_path = matches[0]
+        # Generate Morphe-Manager-style APKMirror helper search URL
+        query = f"{app_id} {app_version}".strip()
+        apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
+
+        # Save metadata for Web UI
+        meta_data = {
+            "patch_tag": tag_name,
+            "recommended_version": app_version,
+            "compatible_versions": compatible_versions,
+            "apkmirror_url": apkmirror_url
+        }
+        with open(info_file, 'w') as f:
+            json.dump(meta_data, f, indent=2)
+
+        # 2. Resolve Stock APK (Local or Drop-Bucket Release)
+        apk_path = resolve_stock_apk(app_id, package, app_version)
 
         if not apk_path:
-            matches = glob.glob(f"apks/{app_id}.*")
-            if matches:
-                apk_path = matches[0]
-
-        if not apk_path:
-            print(f"Error: Stock APK missing for {app_id}.")
-            print(f"Place APK in 'apks/{app_id}.apk' or 'apks/{app_id}-{app_version}.apk'")
+            print("\n" + "="*60)
+            print(f"⚠️  ACTION REQUIRED: Stock APK Missing for '{app_id}'")
+            print("="*60)
+            print(f"Target Version: {app_version or 'Latest'}")
+            print(f"Download link:  {apkmirror_url}")
+            print("\nHow to supply the APK:")
+            print(f"  Option A: Place '{app_id}.apk' or '{app_id}-{app_version}.apk' in 'apks/' folder.")
+            print(f"  Option B: Upload the APK/APKM to a GitHub Release tagged 'stock-{app_id}'.")
+            print("="*60 + "\n")
             has_errors = True
             continue
 
-        print(f"Resolved stock APK: {apk_path}")
+        print(f"Found stock APK: {apk_path}")
 
         # 3. Construct and Execute Patch Command
         output_apk = f"{app_id}-patched.apk"
@@ -263,7 +332,7 @@ def main():
             for key, val in opts.items():
                 patch_flags.append(f'-O "{p_name}:{key}={val}"')
 
-        # Target input APK is passed strictly at the end
+        # Target input APK placed strictly at the end
         patch_cmd = f"java -jar {cli_jar} patch {' '.join(patch_flags)} \"{apk_path}\""
         print("Executing patch command...")
         ok, patch_out = run_cmd(patch_cmd)
@@ -304,7 +373,7 @@ def main():
                 os.remove(notes_file)
 
     if has_errors:
-        print("\nBuild finished with errors.")
+        print("\nBuild finished with errors or missing stock APKs.")
         sys.exit(1)
     else:
         print("\n🎉 Build finished successfully!")
