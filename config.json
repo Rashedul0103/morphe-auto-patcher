@@ -13,7 +13,12 @@
         "Clone app"
       ],
       "disable": [],
-      "options": {}
+      "options": {},
+      "apk_arch": "auto",
+      "apk_providers": [
+        "apkmirror",
+        "uptodown"
+      ]
     }
   ],
   "settings": {
