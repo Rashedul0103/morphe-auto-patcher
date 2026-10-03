@@ -73,6 +73,7 @@ jobs:
 
       - name: Validate Web UI JavaScript
         run: |
+
           python3 - <<'PY'
           from pathlib import Path
           import re
