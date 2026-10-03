@@ -1,17 +1,3 @@
 {
-  "apps": [
-    {
-      "id": "youtube",
-      "package": "com.google.android.youtube",
-      "patches_repo": "MorpheApp/morphe-patches",
-      "prerelease": false,
-      "arch": "arm64-v8a",
-      "version": "",
-      "apk_url": "",
-      "force": false,
-      "enable": [],
-      "disable": [],
-      "options": {}
-    }
-  ]
+  "apps": []
 }
