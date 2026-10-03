@@ -7,5 +7,25 @@
     "20.31.42",
     "20.21.37"
   ],
-  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.16.256"
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.16.256",
+  "apk_acquisition": {
+    "status": "downloaded",
+    "provider": "stock_release",
+    "manual_urls": [
+      "https://github.com/Rashedul0103/morphe-auto-patcher/releases/tag/stock-youtube"
+    ],
+    "attempts": []
+  },
+  "stock_apk": {
+    "path": ".work/youtube/stock/com_google_android_youtube_21_16_256_1561068412_minAPI28arm64_v8a.apk",
+    "package": "com.google.android.youtube",
+    "version_name": "21.16.256",
+    "version_code": "1561068412",
+    "architectures": [
+      "arm64-v8a"
+    ],
+    "sha256": "724d2bf15d31dac98db00d82914db3876edf66e62fe2845001f204209ecf4c00",
+    "size_bytes": 184012881,
+    "signer_sha256": []
+  }
 }
