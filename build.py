@@ -263,7 +263,7 @@ def _choose_valid_stock(candidates, package, version, apk_arch):
 
 def resolve_stock_apk(app_id, package, app_version, app_config):
     root, stock_dir, _ = _clean_app_workspace(app_id)
-    apk_arch = app_config.get("apk_arch") or app_config.get("arch") or "auto"
+    apk_arch = app_config.get("apk_arch") or "auto"
     attempts = []
     manual_urls = []
 
