@@ -49,6 +49,17 @@ jobs:
         run: |
           gh release download --repo MorpheApp/morphe-desktop --pattern "*-all.jar" --clobber
 
+      - name: Setup Android build tools
+        uses: android-actions/setup-android@v3
+
+      - name: Install APK tooling
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "build-tools;35.0.0"
+
+      - name: Install Python dependencies
+        run: python3 -m pip install --disable-pip-version-check -r requirements.txt
+
       - name: Restore Keystore
         run: |
           if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
