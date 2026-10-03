@@ -1,0 +1,9 @@
+apks/
+*.apk
+*.apkm
+*.xapk
+*.log
+*.jar
+docs/catalog/*.raw.txt
+*.bks
+.env
