@@ -1106,7 +1106,8 @@ async function inspectEnteredSource() {
   }
 }
 
-document.addEventListener('click', () => {
+document.addEventListener('click', e => {
+  if (e.target.closest('.menu-wrap')) return;
   document.querySelectorAll('.menu-pop.on').forEach(el => el.classList.remove('on'));
 });
 
