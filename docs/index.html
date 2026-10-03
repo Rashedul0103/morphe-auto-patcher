@@ -427,73 +427,151 @@ const closeDlg = () => $('#dbg').classList.remove('on');
 function startPatchFlow(id) {
   const a = app(id);
   if (!a) return toast('App not found', 1);
-
   const cat = S.cats[id];
   const recVer = cat && cat.info ? cat.info.recommended_version : 'Auto';
-  const compVers = cat && cat.info ? cat.info.compatible_versions : [];
   const ready = hasStockApk(id);
+  const acquisition = cat && cat.info ? (cat.info.apk_acquisition || {}) : {};
+
+  if (acquisition.status === 'manual_required') return showManualApkFlow(id);
 
   dlg(`
-    <h2>Do you have the APK?</h2>
-    <p>Targeting <b>${esc(ttl(a))}</b> for patching.</p>
-    
+    <h2>${ready ? 'Stock APK Ready' : 'Get Stock APK'}</h2>
+    <p>Targeting <b>${esc(ttl(a))}</b> · version <b>${esc(recVer)}</b>.</p>
     <div class="card" style="background:var(--card-high)">
-      <div style="font-size:0.85rem;font-weight:500;margin-bottom:6px">Recommended Version</div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <b style="font-size:1.1rem;color:var(--primary)">${esc(recVer)}</b>
-        <span class="chip ${ready ? 'ok' : 'bad'}">${ready ? 'APK Ready' : 'APK Missing'}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b>Stock APK</b>
+        <span class="chip ${ready ? 'ok' : 'bad'}">${ready ? 'Available' : 'Missing'}</span>
       </div>
-      ${compVers.length ? `<div style="margin-top:8px"><div class="d">Compatible versions:</div>${compVers.slice(0,6).map(v=>`<span class="chip">${esc(v)}</span>`).join('')}</div>` : ''}
+      <div class="d" style="margin-top:6px">
+        ${ready ? 'A stock APK is already stored. The build will verify it before patching.' : 'No valid stock APK is currently available.'}
+      </div>
     </div>
-
-    ${ready ? `<div class="row" style="padding:0;margin-bottom:12px"><i class="ms" style="color:var(--ok)">check_circle</i><div class="g">Verified stock APK found in repository.</div></div>` : ''}
-
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
-      <button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Need APK (Download Instructions)</button>
-      <button class="pill o" data-a="dlg_have_apk" data-id="${esc(id)}"><i class="ms">tune</i> Have APK / Configure Patches</button>
-      <button class="pill t" data-a="close">Cancel</button>
-    </div>
+    ${ready
+      ? `<button class="pill" data-a="dispatch_app" data-id="${esc(id)}"><i class="ms">bolt</i> Start Build</button>`
+      : `<button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Find & Download APK</button>
+         <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> I Already Have the APK</button>`}
+    <button class="pill t" data-a="close">Cancel</button>
   `);
 }
 
 function showDownloadInstructions(id) {
+  return showManualApkFlow(id);
+}
+
+function showManualApkFlow(id) {
   const a = app(id);
   const cat = S.cats[id];
-  const recVer = cat && cat.info ? cat.info.recommended_version : 'latest';
-  const apkmUrl = cat && cat.info ? cat.info.apkmirror_url : `https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${encodeURIComponent(id + ' ' + recVer)}`;
+  const info = cat && cat.info ? cat.info : {};
+  const acquisition = info.apk_acquisition || {};
+  const urls = Array.isArray(acquisition.manual_urls) ? acquisition.manual_urls : [];
+  const exact = urls.find(u => /apkmirror\\.com/i.test(u)) || urls[0] || info.apkmirror_url || '';
+  const version = info.recommended_version || a.version || 'the requested version';
 
   dlg(`
-    <h2>Download Instructions</h2>
-    <p>Target: <b>${esc(ttl(a))} · v${esc(recVer)}</b></p>
-    
-    <div style="display:flex;gap:12px;margin-bottom:12px">
-      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">1</div>
-      <div style="flex:1">Open <b>APKMirror.com</b> using the button below.</div>
-    </div>
-
-    <div style="display:flex;gap:12px;margin-bottom:12px">
-      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">2</div>
-      <div style="flex:1">
-        Look for the <b>nodpi / universal</b> variant and tap Download.
+    <h2>Manual APK Required</h2>
+    <p><b>${esc(ttl(a))}</b> · exact version <b>${esc(version)}</b></p>
+    <div class="card" style="background:var(--card-high)">
+      <b>Automatic download failed.</b>
+      <div class="d" style="margin-top:6px">
+        Download the untouched original APK for this exact version. Do not use an already-patched APK.
       </div>
     </div>
+    ${exact ? `<a class="pill" style="text-decoration:none;justify-content:center;margin-top:14px" href="${esc(exact)}" target="_blank" rel="noopener"><i class="ms">download</i> Download Exact APK ↗</a>` : ''}
+    <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> Select Downloaded APK</button>
+    <button class="pill t" data-a="close">Cancel</button>
+  `);
+}
 
-    <div style="display:flex;gap:12px;margin-bottom:12px">
-      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">3</div>
-      <div style="flex:1">
-        Upload the file to the GitHub Release tagged <code>stock-${esc(id)}</code> or put it in <code>apks/</code>.
-      </div>
+function openUploadApkDialog(id) {
+  const a = app(id);
+  const cat = S.cats[id];
+  const info = cat && cat.info ? cat.info : {};
+  const version = info.recommended_version || a.version || 'requested version';
+  dlg(`
+    <h2>Upload Stock APK</h2>
+    <p><b>${esc(ttl(a))}</b> · expected version <b>${esc(version)}</b></p>
+    <input id="stock_apk_file" data-app-id="${esc(id)}" type="file" accept=".apk,application/vnd.android.package-archive" style="display:none">
+    <div class="card" style="background:var(--card-high);text-align:center;padding:18px">
+      <i class="ms" style="font-size:40px;color:var(--primary)">upload_file</i>
+      <div style="margin-top:6px"><b>Choose the untouched APK</b></div>
+      <div class="d" style="margin-top:5px">It will be uploaded to the stock release automatically.</div>
+      <button class="pill" style="margin-top:14px" data-a="choose_apk_file" data-id="${esc(id)}"><i class="ms">folder_open</i> Choose APK</button>
     </div>
+    <button class="pill t" data-a="close">Cancel</button>
+  `);
+}
 
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
-      <a class="pill" style="text-decoration:none;justify-content:center" href="${esc(apkmUrl)}" target="_blank" rel="noopener">
-        <i class="ms">open_in_new</i> Open APKMirror.com ↗
-      </a>
-      <a class="pill o" style="text-decoration:none;justify-content:center" href="https://github.com/${S.owner}/${S.repo}/releases/tag/stock-${esc(id)}" target="_blank" rel="noopener">
-        <i class="ms">upload</i> Open stock-${esc(id)} Release Page ↗
-      </a>
-      <button class="pill t" data-a="dlg_have_apk" data-id="${esc(id)}">I have uploaded it → Configure</button>
+async function ensureStockRelease(id) {
+  const tag = 'stock-' + id;
+  try { return await gh('/releases/tags/' + encodeURIComponent(tag)); }
+  catch(e) {
+    if (e.status !== 404) throw e;
+    return await gh('/releases', { method:'POST', body:JSON.stringify({
+      tag_name:tag, target_commitish:S.branch, name:'Stock ' + ttl(app(id)) + ' APK',
+      body:'Original stock APK storage used by Auto-Patcher.'
+    })});
+  }
+}
+
+async function uploadReleaseAsset(release, file, onProgress) {
+  const base = String(release.upload_url || '').replace(/\\{\\?name,label\\}$/, '');
+  if (!base) throw new Error('GitHub release upload URL is unavailable.');
+  return await new Promise((resolve,reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', base + '?name=' + encodeURIComponent(file.name), true);
+    xhr.setRequestHeader('Authorization','Bearer ' + S.token);
+    xhr.setRequestHeader('Accept','application/vnd.github+json');
+    xhr.setRequestHeader('X-GitHub-Api-Version','2022-11-28');
+    xhr.setRequestHeader('Content-Type','application/vnd.android.package-archive');
+    xhr.upload.onprogress = e => { if(e.lengthComputable && onProgress) onProgress(Math.round(e.loaded/e.total*100)); };
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); } catch(e) { reject(new Error('Invalid GitHub upload response.')); }
+      } else {
+        let m=''; try { m=JSON.parse(xhr.responseText).message || ''; } catch(e){}
+        reject(new Error('Upload failed (' + xhr.status + ')' + (m ? ': ' + m : '')));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during APK upload.'));
+    xhr.send(file);
+  });
+}
+
+async function uploadStockApk(id, file) {
+  if (!file || !/\\.apk$/i.test(file.name)) throw new Error('Please select an .apk file.');
+  if (file.size < 1024) throw new Error('The selected file is too small to be a valid APK.');
+
+  const release = await ensureStockRelease(id);
+  const assets = await gh('/releases/' + release.id + '/assets');
+  const same = (assets || []).filter(a => a.name === file.name);
+  for (const asset of same) await gh('/releases/assets/' + asset.id, {method:'DELETE'});
+
+  dlg(`
+    <h2>Uploading APK</h2>
+    <p>${esc(file.name)}</p>
+    <div class="card" style="background:var(--card-high)">
+      <div style="display:flex;justify-content:space-between"><b id="apk_up_status">Uploading…</b><b id="apk_up_pct">0%</b></div>
+      <div class="wavy-bar"><i id="apk_up_bar" style="width:0%;animation:none"></i></div>
     </div>
+  `);
+
+  const result = await uploadReleaseAsset(release,file,pct => {
+    const p=$('#apk_up_pct'), b=$('#apk_up_bar'), t=$('#apk_up_status');
+    if(p)p.textContent=pct+'%'; if(b)b.style.width=pct+'%'; if(t)t.textContent=pct<100?'Uploading…':'Uploaded. Refreshing verification state…';
+  });
+
+  await loadRels();
+  await loadLocalCatalogs();
+  render();
+
+  dlg(`
+    <h2>APK Uploaded</h2>
+    <div class="card" style="background:var(--card-high)">
+      <b>${esc(result.name || file.name)}</b>
+      <div class="d" style="margin-top:5px">The APK is stored. GitHub Actions will perform the authoritative package/version/architecture validation.</div>
+    </div>
+    <button class="pill" data-a="upload_retry_build" data-id="${esc(id)}"><i class="ms">play_arrow</i> Verify & Build</button>
+    <button class="pill t" data-a="close">Done</button>
   `);
 }
 
@@ -1115,6 +1193,9 @@ Object.assign(A, {
   go: t => location.hash = '#/' + t.dataset.h,
   start_flow: t => startPatchFlow(t.dataset.id),
   dlg_need_apk: t => showDownloadInstructions(t.dataset.id),
+  dlg_upload_apk: t => openUploadApkDialog(t.dataset.id),
+  choose_apk_file: t => { const f=$('#stock_apk_file'); if(f) f.click(); },
+  upload_retry_build: t => dispatchBuild(t.dataset.id, true),
   dlg_have_apk: t => { closeDlg(); location.hash = '#/app/' + encodeURIComponent(t.dataset.id); },
   open_opts: t => openPatchOptions(t.dataset.id, t.dataset.p),
   dispatch_app: t => dispatchBuild(t.dataset.id, true),
@@ -1259,6 +1340,14 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const n = e.target.dataset && e.target.dataset.c;
   if (n && C[n]) C[n](e.target);
+  if (e.target && e.target.id === 'stock_apk_file') {
+    const id = e.target.dataset.appId;
+    const file = e.target.files && e.target.files[0];
+    if (id && file) uploadStockApk(id, file).catch(err => {
+      toast(err.message, 1);
+      openUploadApkDialog(id);
+    });
+  }
 });
 $('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', theme);
