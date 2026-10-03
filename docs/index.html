@@ -25,6 +25,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 #bg { position: fixed; inset: 0; z-index: 0; opacity: 0.45; pointer-events: none; width: 100%; height: 100%; }
 #main { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 16px 120px; }
 
+/* Header & Top Bar */
 .top { display: flex; align-items: center; gap: 10px; padding: 14px 0; position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
 .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #1E5AA8, #00AFAE); display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #fff; flex: none; }
 .top h1 { font-size: 1.25rem; font-weight: 500; flex: 1; }
@@ -32,6 +33,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 .ib { width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; color: var(--on); display: grid; place-items: center; cursor: pointer; flex: none; }
 .ib:hover { background: #8883; }
 
+/* App Cards */
 .card { background: var(--card); border-radius: 24px; padding: 14px; margin-bottom: 10px; border: 1px solid #8882; position: relative; }
 .banner { display: flex; gap: 12px; align-items: center; background: linear-gradient(135deg, #0d3a6d, #0a5959); color: #fff; border-radius: 24px; padding: 14px; margin-bottom: 12px; }
 .banner .s { font-size: 0.78rem; opacity: 0.75; }
@@ -54,6 +56,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 .chip.p { background: var(--pc); color: var(--primary); }
 .chip.warn { background: color-mix(in srgb, var(--warn) 25%, transparent); color: var(--warn); }
 
+/* Buttons & Menu */
 .pill { border: 0; border-radius: 20px; padding: 8px 16px; background: var(--primary); color: var(--onp); font: 500 0.88rem Roboto; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .pill.t { background: none; color: var(--primary); }
 .pill.o { background: none; color: var(--primary); border: 1px solid var(--out); }
@@ -67,6 +70,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 .menu-item:hover { background: #8882; }
 .menu-item .ms { font-size: 18px; color: var(--primary); }
 
+/* Bottom Dock */
 #dock { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; gap: 4px; background: var(--card); border: 1px solid #8883; border-radius: 32px; padding: 6px; box-shadow: 0 6px 24px #0007; }
 .bb { display: flex; flex-direction: column; align-items: center; min-width: 68px; padding: 8px 8px 6px; border-radius: 24px; border: 0; background: none; color: var(--on); font: 500 0.7rem Roboto; cursor: pointer; gap: 2px; }
 .bb.hl { background: var(--pc); color: var(--primary); }
@@ -75,6 +79,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
   #main { margin-left: max(104px, calc(50vw - 480px + 52px)); }
 }
 
+/* Forms & Dialogs */
 input[type=text], input[type=password], select { width: 100%; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--out); background: transparent; color: var(--on); font: 1rem Roboto; outline: 0; }
 input:focus, select:focus { border-color: var(--primary); }
 .lbl { font-size: 0.75rem; color: var(--sec); margin: 10px 4px 4px; }
@@ -141,14 +146,31 @@ const u64 = s => {
 };
 
 const LS = 'patch-manager-cfg';
-const PK = {
+const PK_REGISTRY = {
   'com.google.android.youtube': ['YouTube', '#e53935,#b71c1c'],
   'com.google.android.apps.youtube.music': ['YouTube Music', '#ff7043,#d84315'],
   'com.reddit.frontpage': ['Reddit', '#ff8f00,#e65100'],
   'com.twitter.android': ['Twitter / X', '#1da1f2,#0d8ddb'],
   'tv.twitch.android.app': ['Twitch', '#9146ff,#6441a5'],
-  'com.zhiliaoapp.musically': ['TikTok', '#fe2c55,#25f4ee']
+  'com.zhiliaoapp.musically': ['TikTok', '#fe2c55,#25f4ee'],
+  'com.ss.android.ugc.trill': ['TikTok', '#fe2c55,#25f4ee'],
+  'com.facebook.katana': ['Facebook', '#1877f2,#0d5ec4'],
+  'com.facebook.orca': ['Messenger', '#0084ff,#0060cc'],
+  'com.facebook.lite': ['Facebook Lite', '#1877f2,#0d5ec4'],
+  'com.instagram.android': ['Instagram', '#e1306c,#c13584'],
+  'com.instagram.barcelona': ['Threads', '#000000,#333333']
 };
+
+function getAppMeta(pkg) {
+  if (PK_REGISTRY[pkg]) {
+    return { name: PK_REGISTRY[pkg][0], color: PK_REGISTRY[pkg][1] };
+  }
+  const parts = (pkg || '').split('.');
+  const raw = parts[parts.length - 1] || pkg || 'app';
+  const name = raw.charAt(0).toUpperCase() + raw.slice(1);
+  return { name, color: '#1E5AA8,#00AFAE' };
+}
+
 const ARCH = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
 const EXT = /\.(apk|apkm|apks|xapk|axapk)$/i;
 
@@ -159,9 +181,10 @@ let S = {
     settings: { 
       default_arch: 'arm64-v8a', 
       auto_prune: true, 
-      keep_releases: 3,
-      trigger_policy: 'on_new_patch',
-      check_interval_hours: 6
+      keep_releases: 3, 
+      trigger_policy: 'on_new_patch', 
+      check_interval_hours: 6,
+      discord_webhook: ''
     }, 
     sources: [], apps: [], hidden_apps: [] 
   },
@@ -215,12 +238,9 @@ async function gh(path, o={}, raw) {
 }
 
 const app = id => (S.config.apps || []).find(a => a.id === id);
-const ttl = a => (PK[a.package] || [])[0] || a.id;
+const ttl = a => getAppMeta(a.package).name || a.id;
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
-const hue = a => {
-  const h = [...a.id].reduce((acc, c) => acc * 31 + c.charCodeAt(0) | 0, 7) % 360;
-  return PK[a.package] ? PK[a.package][1] : `hsl(${h} 55% 45%),hsl(${h} 55% 28%)`;
-};
+const hue = a => getAppMeta(a.package).color;
 const eff = (a, p) => (a.enable || []).includes(p.name) ? true : (a.disable || []).includes(p.name) ? false : !!p.enabled;
 const ago = d => {
   const s = (Date.now() - Date.parse(d)) / 1e3;
@@ -243,11 +263,11 @@ async function connect(quiet) {
       if (e.status != 404) throw e;
       S.sha = '';
       S.config = { 
-        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6 }, 
+        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '' }, 
         sources: [], apps: [], hidden_apps: [] 
       };
     }
-    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6 };
+    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '' };
     if (!Array.isArray(S.config.apps)) S.config.apps = [];
     if (!Array.isArray(S.config.sources)) S.config.sources = [];
     if (!Array.isArray(S.config.hidden_apps)) S.config.hidden_apps = [];
@@ -564,6 +584,7 @@ function appCard(a) {
   const latestUpstream = S.upstreamTags[a.patches_repo] || (cat && cat.info && cat.info.patch_tag);
   const hasUpdate = latestUpstream && patchedTag && (latestUpstream !== patchedTag);
   const apkAsset = latestRel ? (latestRel.assets || []).find(x => x.name.endsWith('.apk')) : null;
+  const isAutoPatch = a.auto_patch !== false;
 
   return `
     <div class="swipe-box">
@@ -580,6 +601,11 @@ function appCard(a) {
               <span class="chip">${esc(recVer)}</span>
               ${hasStock ? '<span class="chip ok">APK ready</span>' : '<span class="chip bad">APK missing</span>'}
               ${hasUpdate ? `<span class="chip warn">Update: ${esc(latestUpstream)}</span>` : (latestRel ? '<span class="chip ok">✓ Up to date</span>' : '')}
+              
+              <!-- Per-App Auto-Patch Toggle Button -->
+              <span class="chip ${isAutoPatch ? 'p' : ''}" style="cursor:pointer" data-a="toggle_autopatch" data-id="${esc(a.id)}" title="Toggle automatic scheduled building">
+                <i class="ms" style="font-size:14px">${isAutoPatch ? 'check_box' : 'check_box_outline_blank'}</i> Auto-Patch
+              </span>
             </div>
 
             <div class="mono" style="margin-top:4px;font-family:inherit">
@@ -780,7 +806,7 @@ function paintLive() {
       </div>
       <div class="wavy-bar"><i style="width:${L.pct}%;${L.done?'animation:none':''}"></i></div>
       
-      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
         ${steps.map(s => `<span class="chip ${s.done?'ok':''}">${s.done?'✓ ':''}${s.name}</span>`).join('')}
       </div>
 
@@ -845,7 +871,7 @@ async function dispatchBuild(appId, force=true) {
   }
 }
 
-/* Settings View with Repository & Build Controls */
+/* Settings View with Repository & Automation Controls */
 let settingsTab = 0;
 function vSet() {
   let b = '';
@@ -870,13 +896,13 @@ function vSet() {
       auto_prune: true, 
       keep_releases: 3, 
       trigger_policy: 'on_new_patch', 
-      check_interval_hours: 6 
+      check_interval_hours: 6,
+      discord_webhook: ''
     };
     b = `
-      <!-- Repository & Build Controls -->
       <div class="card">
         <b>Repository & Build Automation</b>
-        <div class="d" style="margin:4px 0 12px">Control how GitHub Actions manages and cleans your repository.</div>
+        <div class="d" style="margin:4px 0 12px">Control how GitHub Actions manages, rebuilds, and cleans your repository.</div>
         
         <div class="lbl">When to Build (Trigger Policy)</div>
         <select data-c="cfg_st" data-k="trigger_policy">
@@ -912,9 +938,13 @@ function vSet() {
           <option value="3" ${st.keep_releases==3?'selected':''}>Keep 3 releases (Recommended)</option>
           <option value="5" ${st.keep_releases==5?'selected':''}>Keep 5 releases</option>
         </select>
+
+        <!-- Discord Webhook Input -->
+        <div class="lbl" style="margin-top:14px">Discord Webhook URL (Optional Notifications)</div>
+        <input type="text" data-c="cfg_st" data-k="discord_webhook" value="${esc(st.discord_webhook || '')}" placeholder="https://discord.com/api/webhooks/..." style="font-family:monospace;font-size:0.85rem">
+        <div class="d">Receive pings on Discord when an APK is patched or if a stock APK is missing.</div>
       </div>
 
-      <!-- Keystore Helper Card -->
       <div class="card">
         <b>Signing Keystore (KEYSTORE_B64)</b>
         <div class="d" style="margin:4px 0 10px">Ensures all your patched APKs install over previous builds without signature errors.</div>
@@ -923,7 +953,6 @@ function vSet() {
         </a>
       </div>
 
-      <!-- Hidden Apps -->
       <div class="card">
         <b>Hidden Apps</b>
         ${(S.config.hidden_apps || []).length ? S.config.hidden_apps.map(id => `
@@ -940,7 +969,7 @@ function vSet() {
   return hdr('Settings', '', 1) + `
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <button class="pill ${settingsTab===0?'':'o'}" data-a="set_stab" data-v="0">Appearance</button>
-      <button class="pill ${settingsTab===1?'':'o'}" data-a="set_stab" data-v="1">Repository & System</button>
+      <button class="pill ${settingsTab===1?'':'o'}" data-a="set_stab" data-v="1">Repository & Automation</button>
     </div>
     ${b}
   `;
@@ -961,22 +990,120 @@ function dlgConnect() {
   `);
 }
 
+/* Dynamic Add Source Dialog */
+let newSourceInspection = null;
+
 function dlgAddSource() {
-  const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
+  newSourceInspection = null;
   dlg(`
-    <h2>Add App</h2>
-    <p>Configure a target app and its Morphe patch bundle repository.</p>
-    <div class="lbl">App Identifier</div>
-    <input type="text" id="n_id" value="youtube" placeholder="youtube">
-    <div class="lbl">Package Name</div>
-    <input type="text" id="n_pkg" value="com.google.android.youtube" placeholder="com.google.android.youtube">
-    <div class="lbl">Patches Repository (owner/repo)</div>
-    <input type="text" id="n_src" value="MorpheApp/morphe-patches">
+    <h2>Add Patch Source</h2>
+    <p>Enter any repository publishing a Morphe patch bundle. We will inspect it to discover compatible apps.</p>
+    <div class="lbl">Repository (owner/repo)</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="n_src" value="SysAdminDoc/Hushfacebook" placeholder="owner/repo" style="flex:1">
+      <button class="pill" data-a="inspect_src"><i class="ms">search</i> Inspect</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <div class="g">Include pre-releases</div>
+      ${sw(false, 'data-a="sw_srcpre" id="sw_srcpre"')}
+    </div>
+    
+    <div id="src_inspect_result" style="margin-top:12px"></div>
+
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
       <button class="pill t" data-a="close">Cancel</button>
-      <button class="pill" data-a="do_addsrc">Add App</button>
+      <button class="pill" id="btn_add_discovered" data-a="do_add_inspected" disabled>Add to Config</button>
     </div>
   `);
+  setTimeout(() => A.inspect_src(), 50);
+}
+
+async function inspectEnteredSource() {
+  const repo = $('#n_src').value.trim();
+  const pre = $('#sw_srcpre').classList.contains('on');
+  const resDiv = $('#src_inspect_result');
+  const addBtn = $('#btn_add_discovered');
+  if (!repo) return toast('Enter owner/repo', 1);
+
+  resDiv.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:12px 0"><i class="ms">sync</i> Inspecting repository...</div>`;
+  addBtn.disabled = true;
+
+  try {
+    const rels = await gh(`https://api.github.com/repos/${repo}/releases?per_page=5`, {}, 1);
+    if (!Array.isArray(rels) || !rels.length) throw new Error('No published releases found');
+    const rel = rels.find(r => !r.draft && (pre || !r.prerelease)) || rels[0];
+    const tag = rel.tag_name || rel.tagName;
+
+    let patchesData = null;
+    const asset = (rel.assets || []).find(a => a.name === 'patches-list.json');
+    if (asset) {
+      try {
+        const res = await fetch(asset.browser_download_url);
+        if (res.ok) patchesData = await res.json();
+      } catch(e) {}
+    }
+
+    if (!patchesData) {
+      const rawUrls = [
+        `https://raw.githubusercontent.com/${repo}/${tag}/patches-list.json`,
+        `https://raw.githubusercontent.com/${repo}/main/patches-list.json`,
+        `https://raw.githubusercontent.com/${repo}/master/patches-list.json`
+      ];
+      for (const u of rawUrls) {
+        try {
+          const res = await fetch(u);
+          if (res.ok) { patchesData = await res.json(); break; }
+        } catch(e) {}
+      }
+    }
+
+    const discoveredPkgs = new Set();
+    if (Array.isArray(patchesData)) {
+      patchesData.forEach(p => {
+        (p.compatiblePackages || []).forEach(cp => {
+          const pkg = cp.name || cp.packageName;
+          if (pkg) discoveredPkgs.add(pkg);
+        });
+      });
+    }
+
+    if (discoveredPkgs.size === 0) {
+      const rLower = repo.toLowerCase();
+      const rBody = (rel.body || '').toLowerCase();
+      if (rLower.includes('facebook') || rBody.includes('facebook') || rBody.includes('katana')) discoveredPkgs.add('com.facebook.katana');
+      if (rLower.includes('messenger') || rBody.includes('messenger') || rBody.includes('orca')) discoveredPkgs.add('com.facebook.orca');
+      if (rLower.includes('tiktok') || rLower.includes('hushfeed') || rBody.includes('tiktok')) discoveredPkgs.add('com.zhiliaoapp.musically');
+      if (rLower.includes('threads') || rBody.includes('threads')) discoveredPkgs.add('com.instagram.barcelona');
+      if (rLower.includes('twitter') || rLower.includes('piko') || rBody.includes('twitter')) discoveredPkgs.add('com.twitter.android');
+      if (rLower.includes('reddit') || rBody.includes('reddit')) discoveredPkgs.add('com.reddit.frontpage');
+      if (rLower.includes('youtube') || rBody.includes('youtube')) discoveredPkgs.add('com.google.android.youtube');
+    }
+
+    const pkgList = Array.from(discoveredPkgs);
+    newSourceInspection = { repo, tag, prerelease: pre, packages: pkgList, selectedPkg: pkgList[0] || '' };
+
+    resDiv.innerHTML = `
+      <div style="font-size:0.8rem;color:var(--sec);margin-bottom:6px">Release: <b>${esc(tag)}</b> · Detected ${pkgList.length} compatible app(s):</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${pkgList.map((pkg, idx) => {
+          const meta = getAppMeta(pkg);
+          return `
+            <span class="chip ${idx===0?'p':''}" style="padding:7px 12px;cursor:pointer" data-a="select_inspected_pkg" data-pkg="${esc(pkg)}">
+              ${esc(meta.name)} (${esc(pkg)})
+            </span>
+          `;
+        }).join('')}
+      </div>
+      <div class="lbl" style="margin-top:10px">Other / Custom package name</div>
+      <input type="text" id="custom_inspected_pkg" placeholder="com.example.app" value="${esc(pkgList[0] || '')}">
+    `;
+    addBtn.disabled = false;
+  } catch(e) {
+    resDiv.innerHTML = `<div class="warnb" style="margin:8px 0">Could not inspect automatically (${esc(e.message)}). Specify package manually:</div>
+      <input type="text" id="custom_inspected_pkg" placeholder="com.example.app">`;
+    newSourceInspection = { repo, tag: 'latest', prerelease: pre, packages: [], selectedPkg: '' };
+    addBtn.disabled = false;
+  }
 }
 
 document.addEventListener('click', () => {
@@ -999,7 +1126,43 @@ Object.assign(A, {
     document.querySelectorAll('.menu-pop.on').forEach(el => el.classList.remove('on'));
     if (!isOpen) m.classList.add('on');
   },
+  toggle_autopatch: t => {
+    const a = app(t.dataset.id);
+    if (!a) return;
+    a.auto_patch = (a.auto_patch === false) ? true : false;
+    dirty();
+    render();
+    toast(`${ttl(a)} Auto-Patch: ${a.auto_patch ? 'Enabled' : 'Disabled'}`);
+  },
   addsrc: dlgAddSource,
+  inspect_src: inspectEnteredSource,
+  select_inspected_pkg: t => {
+    document.querySelectorAll('#src_inspect_result .chip').forEach(c => c.classList.remove('p'));
+    t.classList.add('p');
+    $('#custom_inspected_pkg').value = t.dataset.pkg;
+    if (newSourceInspection) newSourceInspection.selectedPkg = t.dataset.pkg;
+  },
+  do_add_inspected: () => {
+    if (!newSourceInspection) return;
+    const pkg = ($('#custom_inspected_pkg') || {}).value?.trim() || newSourceInspection.selectedPkg;
+    if (!pkg) return toast('Please specify package name', 1);
+
+    const parts = pkg.split('.');
+    const id = (parts[parts.length - 1] || 'app').toLowerCase();
+    const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
+
+    S.config.apps = S.config.apps || [];
+    if (!S.config.apps.some(a => a.id === id)) {
+      S.config.apps.push({
+        id, package: pkg, patches_repo: newSourceInspection.repo, prerelease: newSourceInspection.prerelease,
+        arch: defArch, version: '', force: false, auto_patch: true, enable: [], disable: [], options: {}
+      });
+      dirty();
+    }
+    closeDlg();
+    loadLocalCatalogs().then(render);
+    toast(`Added ${id} (${pkg}) ✔ Click "Save changes"`);
+  },
   conn: dlgConnect,
   close: closeDlg,
   save: save,
@@ -1035,26 +1198,7 @@ Object.assign(A, {
     t.classList.toggle('on', !cur);
     dirty();
   },
-  do_addsrc: () => {
-    const id = $('#n_id').value.trim().toLowerCase();
-    const pkg = $('#n_pkg').value.trim();
-    const repo = $('#n_src').value.trim();
-    if (!id || !pkg || !repo) return toast('All fields required', 1);
-
-    const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
-    S.config.apps = S.config.apps || [];
-    if (!S.config.apps.some(a => a.id === id)) {
-      S.config.apps.push({
-        id, package: pkg, patches_repo: repo, prerelease: false,
-        arch: defArch, version: '', force: false,
-        enable: [], disable: [], options: {}
-      });
-      dirty();
-    }
-    closeDlg();
-    loadLocalCatalogs().then(render);
-    toast(`Added ${id} ✔ Tap Save changes`);
-  },
+  sw_srcpre: t => t.classList.toggle('on'),
   doconn: () => {
     S.owner = $('#c_owner').value.trim();
     S.repo = $('#c_repo').value.trim();
@@ -1118,7 +1262,6 @@ document.addEventListener('change', e => {
 $('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', theme);
 
-/* Background Animation */
 (function(){
   const c = $('#bg'), x = c.getContext('2d'); let w, h, o = [];
   function r() {

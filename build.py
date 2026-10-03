@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import urllib.parse
+import urllib.request
 
 CONFIG_FILE = "config.json"
 
@@ -33,6 +34,29 @@ def run_cmd(cmd_list, silent=False):
         return True, stdout
     except FileNotFoundError:
         return False, f"Command not found: {cmd_list[0]}"
+
+def send_discord_webhook(webhook_url, title, description, color=0x3B82F6, fields=None):
+    if not webhook_url or not webhook_url.startswith("http"):
+        return
+    try:
+        payload = {
+            "embeds": [{
+                "title": title,
+                "description": description,
+                "color": color,
+                "fields": fields or [],
+                "footer": {"text": "Auto-Patcher Engine"}
+            }]
+        }
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json", "User-Agent": "AutoPatcher-Bot/1.0"}
+        )
+        urllib.request.urlopen(req, timeout=10)
+    except Exception as e:
+        print(f"Warning: Failed to send Discord webhook: {e}")
 
 def pre_flight_checks():
     if not shutil.which("java"):
@@ -214,11 +238,11 @@ def main():
     keep_releases_count = int(repo_settings.get('keep_releases', 3))
     check_interval_hours = int(repo_settings.get('check_interval_hours', 6))
     trigger_policy = repo_settings.get('trigger_policy', 'on_new_patch')
+    discord_webhook = os.environ.get("DISCORD_WEBHOOK") or repo_settings.get("discord_webhook", "").strip()
 
     catalog_dir = "docs/catalog"
     os.makedirs(catalog_dir, exist_ok=True)
 
-    # --- Interval Gate & Schedule Filter ---
     github_event = os.environ.get("GITHUB_EVENT_NAME", "").lower()
     is_scheduled = (github_event == "schedule")
     state_file = os.path.join(catalog_dir, "build_state.json")
@@ -233,7 +257,6 @@ def main():
 
     now = int(time.time())
     if is_scheduled:
-        # If scheduled, check if the required interval has passed (with 5-minute clock drift allowance)
         if (now - last_run) < (check_interval_hours * 3600 - 300):
             print(f"Interval gate: Next scheduled run allowed in {round((check_interval_hours * 3600 - (now - last_run)) / 60)} minutes. Exiting.")
             sys.exit(0)
@@ -254,6 +277,13 @@ def main():
 
     for app in apps:
         app_id = app['id']
+
+        # Skip apps with auto_patch turned off during scheduled runs
+        auto_patch = app.get('auto_patch', True)
+        if is_scheduled and not auto_patch:
+            print(f"Skipping {app_id}: Auto-patch toggle is disabled for this app.")
+            continue
+
         if target_app_filter and app_id != target_app_filter: continue
 
         patches_repo = app['patches_repo']
@@ -261,7 +291,6 @@ def main():
         arch = app.get('arch') or repo_settings.get('default_arch', 'arm64-v8a')
         allow_prerelease = app.get('prerelease', False)
 
-        # Determine force flag based on trigger policy
         if is_scheduled and trigger_policy == "periodic_rebuild":
             force = True
         else:
@@ -291,7 +320,6 @@ def main():
             has_errors = True
             continue
 
-        # 1. Update Catalog
         ok_v, versions_out = run_cmd(["java", "-jar", cli_jar, "list-versions", "--patches", mpp_file, "-f", package])
         compatible_versions = parse_versions(versions_out, package) if ok_v else []
 
@@ -311,23 +339,35 @@ def main():
 
         app_version = app.get('version', '') or (compatible_versions[0] if compatible_versions else '')
         query = f"{app_id} {app_version}".strip()
+        apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
         
         with open(os.path.join(catalog_dir, f"{app_id}.info.json"), 'w') as f:
             json.dump({
                 "patch_tag": tag_name,
                 "recommended_version": app_version,
                 "compatible_versions": compatible_versions,
-                "apkmirror_url": f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
+                "apkmirror_url": apkmirror_url
             }, f, indent=2)
 
-        # 2. Resolve Stock APK
         apk_path = resolve_stock_apk(app_id, package, app_version)
         if not apk_path:
             print(f"⚠️ ACTION REQUIRED: Stock APK Missing for '{app_id}'")
+            if discord_webhook:
+                send_discord_webhook(
+                    discord_webhook,
+                    title=f"⚠️ Stock APK Missing: {app_id.capitalize()}",
+                    description=f"Action required: A compatible stock APK is needed to patch **{app_id}**.",
+                    color=0xF59E0B,
+                    fields=[
+                        {"name": "Target Version", "value": app_version or "Latest", "inline": True},
+                        {"name": "Architecture", "value": arch, "inline": True},
+                        {"name": "APKMirror Link", "value": f"[Open APKMirror]({apkmirror_url})", "inline": False},
+                        {"name": "Upload Instructions", "value": f"Upload to GitHub Release `stock-{app_id}` or place in `apks/{app_id}.apk`.", "inline": False}
+                    ]
+                )
             has_errors = True
             continue
 
-        # 3. Execute Patch Command
         output_apk = f"{app_id}-patched.apk"
         if os.path.exists(output_apk): os.remove(output_apk)
 
@@ -344,7 +384,6 @@ def main():
         for p_name in app.get('enable', []): patch_cmd.extend(["-e", p_name])
         for p_name in app.get('disable', []): patch_cmd.extend(["-d", p_name])
 
-        # Boolean lowercase formatting fix
         for p_name, opts in app.get('options', {}).items():
             for key, val in opts.items():
                 val_str = str(val).lower() if isinstance(val, bool) else str(val)
@@ -361,7 +400,6 @@ def main():
             has_errors = True
             continue
 
-        # 4. Create GitHub Release
         print(f"Publishing release: {release_tag}")
         with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md') as tf:
             tf.write(f"Auto-patched {app_id}\n\n- **Patch:** {tag_name}\n- **App Version:** {app_version or 'Auto'}\n- **Architecture:** {arch}\n")
@@ -381,10 +419,23 @@ def main():
                 print(f"✅ Release {release_tag} published successfully!")
                 if auto_prune:
                     prune_old_releases(app_id, keep_releases_count)
+                if discord_webhook:
+                    repo_slug = os.environ.get("GITHUB_REPOSITORY", "")
+                    rel_link = f"https://github.com/{repo_slug}/releases/tag/{release_tag}" if repo_slug else ""
+                    send_discord_webhook(
+                        discord_webhook,
+                        title=f"🎉 Successfully Patched: {app_id.capitalize()}",
+                        description=f"New build **{release_tag}** is published and ready to install!",
+                        color=0x22C55E,
+                        fields=[
+                            {"name": "Version", "value": app_version or "Auto", "inline": True},
+                            {"name": "Architecture", "value": arch, "inline": True},
+                            {"name": "Download Link", "value": f"[View GitHub Release]({rel_link})" if rel_link else release_tag, "inline": False}
+                        ]
+                    )
         finally:
             if os.path.exists(notes_file): os.remove(notes_file)
 
-    # Record successful execution timestamp
     try:
         with open(state_file, 'w') as sf:
             json.dump({"last_run": now}, sf, indent=2)
