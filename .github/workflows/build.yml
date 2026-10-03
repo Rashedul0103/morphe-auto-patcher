@@ -2,7 +2,7 @@ name: Auto-Patcher Build
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */2 * * *'
   push:
     paths:
       - 'config.json'
@@ -61,6 +61,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_APP: ${{ inputs.app }}
           FORCE_BUILD: ${{ inputs.force || (github.event_name == 'push') }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: python3 build.py
 
       - name: Commit Catalog

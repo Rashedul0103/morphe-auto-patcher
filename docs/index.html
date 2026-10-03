@@ -1,59 +1,131 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Patch Manager</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Patch Manager</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0..1&display=swap">
-<style>:root{--primary:#A4C9FF;--bg:#1A1C1E;--card:#23262b;--sv:#43474E;--on:#E3E2E6;--out:#8D9199;--ok:#90D889;--err:#FFB4AB;--sec:#BCC7DB;--warn:#ffdea8;--pc:color-mix(in srgb,var(--primary) 26%,var(--bg));--onp:color-mix(in srgb,var(--primary) 18%,#000);--fs:16px}
-:root.black{--bg:#000;--card:#111214}
-:root.light{--bg:#FDFCFF;--card:#eef0f6;--sv:#dfe2eb;--on:#1A1C1E;--out:#73777F;--sec:#545F71;--onp:#fff;--ok:#286C2A;--err:#BA1A1A;--warn:#7C5800}
-*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-html{font-size:var(--fs)}body{font-family:Roboto,system-ui,sans-serif;background:var(--bg);color:var(--on);min-height:100dvh}
-.ms{font-family:'Material Symbols Outlined';font-size:24px;line-height:1;font-style:normal;display:inline-block;user-select:none;vertical-align:middle}
-#bg{position:fixed;inset:0;z-index:0;opacity:.45;pointer-events:none;width:100%;height:100%}
-#main{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:0 16px 120px}
-.top{display:flex;align-items:center;gap:10px;padding:14px 0;position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px)}
-.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#1E5AA8,#00AFAE);display:grid;place-items:center;font-weight:700;font-size:20px;color:#fff;flex:none}
-.top h1{font-size:1.25rem;font-weight:500;flex:1}.top small{display:block;font-size:.72rem;color:var(--out);font-weight:400}
-.ib{width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--on);display:grid;place-items:center;cursor:pointer;flex:none}.ib:hover{background:#8883}
-.card{background:var(--card);border-radius:24px;padding:14px;margin-bottom:10px;border:1px solid #8882}
-.banner{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#0d3a6d,#0a5959);color:#fff;border-radius:24px;padding:14px;margin-bottom:12px}.banner .s{font-size:.78rem;opacity:.75}
-.grid{display:grid;gap:10px}@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}.grid .card{margin:0}
-.app{display:flex;align-items:center;gap:12px;cursor:pointer}.app:hover{border-color:var(--primary)}
-.ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;color:#fff;flex:none;font-weight:700;font-size:1.4rem}
-.n{font-weight:500;display:flex;gap:4px;align-items:center}.n .ms{font-size:16px;color:var(--primary)}
-.mono{font:.72rem ui-monospace,monospace;color:var(--out);word-break:break-all}.chip{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:8px;background:var(--sv);margin:4px 4px 0 0}
-.chip.ok{background:color-mix(in srgb,var(--ok) 25%,transparent);color:var(--ok)}.chip.bad{background:color-mix(in srgb,var(--err) 22%,transparent);color:var(--err)}.chip.p{background:var(--pc);color:var(--primary)}
-.pill{border:0;border-radius:20px;padding:9px 18px;background:var(--primary);color:var(--onp);font:500 .88rem Roboto;cursor:pointer;white-space:nowrap}.pill.t{background:none;color:var(--primary)}.pill.o{background:none;color:var(--primary);border:1px solid var(--out)}.pill:disabled{opacity:.4;cursor:default}.pill.d{background:var(--err);color:#000}
-#dock{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:4px;background:var(--card);border:1px solid #8883;border-radius:32px;padding:6px;box-shadow:0 6px 24px #0007}
-.bb{display:flex;flex-direction:column;align-items:center;min-width:68px;padding:8px 8px 6px;border-radius:24px;border:0;background:none;color:var(--on);font:500 .7rem Roboto;cursor:pointer;gap:2px}.bb.hl{background:var(--pc);color:var(--primary)}
-@media(min-width:900px){#dock{left:14px;top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;border-radius:32px}#main{margin-left:max(104px,calc(50vw - 520px + 52px))}}
-input[type=text],input[type=password],input[type=number],select{width:100%;padding:12px 16px;border-radius:24px;border:1px solid var(--out);background:transparent;color:var(--on);font:1rem Roboto;outline:0}input:focus,select:focus{border-color:var(--primary)}select option{background:var(--card)}
-.lbl{font-size:.75rem;color:var(--sec);margin:10px 4px 4px}
-.sw{position:relative;width:52px;height:30px;border-radius:15px;background:var(--sv);border:2px solid var(--out);flex:none;cursor:pointer;transition:.2s}.sw::after{content:"";position:absolute;top:5px;left:5px;width:16px;height:16px;border-radius:50%;background:var(--out);transition:.2s}
-.sw.on{background:var(--primary);border-color:var(--primary)}.sw.on::after{left:25px;top:3px;width:24px;height:24px;background:var(--onp)}
-.row{display:flex;align-items:center;gap:12px;padding:9px 0}.row .g{flex:1;min-width:0}.row .d{font-size:.78rem;color:var(--out);margin-top:2px}
-.seg{display:flex;background:var(--bg);border-radius:20px;padding:3px;margin-bottom:10px;border:1px solid #8882}.seg b{flex:1;text-align:center;padding:9px;border-radius:17px;font:500 .85rem Roboto;cursor:pointer}.seg b.on{background:var(--pc);color:var(--primary)}
-.bar{height:10px;border-radius:5px;background:var(--sv);overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1E5AA8,#00AFAE,#A4C9FF);background-size:200%;animation:sh 1.5s linear infinite;transition:width .3s}@keyframes sh{to{background-position:-200%}}
-#term{background:#0a0b0c;color:#e3e2e6;border-radius:16px;padding:12px;font:.75rem/1.55 ui-monospace,monospace;max-height:340px;overflow-y:auto}.INFO{color:#8ab4f8}.SUCCESS{color:#90D889}.ERROR{color:#FFB4AB}.WARN{color:#fdd663}
-.dlg-bg{position:fixed;inset:0;background:#0009;z-index:20;display:none;align-items:center;justify-content:center}.dlg-bg.on{display:flex}
-.dlg{background:var(--card);width:min(560px,100%);max-height:88vh;overflow-y:auto;border-radius:28px;padding:20px;animation:pop .2s ease-out}@keyframes pop{from{transform:scale(.94);opacity:0}}
-@media(max-width:700px){.dlg-bg{align-items:flex-end}.dlg{border-radius:28px 28px 0 0;animation:up .25s ease-out}@keyframes up{from{transform:translateY(100%)}}}
-.dlg h2{font-size:1.25rem;font-weight:500;margin-bottom:6px}.dlg p{font-size:.85rem;color:var(--sec);margin-bottom:12px}
-.opts{margin:4px 0 8px;padding:10px;border-radius:16px;background:var(--bg)}.opts input,.opts select{margin-top:4px;padding:9px 14px}
-.tabs{display:flex;background:var(--card);border-radius:24px;padding:4px;margin-bottom:12px}.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78rem;color:var(--out);cursor:pointer;padding:6px;border-radius:20px}.tab.on{background:var(--pc);color:var(--primary)}
-.sw-c{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;display:grid;place-items:center;color:#000}.sw-c.on{border-color:var(--on)}
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#e3e2e6;color:#1a1c1e;padding:10px 18px;border-radius:14px;font-size:.85rem;z-index:60;opacity:0;transition:.25s;pointer-events:none;max-width:92vw}.toast.on{opacity:1}.toast.bad{background:#ffb4ab}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);animation:p 1.6s infinite;flex:none}@keyframes p{50%{opacity:.3}}
-.fab{position:fixed;right:16px;bottom:96px;z-index:9;box-shadow:0 6px 20px #0008;padding:14px 20px}@media(min-width:900px){.fab{bottom:24px;right:24px}}
-.warnb{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border-radius:16px;padding:10px 14px;font-size:.82rem;margin-bottom:10px}
-.sec-h{font-size:.85rem;color:var(--primary);font-weight:500;margin:14px 4px 6px}.x{color:var(--err)!important}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-</style></head><body>
-<canvas id="bg"></canvas><div id="main"></div>
-<button class="pill fab" id="fab" data-a="save" style="display:none"><i class="ms" style="margin-right:6px;font-size:20px">save</i>Save changes</button>
-<div id="dock"><button class="bb" data-nav="home" data-a="go" data-h=""><i class="ms">home</i>Apps</button><button class="bb" data-a="addsrc"><i class="ms">source</i>Sources</button><button class="bb" data-nav="builds" data-a="go" data-h="builds"><i class="ms">construction</i>Builds</button><button class="bb" data-nav="settings" data-a="go" data-h="settings"><i class="ms">settings</i>Settings</button></div>
-<div class="dlg-bg" id="dbg"><div class="dlg" id="dlg"></div></div><div class="toast" id="toast"></div>
+<style>
+:root {
+  --primary: #A4C9FF; --bg: #1A1C1E; --card: #23262b; --card-high: #2d3037; --sv: #43474E;
+  --on: #E3E2E6; --out: #8D9199; --ok: #90D889; --err: #FFB4AB; --sec: #BCC7DB; --warn: #ffdea8;
+  --pc: color-mix(in srgb, var(--primary) 26%, var(--bg));
+  --onp: color-mix(in srgb, var(--primary) 18%, #000);
+  --fs: 16px;
+}
+:root.black { --bg: #000; --card: #111214; --card-high: #1c1d21; }
+:root.light {
+  --bg: #FDFCFF; --card: #eef0f6; --card-high: #e2e5ee; --sv: #dfe2eb; --on: #1A1C1E; --out: #73777F;
+  --sec: #545F71; --onp: #fff; --ok: #286C2A; --err: #BA1A1A; --warn: #7C5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: var(--fs); }
+body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color: var(--on); min-height: 100dvh; user-select: none; }
+.ms { font-family: 'Material Symbols Outlined'; font-size: 24px; line-height: 1; font-style: normal; display: inline-block; vertical-align: middle; }
+#bg { position: fixed; inset: 0; z-index: 0; opacity: 0.45; pointer-events: none; width: 100%; height: 100%; }
+#main { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 16px 120px; }
+
+.top { display: flex; align-items: center; gap: 10px; padding: 14px 0; position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
+.logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #1E5AA8, #00AFAE); display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #fff; flex: none; }
+.top h1 { font-size: 1.25rem; font-weight: 500; flex: 1; }
+.top small { display: block; font-size: 0.72rem; color: var(--out); font-weight: 400; }
+.ib { width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; color: var(--on); display: grid; place-items: center; cursor: pointer; flex: none; }
+.ib:hover { background: #8883; }
+
+.card { background: var(--card); border-radius: 24px; padding: 14px; margin-bottom: 10px; border: 1px solid #8882; position: relative; }
+.banner { display: flex; gap: 12px; align-items: center; background: linear-gradient(135deg, #0d3a6d, #0a5959); color: #fff; border-radius: 24px; padding: 14px; margin-bottom: 12px; }
+.banner .s { font-size: 0.78rem; opacity: 0.75; }
+.grid { display: grid; gap: 10px; }
+@media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+.swipe-box { position: relative; overflow: visible; border-radius: 24px; margin-bottom: 10px; }
+.swipe-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-weight: 700; font-size: 0.9rem; border-radius: 24px; z-index: 0; }
+.swipe-bg.left { background: var(--err); color: #000; justify-content: flex-end; }
+.swipe-bg.right { background: var(--primary); color: var(--onp); justify-content: flex-start; }
+.swipe-front { position: relative; background: var(--card); border-radius: 24px; padding: 14px; border: 1px solid #8882; transition: transform 0.15s ease-out; touch-action: pan-y; z-index: 1; }
+
+.app { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.ico { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: #fff; flex: none; font-weight: 700; font-size: 1.4rem; }
+.n { font-weight: 500; display: flex; gap: 4px; align-items: center; }
+.mono { font: 0.72rem ui-monospace, monospace; color: var(--out); word-break: break-all; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 3px 8px; border-radius: 8px; background: var(--sv); margin: 4px 4px 0 0; }
+.chip.ok { background: color-mix(in srgb, var(--ok) 25%, transparent); color: var(--ok); }
+.chip.bad { background: color-mix(in srgb, var(--err) 22%, transparent); color: var(--err); }
+.chip.p { background: var(--pc); color: var(--primary); }
+.chip.warn { background: color-mix(in srgb, var(--warn) 25%, transparent); color: var(--warn); }
+
+.pill { border: 0; border-radius: 20px; padding: 8px 16px; background: var(--primary); color: var(--onp); font: 500 0.88rem Roboto; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.pill.t { background: none; color: var(--primary); }
+.pill.o { background: none; color: var(--primary); border: 1px solid var(--out); }
+.pill.d { background: var(--err); color: #000; }
+.pill:disabled { opacity: 0.4; cursor: default; }
+
+.menu-wrap { position: relative; display: inline-block; }
+.menu-pop { position: absolute; right: 0; top: 100%; background: var(--card-high); border: 1px solid #8884; border-radius: 16px; padding: 6px; min-width: 220px; z-index: 25; box-shadow: 0 8px 24px #0008; display: none; flex-direction: column; gap: 2px; }
+.menu-pop.on { display: flex; }
+.menu-item { padding: 9px 12px; border-radius: 10px; font-size: 0.82rem; color: var(--on); text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 0; background: none; width: 100%; text-align: left; }
+.menu-item:hover { background: #8882; }
+.menu-item .ms { font-size: 18px; color: var(--primary); }
+
+#dock { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; gap: 4px; background: var(--card); border: 1px solid #8883; border-radius: 32px; padding: 6px; box-shadow: 0 6px 24px #0007; }
+.bb { display: flex; flex-direction: column; align-items: center; min-width: 68px; padding: 8px 8px 6px; border-radius: 24px; border: 0; background: none; color: var(--on); font: 500 0.7rem Roboto; cursor: pointer; gap: 2px; }
+.bb.hl { background: var(--pc); color: var(--primary); }
+@media (min-width: 900px) {
+  #dock { left: 14px; top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; border-radius: 32px; }
+  #main { margin-left: max(104px, calc(50vw - 480px + 52px)); }
+}
+
+input[type=text], input[type=password], select { width: 100%; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--out); background: transparent; color: var(--on); font: 1rem Roboto; outline: 0; }
+input:focus, select:focus { border-color: var(--primary); }
+.lbl { font-size: 0.75rem; color: var(--sec); margin: 10px 4px 4px; }
+.sw { position: relative; width: 52px; height: 30px; border-radius: 15px; background: var(--sv); border: 2px solid var(--out); flex: none; cursor: pointer; transition: 0.2s; }
+.sw::after { content: ""; position: absolute; top: 5px; left: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--out); transition: 0.2s; }
+.sw.on { background: var(--primary); border-color: var(--primary); }
+.sw.on::after { left: 25px; top: 3px; width: 24px; height: 24px; background: var(--onp); }
+.row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.row .g { flex: 1; min-width: 0; }
+.row .d { font-size: 0.78rem; color: var(--out); margin-top: 2px; }
+
+.dlg-bg { position: fixed; inset: 0; background: #0009; z-index: 30; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.dlg-bg.on { display: flex; }
+.dlg { background: var(--card); width: min(600px, 100%); max-height: 90vh; overflow-y: auto; border-radius: 28px; padding: 22px; border: 1px solid #8883; box-shadow: 0 10px 30px #000a; }
+.dlg h2 { font-size: 1.25rem; font-weight: 500; margin-bottom: 6px; }
+.dlg p { font-size: 0.85rem; color: var(--sec); margin-bottom: 12px; }
+
+.toast { position: fixed; bottom: 95px; left: 50%; transform: translateX(-50%); background: #e3e2e6; color: #1a1c1e; padding: 10px 20px; border-radius: 14px; font-size: 0.85rem; z-index: 60; opacity: 0; transition: 0.25s; pointer-events: none; max-width: 92vw; box-shadow: 0 4px 14px #0006; }
+.toast.on { opacity: 1; } .toast.bad { background: #ffb4ab; color: #000; }
+.fab { position: fixed; right: 16px; bottom: 96px; z-index: 9; box-shadow: 0 6px 20px #0008; padding: 14px 22px; }
+@media (min-width: 900px) { .fab { bottom: 24px; right: 24px; } }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); animation: p 1.6s infinite; flex: none; }
+@keyframes p { 50% { opacity: 0.3; } }
+.wavy-bar { height: 12px; border-radius: 6px; background: var(--sv); overflow: hidden; margin: 12px 0; }
+.wavy-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #1E5AA8, #00AFAE, #A4C9FF); background-size: 200%; animation: sh 1.5s linear infinite; transition: width 0.3s; }
+@keyframes sh { to { background-position: -200%; } }
+#term { background: #0a0b0c; color: #e3e2e6; border-radius: 16px; padding: 12px; font: 0.75rem/1.5 ui-monospace, monospace; max-height: 320px; overflow-y: auto; margin-top: 10px; }
+.INFO { color: #8ab4f8; } .SUCCESS { color: #90D889; } .ERROR { color: #FFB4AB; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="main"></div>
+
+<button class="pill fab" id="fab" data-a="save" style="display:none">
+  <i class="ms">save</i> Save changes
+</button>
+
+<div id="dock">
+  <button class="bb" data-nav="home" data-a="go" data-h=""><i class="ms">home</i>Apps</button>
+  <button class="bb" data-a="addsrc"><i class="ms">source</i>Sources</button>
+  <button class="bb" data-nav="builds" data-a="go" data-h="builds"><i class="ms">construction</i>Builds</button>
+  <button class="bb" data-nav="settings" data-a="go" data-h="settings"><i class="ms">settings</i>Settings</button>
+</div>
+
+<div class="dlg-bg" id="dbg"><div class="dlg" id="dlg"></div></div>
+<div class="toast" id="toast"></div>
+
 <script>
-const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 const b64 = s => {
   try {
@@ -68,373 +140,1005 @@ const u64 = s => {
   return btoa(bin);
 };
 
-const LS='patch-manager-cfg';
-const PK={'com.google.android.youtube':['YouTube','#e53935,#b71c1c'],'com.google.android.apps.youtube.music':['YouTube Music','#ff7043,#d84315'],'com.reddit.frontpage':['Reddit','#ff8f00,#e65100']};
-const ARCH=['arm64-v8a','armeabi-v7a','x86','x86_64'],EXT=/\.(apk|apkm|apks|xapk|axapk)$/i;
-const S={owner:'',repo:'',branch:'main',token:'',wf:'build.yml',expert:false,black:false,mode:'system',accent:'#A4C9FF',scale:100,sort:'order',filter:'all',confirm:true,config:{apps:[]},sha:'',cats:{},rels:[],runs:[],dirty:false,pm:'simple',onlySel:false,live:null,connected:false};
+const LS = 'patch-manager-cfg';
+const PK = {
+  'com.google.android.youtube': ['YouTube', '#e53935,#b71c1c'],
+  'com.google.android.apps.youtube.music': ['YouTube Music', '#ff7043,#d84315'],
+  'com.reddit.frontpage': ['Reddit', '#ff8f00,#e65100'],
+  'com.twitter.android': ['Twitter / X', '#1da1f2,#0d8ddb'],
+  'tv.twitch.android.app': ['Twitch', '#9146ff,#6441a5'],
+  'com.zhiliaoapp.musically': ['TikTok', '#fe2c55,#25f4ee']
+};
+const ARCH = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
+const EXT = /\.(apk|apkm|apks|xapk|axapk)$/i;
 
-if(/github\.io$/.test(location.hostname)){S.owner=location.hostname.split('.')[0];S.repo=location.pathname.split('/')[1]||''}
-try{Object.assign(S,JSON.parse(localStorage.getItem(LS)||'{}'))}catch(e){}
-const persist=()=>{const{owner,repo,branch,token,wf,expert,black,mode,accent,scale,sort,filter,confirm}=S;localStorage.setItem(LS,JSON.stringify({owner,repo,branch,token,wf,expert,black,mode,accent,scale,sort,filter,confirm}))};
-const sw=(on,attrs)=>`<div class="sw ${on?'on':''}" ${attrs}></div>`,A={},C={};
-function toast(t,bad){const e=$('#toast');e.textContent=t;e.className='toast on'+(bad?' bad':'');clearTimeout(e.t);e.t=setTimeout(()=>e.className='toast',3200)}
-
-async function gh(path,o={},raw){
-  const r=await fetch(raw?path:'https://api.github.com/repos/'+S.owner+'/'+S.repo+path,{...o,headers:{Authorization:'Bearer '+S.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(o.body?{'Content-Type':'application/json'}:{}),...(o.headers||{})}});
-  if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}const er=new Error('GitHub '+r.status+(m?': '+m:''));er.status=r.status;throw er}
-  return r.status==204?null:r.json()
-}
-
-const app=id=>S.config.apps.find(a=>a.id===id),ttl=a=>(PK[a.package]||[])[0]||a.id,dirty=()=>{S.dirty=true;$('#fab').style.display='block'};
-const hue=a=>{const h=[...a.id].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7)%360;return PK[a.package]?PK[a.package][1]:`hsl(${h} 55% 45%),hsl(${h} 55% 28%)`};
-const eff=(a,p)=>(a.enable||[]).includes(p.name)?true:(a.disable||[]).includes(p.name)?false:!!p.enabled;
-const ago=d=>{const s=(Date.now()-Date.parse(d))/1e3;return s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<129600?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago'};
-function relsFor(id){const ids=S.config.apps.map(a=>a.id).filter(x=>x!==id&&x.startsWith(id+'-'));return S.rels.filter(r=>!r.draft&&r.tag_name.startsWith(id+'-')&&!ids.some(x=>r.tag_name.startsWith(x+'-')))}
-const stockRel=id=>S.rels.find(r=>r.tag_name==='stock-'+id),stockFiles=id=>((stockRel(id)||{}).assets||[]).filter(x=>EXT.test(x.name));
-
-/* data */
-async function connect(quiet){
-  if(!S.owner||!S.repo||!S.token)return dlgConnect();
-  try{
-    try{
-      const d=await gh('/contents/config.json?ref='+encodeURIComponent(S.branch));
-      S.sha=d.sha;S.config=JSON.parse(b64(d.content));
-    }catch(e){
-      if(e.status!=404)throw e;
-      S.sha='';S.config={apps:[]};toast('No config.json yet, starting a new one');
-    }
-    if(!Array.isArray(S.config.apps))S.config.apps=[];
-    S.connected=true;S.dirty=false;persist();closeDlg();render();
-    await Promise.all([loadCats(),loadRels(),loadRuns()]);
-    render();if(!quiet)toast('Connected');
-  }catch(e){
-    S.connected=false;toast(e.message,1);if(!quiet)dlgConnect();render();
-  }
-}
-
-async function loadCat(id){
-  try {
-    let patches = null, info = null;
-    try {
-      const pRes = await fetch('catalog/' + encodeURIComponent(id) + '.json?t=' + Date.now());
-      if (pRes.ok) patches = await pRes.json();
-      const iRes = await fetch('catalog/' + encodeURIComponent(id) + '.info.json?t=' + Date.now());
-      if (iRes.ok) info = await iRes.json();
-    } catch(e){}
-
-    if (!patches) {
-      const d = await gh('/contents/docs/catalog/' + encodeURIComponent(id) + '.json?ref=' + encodeURIComponent(S.branch));
-      patches = JSON.parse(b64(d.content));
-      try {
-        info = JSON.parse(b64((await gh('/contents/docs/catalog/' + encodeURIComponent(id) + '.info.json?ref=' + encodeURIComponent(S.branch))).content));
-      } catch(e){}
-    }
-    S.cats[id] = { patches, info };
-  } catch(e){
-    S.cats[id] = null;
-  }
-}
-
-const loadCats=()=>Promise.all(S.config.apps.map(a=>loadCat(a.id)));
-async function loadRels(){try{S.rels=await gh('/releases?per_page=100')}catch(e){S.rels=[]}}
-async function loadRuns(){try{S.runs=(await gh('/actions/runs?per_page=15')).workflow_runs}catch(e){S.runs=[]}}
-
-async function save(){
-  try{
-    const r=await gh('/contents/config.json',{method:'PUT',body:JSON.stringify({message:'Update config from Patch Manager',branch:S.branch,content:u64(JSON.stringify(S.config,null,2)+'\n'),...(S.sha?{sha:S.sha}:{})})});
-    S.sha=r.content.sha;S.dirty=false;render();toast('Saved. A build starts from the push trigger');watchCats();
-  }catch(e){
-    toast(e.status==409||e.status==422?'config.json changed on GitHub. Reconnect to refresh':e.message,1);
-  }
-}
-
-let wc=0;
-async function watchCats(){
-  const n=++wc;
-  for(let i=0;i<40&&n==wc;i++){
-    await new Promise(r=>setTimeout(r,8000));
-    const miss=S.config.apps.filter(a=>!S.cats[a.id]);
-    if(!miss.length){await loadRuns();render();return}
-    await Promise.all(miss.map(a=>loadCat(a.id)));
-    await loadRels();render();
-  }
-}
-
-/* router */
-const route=()=>{const p=location.hash.replace(/^#\/?/,'').split('/');return{v:p[0]||'home',id:decodeURIComponent(p[1]||'')}};
-addEventListener('hashchange',()=>{render();if(route().v=='builds')loadRuns().then(paintHist)});
-
-function theme(){
-  const d=document.documentElement,light=S.mode=='light'||(S.mode=='system'&&matchMedia('(prefers-color-scheme: light)').matches);
-  d.classList.toggle('light',light);d.classList.toggle('black',S.black&&!light);
-  d.style.setProperty('--primary',S.accent);d.style.setProperty('--fs',16*S.scale/100+'px');
-}
-
-function render(){
-  const r=route(),m=$('#main'),nav={home:'home',app:'home',builds:'builds',settings:'settings'}[r.v]||'home';
-  document.querySelectorAll('.bb[data-nav]').forEach(b=>b.classList.toggle('hl',b.dataset.nav==nav));
-  $('#fab').style.display=S.dirty?'block':'none';
-  m.innerHTML=({home:vHome,app:vApp,builds:vBuilds,settings:vSet}[r.v]||vHome)(r);
-  if(r.v=='builds')paintLive();
-}
-
-const hdr=(t,sub,back)=>`<div class="top">${back?`<button class="ib" data-a="go" data-h="">${'<i class="ms">arrow_back</i>'}</button>`:'<div class="logo">P</div>'}<h1>${esc(t)}<small>${esc(sub||'')}</small></h1>${back?'':'<button class="ib" data-a="go" data-h="settings"><i class="ms">settings</i></button>'}</div>`;
-
-/* home */
-function appCard(a){
-  const c=S.cats[a.id],rl=relsFor(a.id)[0],sf=stockFiles(a.id),k=c?c.patches.filter(p=>eff(a,p)).length:0;
-  return`<div class="card app" data-a="open" data-id="${esc(a.id)}"><div class="ico" style="background:linear-gradient(135deg,${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div><div style="flex:1;min-width:0"><div class="n">${esc(ttl(a))}<i class="ms">verified</i></div><div class="mono">${esc(a.package)}</div>
- ${c?`<span class="chip">${k} of ${c.patches.length} patches</span>`:'<span class="chip bad">No patch list yet</span>'}${c&&c.info?`<span class="chip">${esc(c.info.patch_tag||'')}</span>`:''}<span class="chip">${esc(a.version||(c&&c.info&&c.info.recommended_version)||'Latest')}</span>${a.prerelease?'<span class="chip p">Pre-release</span>':''}${S.connected?(sf.length?'<span class="chip ok">APK ready</span>':'<span class="chip bad">APK missing</span>'):''}
- <div class="mono" style="margin-top:4px;font-family:inherit">${rl?'Patched '+ago(rl.published_at||rl.created_at):'Not patched yet'}</div></div><button class="pill" data-a="build" data-id="${esc(a.id)}">Patch</button></div>`;
-}
-
-function listApps(){
-  const q=($('#asearch')||{}).value?.toLowerCase()||'';
-  let l=S.config.apps.filter(a=>(ttl(a)+a.package+a.id).toLowerCase().includes(q));
-  l=l.filter(a=>S.filter=='all'||(S.filter=='patched'?relsFor(a.id).length:S.filter=='not'?!relsFor(a.id).length:!stockFiles(a.id).length));
-  if(S.sort=='name')l.sort((a,b)=>ttl(a).localeCompare(ttl(b)));
-  if(S.sort=='patched')l.sort((a,b)=>Date.parse((relsFor(b.id)[0]||{}).created_at||0)-Date.parse((relsFor(a.id)[0]||{}).created_at||0));
-  return l.length?`<div class="grid">${l.map(appCard).join('')}</div>`:`<div class="card" style="text-align:center"><b>${S.config.apps.length?'No apps match':'No apps available'}</b><div class="d" style="color:var(--out);font-size:.85rem;margin:4px 0 12px">${S.config.apps.length?'Change the search or filter':'Add a patch source to get started'}</div>${S.config.apps.length?'':'<button class="pill" data-a="addsrc">Add source</button>'}</div>`;
-}
-
-function vHome(){
-  const lr=S.runs[0],n=S.config.apps.length;
-  return hdr('Patch Manager',S.connected?`${S.owner}/${S.repo} · ${S.branch}`:'Web manager · not connected')+`<div class="banner"><i class="ms" style="font-size:32px">${S.connected?'cloud_done':'cloud_off'}</i><div style="flex:1"><div style="font-weight:500">${S.connected?'Connected to GitHub':'Connect a repository'}</div><div class="s">${n} app${n==1?'':'s'}${S.dirty?' · unsaved changes':''}${lr?' · last build '+esc(lr.conclusion||lr.status):''}</div></div>${S.connected?'<div class="dot"></div>':'<button class="pill" style="background:#fff;color:#000" data-a="conn">Connect</button>'}</div>
- <div style="display:flex;gap:8px;margin-bottom:10px"><input type="text" id="asearch" placeholder="Search apps" data-c="srch" style="flex:1"><button class="pill o" data-a="sort"><i class="ms" style="font-size:18px">sort</i> ${{order:'Config order',name:'Name',patched:'Recently patched'}[S.sort]}</button><button class="pill ${S.filter!='all'?'':'o'}" data-a="filt">${{all:'All',patched:'Patched',not:'Not patched',missing:'APK missing'}[S.filter]}</button></div><div id="apps">${listApps()}</div>`;
-}
-
-/* app screen */
-const optCtl=(a,p,o)=>{
-  const v=((a.options||{})[p.name]||{})[o.key]??'',d=String(o.default??''),bool=/^(true|false)$/i.test(d),cur=v===''?d:v,at=`data-c="opt" data-p="${esc(p.name)}" data-k="${esc(o.key)}"`;
-  return`<div style="margin-top:8px;font-size:.78rem;color:var(--sec)">${esc(o.title||o.key)}${o.description?' · '+esc(o.description):''}${bool?`<div class="row" style="padding:4px 0"><div class="g">${cur}</div>${sw(cur.toLowerCase()=='true',`data-a="optsw" data-p="${esc(p.name)}" data-k="${esc(o.key)}" data-d="${esc(d)}"`)}</div>`:`<input type="${/^-?\d+(\.\d+)?$/.test(d)?'number':'text'}" ${at} value="${esc(v)}" placeholder="${esc(d||'Default')}">`}</div>`;
+let S = {
+  owner: '', repo: '', branch: 'main', token: '', wf: 'build.yml',
+  mode: 'system', black: false, accent: '#A4C9FF', scale: 100,
+  config: { 
+    settings: { 
+      default_arch: 'arm64-v8a', 
+      auto_prune: true, 
+      keep_releases: 3,
+      trigger_policy: 'on_new_patch',
+      check_interval_hours: 6
+    }, 
+    sources: [], apps: [], hidden_apps: [] 
+  },
+  cats: {}, rels: [], runs: [], upstreamTags: {}, dirty: false,
+  onlySel: false, live: null, connected: false, localApks: {}
 };
 
-function plist(a){
-  const c=S.cats[a.id],q=($('#psq')||{}).value?.toLowerCase()||'';
-  if(!c)return'';
-  let h='';
-  c.patches.filter(p=>(!q||(p.name+p.description).toLowerCase().includes(q))&&(!S.onlySel||eff(a,p))).forEach(p=>{
-    const on=eff(a,p),cu=a.options&&a.options[p.name];
-    h+=`<div class="card" style="padding:6px 14px;margin-bottom:8px"><div class="row"><div class="g"><b style="font-size:.95rem">${esc(p.name)}</b>${cu?' <span class="chip p">Customized</span>':''}${p.enabled?'':' <span class="chip">Off by default</span>'}<div class="d">${esc(p.description)}</div></div>${sw(on,`data-a="pt" data-id="${esc(a.id)}" data-n="${esc(p.name)}"`)}</div>${on&&p.options&&p.options.length&&S.expert?`<div class="opts">${p.options.map(o=>optCtl(a,p,o)).join('')}</div>`:''}</div>`;
+if (/github\.io$/.test(location.hostname)) {
+  S.owner = location.hostname.split('.')[0];
+  S.repo = location.pathname.split('/')[1] || '';
+}
+try {
+  const cached = JSON.parse(localStorage.getItem(LS) || localStorage.getItem('patchmanager') || '{}');
+  Object.assign(S, cached);
+} catch(e){}
+
+const persist = () => {
+  const { owner, repo, branch, token, wf, mode, black, accent, scale } = S;
+  localStorage.setItem(LS, JSON.stringify({ owner, repo, branch, token, wf, mode, black, accent, scale }));
+};
+const sw = (on, attrs) => `<div class="sw ${on?'on':''}" ${attrs}></div>`;
+const A = {}, C = {};
+
+function toast(t, bad) {
+  const e = $('#toast');
+  e.textContent = t;
+  e.className = 'toast on' + (bad ? ' bad' : '');
+  clearTimeout(e.t);
+  e.t = setTimeout(() => e.className = 'toast', 3200);
+}
+
+async function gh(path, o={}, raw) {
+  const r = await fetch(raw ? path : 'https://api.github.com/repos/' + S.owner + '/' + S.repo + path, {
+    ...o,
+    headers: {
+      Authorization: 'Bearer ' + S.token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(o.body ? {'Content-Type': 'application/json'} : {}),
+      ...(o.headers || {})
+    }
   });
-  return h||'<div class="card">No patches found</div>';
+  if (!r.ok) {
+    let m = '';
+    try { m = (await r.json()).message; } catch(e){}
+    const er = new Error('GitHub ' + r.status + (m ? ': ' + m : ''));
+    er.status = r.status;
+    throw er;
+  }
+  return r.status == 204 ? null : r.json();
 }
 
-function vApp(r){
-  const a=app(r.id);if(!a)return hdr('App','',1)+'<div class="card">App not found</div>';
-  const c=S.cats[a.id],inf=c&&c.info||{},rl=relsFor(a.id),sf=stockFiles(a.id),ex=S.expert&&S.pm=='expert',n=c?c.patches.filter(p=>eff(a,p)).length:0,ver=a.version||inf.recommended_version||'';
-  const cfg=(k,l,v,ph)=>`<div class="lbl">${l}</div><input type="text" data-c="cfg" data-k="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}">`;
-  
-  return hdr(ttl(a),a.package,1)+`<div class="card app" style="cursor:default"><div class="ico" style="background:linear-gradient(135deg,${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div><div style="flex:1;min-width:0"><div class="n">${esc(ttl(a))}</div><div class="mono">${esc(a.package)}</div><span class="chip">${esc(a.patches_repo)}</span>${inf.patch_tag?`<span class="chip p">${esc(inf.patch_tag)}</span>`:''}</div><button class="pill" data-a="build" data-id="${esc(a.id)}">Patch</button></div>
- <div class="card"><b>Stock APK</b>${sf.length?`<div class="row"><i class="ms" style="color:var(--ok)">check_circle</i><div class="g">${sf.map(f=>esc(f.name)).join(', ')}<div class="d">Found in the stock-${esc(a.id)} release</div></div></div>`:`<div class="warnb" style="margin-top:8px">No stock APK found. ${ver?`Download version ${esc(ver)} `:'Download a supported version '}from APKMirror, then upload it here.</div>`}
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${inf.apkmirror_url?`<a class="pill o" style="text-decoration:none" href="${esc(inf.apkmirror_url)}" target="_blank" rel="noopener">APKMirror</a>`:`<a class="pill o" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${encodeURIComponent(a.id+' '+ver)}">APKMirror</a>`}<label class="pill" style="display:inline-block">Upload APK<input type="file" id="upf" hidden accept=".apk,.apkm,.apks,.xapk,.axapk" data-c="upload" data-id="${esc(a.id)}"></label><a class="pill o" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/releases/tag/stock-${esc(a.id)}" target="_blank" rel="noopener">Open Release ↗</a></div>
-  <div class="bar" id="upbar" style="display:none"><i id="upp"></i></div><div class="d" id="upt" style="font-size:.78rem;color:var(--out)">Accepts .apk and .apkm bundles.</div></div>
- <div class="card"><b>Build settings</b><div class="lbl">App version</div><select data-c="cfg" data-k="version"><option value="">Auto${inf.recommended_version?' ('+esc(inf.recommended_version)+')':''}</option>${(inf.compatible_versions||[]).map(v=>`<option ${a.version==v?'selected':''}>${esc(v)}</option>`).join('')}</select>
-  <div class="lbl">Architecture</div><select data-c="cfg" data-k="arch">${ARCH.map(x=>`<option ${(a.arch||'arm64-v8a')==x?'selected':''}>${x}</option>`).join('')}</select>${cfg('patches_repo','Patch source (owner/repo)',a.patches_repo)}${cfg('apk_url','APK URL (optional)',a.apk_url||'','https://')}
-  <div class="row"><div class="g">Pre-release patches<div class="d">Use pre-releases from this source</div></div>${sw(a.prerelease,'data-a="cfgsw" data-k="prerelease" data-id="'+esc(a.id)+'"')}</div><div class="row"><div class="g">Force rebuild<div class="d">Replace the release even if it exists</div></div>${sw(a.force,'data-a="cfgsw" data-k="force" data-id="'+esc(a.id)+'"')}</div></div>
- <div class="sec-h">Patches</div>${!c?`<div class="warnb">No patch list yet. Save the config and run a build once to generate the catalog.</div>`:`${S.expert?`<div class="seg"><b class="${S.pm=='simple'?'on':''}" data-a="pm" data-v="simple">Simple</b><b class="${S.pm=='expert'?'on':''}" data-a="pm" data-v="expert">Expert</b></div>`:''}
-  ${ex?`<div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" id="psq" placeholder="Search patches" data-c="psrch" style="flex:1"><button class="pill ${S.onlySel?'':'o'}" data-a="onlysel">Selected</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="pill t" data-a="bulk" data-v="all" data-id="${esc(a.id)}">Enable all</button><button class="pill t" data-a="bulk" data-v="none" data-id="${esc(a.id)}">Disable all</button><button class="pill t" data-a="bulk" data-v="rec" data-id="${esc(a.id)}">Recommended</button></div><div class="d" style="font-size:.8rem;color:var(--out);margin:0 4px 8px" id="pcount">${n} of ${c.patches.length} selected</div><div id="plist">${plist(a)}</div>`:`<div class="card"><b>Recommended patches</b><div class="d" style="color:var(--out);font-size:.85rem;margin-top:4px">${n} of ${c.patches.length} patches will be applied.${S.expert?'':' Turn on Expert mode in Settings to customize patches.'}</div></div>`}`}
- <div class="sec-h">Releases</div>${rl.length?rl.slice(0,6).map(r=>`<div class="card"><div class="row" style="padding:0"><div class="g"><b>${esc(r.tag_name)}</b><div class="d">${ago(r.published_at||r.created_at)}${r.prerelease?' · pre-release':''}</div>${r.assets.map(x=>`<a class="chip p" style="text-decoration:none" href="${esc(x.browser_download_url)}">${esc(x.name)} · ${(x.size/1048576).toFixed(1)} MB</a>`).join('')}</div><button class="ib" title="Delete release" data-a="delrel" data-id="${r.id}" data-t="${esc(r.tag_name)}"><i class="ms x">delete</i></button></div></div>`).join(''):'<div class="card d" style="color:var(--out)">Nothing patched yet</div>'}
- <p style="margin-top:14px"><button class="pill d" data-a="rmapp" data-id="${esc(a.id)}">Remove this app</button></p>`;
+const app = id => (S.config.apps || []).find(a => a.id === id);
+const ttl = a => (PK[a.package] || [])[0] || a.id;
+const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
+const hue = a => {
+  const h = [...a.id].reduce((acc, c) => acc * 31 + c.charCodeAt(0) | 0, 7) % 360;
+  return PK[a.package] ? PK[a.package][1] : `hsl(${h} 55% 45%),hsl(${h} 55% 28%)`;
+};
+const eff = (a, p) => (a.enable || []).includes(p.name) ? true : (a.disable || []).includes(p.name) ? false : !!p.enabled;
+const ago = d => {
+  const s = (Date.now() - Date.parse(d)) / 1e3;
+  return s < 90 ? 'just now' : s < 5400 ? Math.round(s/60) + 'm ago' : s < 129600 ? Math.round(s/3600) + 'h ago' : Math.round(s/86400) + 'd ago';
+};
+function relsFor(id) { return S.rels.filter(r => !r.draft && r.tag_name.startsWith(id + '-')); }
+const stockRel = id => S.rels.find(r => r.tag_name === 'stock-' + id);
+const stockFiles = id => ((stockRel(id) || {}).assets || []).filter(x => EXT.test(x.name));
+function hasStockApk(id) { return stockFiles(id).length > 0 || (S.localApks[id] && S.localApks[id].length > 0); }
+
+/* --- Data Loading & Repository Sync --- */
+async function connect(quiet) {
+  if (!S.owner || !S.repo || !S.token) return dlgConnect();
+  try {
+    try {
+      const d = await gh('/contents/config.json?ref=' + encodeURIComponent(S.branch));
+      S.sha = d.sha;
+      S.config = JSON.parse(b64(d.content));
+    } catch(e) {
+      if (e.status != 404) throw e;
+      S.sha = '';
+      S.config = { 
+        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6 }, 
+        sources: [], apps: [], hidden_apps: [] 
+      };
+    }
+    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6 };
+    if (!Array.isArray(S.config.apps)) S.config.apps = [];
+    if (!Array.isArray(S.config.sources)) S.config.sources = [];
+    if (!Array.isArray(S.config.hidden_apps)) S.config.hidden_apps = [];
+
+    S.connected = true; S.dirty = false; persist(); closeDlg(); render();
+    await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
+    render();
+    if (!quiet) toast('Connected ✔');
+  } catch(e) {
+    S.connected = false;
+    toast(e.message, 1);
+    if (!quiet) dlgConnect();
+    render();
+  }
 }
 
-/* builds */
-function vBuilds(){return hdr('Builds','Actions runs for '+S.wf,1)+`<div id="live"></div><div class="sec-h">History</div><div id="hist"></div>`}
-
-function paintHist(){
-  const h=$('#hist');if(!h)return;
-  h.innerHTML=S.runs.length?S.runs.map(r=>`<a class="card row" style="text-decoration:none;color:inherit;display:flex" href="${esc(r.html_url)}" target="_blank" rel="noopener"><i class="ms" style="color:var(--${r.conclusion=='success'?'ok':r.conclusion?'err':'primary'})">${r.conclusion=='success'?'check_circle':r.conclusion?'error':'sync'}</i><div class="g"><b>${esc(r.display_title||r.name)}</b><div class="d">${esc(r.event)} · ${ago(r.created_at)} · ${esc(r.conclusion||r.status)}</div></div></a>`).join(''):'<div class="card d" style="color:var(--out)">No runs yet</div>';
+async function checkLocalApks() {
+  try {
+    const files = await gh('/contents/apks?ref=' + encodeURIComponent(S.branch));
+    S.localApks = {};
+    if (Array.isArray(files)) {
+      files.forEach(f => {
+        (S.config.apps || []).forEach(a => {
+          if (f.name.startsWith(a.id) || f.name.startsWith(a.package)) {
+            S.localApks[a.id] = S.localApks[a.id] || [];
+            S.localApks[a.id].push(f.name);
+          }
+        });
+      });
+    }
+  } catch(e) { S.localApks = {}; }
 }
 
-function paintLive(){
-  const L=S.live,e=$('#live');paintHist();if(!e||!L)return;
-  e.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between"><b>${esc(L.stage)}</b><b>${L.pct}%</b></div><div class="bar"><i style="width:${L.pct}%;${L.done?'animation:none':''}"></i></div><div id="term">${L.lines.map(l=>`<div><span class="${l[0]}">[${l[0]}]</span> ${esc(l[1])}</div>`).join('')}</div>${L.done?`<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${L.ok?`<a class="pill" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/releases" target="_blank" rel="noopener">Open releases</a>`:`<a class="pill o" style="text-decoration:none" href="${esc(L.url||'')}" target="_blank" rel="noopener">View run on GitHub</a>`}</div>`:L.run?`<div style="margin-top:12px"><button class="pill o" data-a="cancel">Cancel run</button></div>`:''}</div>`;
-  const t=$('#term');if(t)t.scrollTop=1e5;
+async function loadLocalCatalogs() {
+  for (const a of (S.config.apps || [])) {
+    try {
+      let patches = null, info = null;
+      try {
+        const pRes = await fetch('catalog/' + encodeURIComponent(a.id) + '.json?t=' + Date.now());
+        if (pRes.ok) patches = await pRes.json();
+        const iRes = await fetch('catalog/' + encodeURIComponent(a.id) + '.info.json?t=' + Date.now());
+        if (iRes.ok) info = await iRes.json();
+      } catch(e){}
+
+      if (!patches && S.token) {
+        try {
+          const d = await gh('/contents/docs/catalog/' + encodeURIComponent(a.id) + '.json?ref=' + encodeURIComponent(S.branch));
+          patches = JSON.parse(b64(d.content));
+          try {
+            const idoc = await gh('/contents/docs/catalog/' + encodeURIComponent(a.id) + '.info.json?ref=' + encodeURIComponent(S.branch));
+            info = JSON.parse(b64(idoc.content));
+          } catch(e){}
+        } catch(e){}
+      }
+
+      if (patches) {
+        S.cats[a.id] = { patches, info };
+      }
+    } catch(e) {
+      console.warn('Catalog load error for', a.id, e);
+    }
+  }
 }
 
-async function build(id){
-  if(S.dirty){toast('Save your changes first so the build uses them',1);return}
-  if(S.confirm&&!confirm(id?'Start a build for '+ttl(app(id))+'?':'Start a build for all apps?'))return;
-  const L=S.live={lines:[],pct:2,stage:'Starting',done:false,ok:false},log=(t,m)=>{L.lines.push([t,m]);paintLive()};location.hash='#/builds';
-  try{
-    const t0=Date.now()-8000;
-    await gh(`/actions/workflows/${S.wf}/dispatches`,{method:'POST',body:JSON.stringify({ref:S.branch,inputs:{app:id||'',force:true}})});
-    log('INFO','Workflow dispatched');const seen=new Set();
-    for(let k=0;k<300;k++){
-      await new Promise(r=>setTimeout(r,4000));
-      const rs=(await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=5`)).workflow_runs,run=rs.find(r=>Date.parse(r.created_at)>=t0);
-      if(!run)continue;
-      L.run=run.id;L.url=run.html_url;
-      const st=(await gh(`/actions/runs/${run.id}/jobs`)).jobs.flatMap(j=>j.steps||[]);
-      st.forEach(s=>{
-        const key=s.name+s.status;
-        if(s.status!='queued'&&!seen.has(key)){
+async function checkUpstreamUpdates() {
+  for (const a of (S.config.apps || [])) {
+    if (!a.patches_repo) continue;
+    try {
+      const rels = await gh(`https://api.github.com/repos/${a.patches_repo}/releases?per_page=1`, {}, 1);
+      if (Array.isArray(rels) && rels.length > 0) {
+        S.upstreamTags[a.patches_repo] = rels[0].tag_name || rels[0].tagName;
+      }
+    } catch(e){}
+  }
+}
+
+async function loadRels() { try { S.rels = await gh('/releases?per_page=100'); } catch(e){ S.rels = []; } }
+async function loadRuns() { try { S.runs = (await gh('/actions/runs?per_page=15')).workflow_runs; } catch(e){ S.runs = []; } }
+
+async function save() {
+  try {
+    const r = await gh('/contents/config.json', {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Update config from Patch Manager Web UI',
+        branch: S.branch,
+        content: u64(JSON.stringify(S.config, null, 2) + '\n'),
+        ...(S.sha ? { sha: S.sha } : {})
+      })
+    });
+    S.sha = r.content.sha;
+    S.dirty = false;
+    render();
+    toast('Saved ✔ Build triggered automatically');
+  } catch(e) {
+    toast(e.status == 409 || e.status == 422 ? 'Conflict on server. Reconnect to refresh' : e.message, 1);
+  }
+}
+
+let touchState = { startX:0, startY:0, el:null, id:null, swiping:false };
+
+function initGestures() {
+  document.querySelectorAll('.swipe-front').forEach(card => {
+    card.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      touchState = { startX: t.clientX, startY: t.clientY, el: card, id: card.dataset.id, swiping: false };
+    }, { passive: true });
+
+    card.addEventListener('touchmove', e => {
+      if (!touchState.el) return;
+      const t = e.touches[0];
+      const diffX = t.clientX - touchState.startX;
+      const diffY = t.clientY - touchState.startY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 12) {
+        touchState.swiping = true;
+        touchState.el.style.transform = `translateX(${diffX}px)`;
+        const bg = touchState.el.previousElementSibling;
+        if (diffX > 0) {
+          bg.className = 'swipe-bg right';
+          bg.innerHTML = '<span class="row"><i class="ms">tune</i> View Patches</span>';
+        } else {
+          bg.className = 'swipe-bg left';
+          bg.innerHTML = '<span class="row">Hide App <i class="ms">visibility_off</i></span>';
+        }
+      }
+    }, { passive: true });
+
+    card.addEventListener('touchend', e => {
+      if (!touchState.swiping || !touchState.el) return;
+      const t = e.changedTouches[0];
+      const diffX = t.clientX - touchState.startX;
+      touchState.el.style.transform = '';
+
+      if (diffX > 85) {
+        location.hash = '#/app/' + encodeURIComponent(touchState.id);
+      } else if (diffX < -85) {
+        hideApp(touchState.id);
+      }
+      touchState.swiping = false;
+    });
+  });
+}
+
+function hideApp(id) {
+  S.config.hidden_apps = S.config.hidden_apps || [];
+  if (!S.config.hidden_apps.includes(id)) {
+    S.config.hidden_apps.push(id);
+    dirty(); render();
+    toast(`Hidden ${id}. Restore in Settings → Apps.`);
+  }
+}
+
+const dlg = h => { $('#dlg').innerHTML = h; $('#dbg').classList.add('on'); };
+const closeDlg = () => $('#dbg').classList.remove('on');
+
+function startPatchFlow(id) {
+  const a = app(id);
+  if (!a) return toast('App not found', 1);
+
+  const cat = S.cats[id];
+  const recVer = cat && cat.info ? cat.info.recommended_version : 'Auto';
+  const compVers = cat && cat.info ? cat.info.compatible_versions : [];
+  const ready = hasStockApk(id);
+
+  dlg(`
+    <h2>Do you have the APK?</h2>
+    <p>Targeting <b>${esc(ttl(a))}</b> for patching.</p>
+    
+    <div class="card" style="background:var(--card-high)">
+      <div style="font-size:0.85rem;font-weight:500;margin-bottom:6px">Recommended Version</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <b style="font-size:1.1rem;color:var(--primary)">${esc(recVer)}</b>
+        <span class="chip ${ready ? 'ok' : 'bad'}">${ready ? 'APK Ready' : 'APK Missing'}</span>
+      </div>
+      ${compVers.length ? `<div style="margin-top:8px"><div class="d">Compatible versions:</div>${compVers.slice(0,6).map(v=>`<span class="chip">${esc(v)}</span>`).join('')}</div>` : ''}
+    </div>
+
+    ${ready ? `<div class="row" style="padding:0;margin-bottom:12px"><i class="ms" style="color:var(--ok)">check_circle</i><div class="g">Verified stock APK found in repository.</div></div>` : ''}
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Need APK (Download Instructions)</button>
+      <button class="pill o" data-a="dlg_have_apk" data-id="${esc(id)}"><i class="ms">tune</i> Have APK / Configure Patches</button>
+      <button class="pill t" data-a="close">Cancel</button>
+    </div>
+  `);
+}
+
+function showDownloadInstructions(id) {
+  const a = app(id);
+  const cat = S.cats[id];
+  const recVer = cat && cat.info ? cat.info.recommended_version : 'latest';
+  const apkmUrl = cat && cat.info ? cat.info.apkmirror_url : `https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${encodeURIComponent(id + ' ' + recVer)}`;
+
+  dlg(`
+    <h2>Download Instructions</h2>
+    <p>Target: <b>${esc(ttl(a))} · v${esc(recVer)}</b></p>
+    
+    <div style="display:flex;gap:12px;margin-bottom:12px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">1</div>
+      <div style="flex:1">Open <b>APKMirror.com</b> using the button below.</div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">2</div>
+      <div style="flex:1">
+        Look for the <b>nodpi / universal</b> variant and tap Download.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--onp);display:grid;place-items:center;font-weight:700">3</div>
+      <div style="flex:1">
+        Upload the file to the GitHub Release tagged <code>stock-${esc(id)}</code> or put it in <code>apks/</code>.
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <a class="pill" style="text-decoration:none;justify-content:center" href="${esc(apkmUrl)}" target="_blank" rel="noopener">
+        <i class="ms">open_in_new</i> Open APKMirror.com ↗
+      </a>
+      <a class="pill o" style="text-decoration:none;justify-content:center" href="https://github.com/${S.owner}/${S.repo}/releases/tag/stock-${esc(id)}" target="_blank" rel="noopener">
+        <i class="ms">upload</i> Open stock-${esc(id)} Release Page ↗
+      </a>
+      <button class="pill t" data-a="dlg_have_apk" data-id="${esc(id)}">I have uploaded it → Configure</button>
+    </div>
+  `);
+}
+
+function openPatchOptions(id, pName) {
+  const a = app(id);
+  const cat = S.cats[id];
+  const patch = (cat ? cat.patches : []).find(p => p.name === pName);
+  if (!patch || !patch.options || !patch.options.length) return;
+
+  const currentOpts = (a && a.options && a.options[pName]) || {};
+
+  dlg(`
+    <h2>${esc(pName)} Options</h2>
+    <p>${esc(patch.description || 'Configure options for this patch.')}</p>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
+      ${patch.options.map(o => {
+        const val = currentOpts[o.key] !== undefined ? currentOpts[o.key] : (o.default ?? '');
+        const isBool = /^(true|false)$/i.test(String(o.default));
+        return `
+          <div class="card" style="background:var(--card-high);margin:0">
+            <b style="font-size:0.9rem">${esc(o.title || o.key)}</b>
+            <div class="d">${esc(o.description || '')}</div>
+            ${isBool ? `
+              <div class="row" style="padding:6px 0">
+                <div class="g">Enabled (${val})</div>
+                ${sw(String(val).toLowerCase() === 'true', `data-a="dlg_opt_sw" data-id="${esc(id)}" data-p="${esc(pName)}" data-k="${esc(o.key)}"`)}
+              </div>
+            ` : `
+              <input type="text" data-c="dlg_opt_text" data-id="${esc(id)}" data-p="${esc(pName)}" data-k="${esc(o.key)}" value="${esc(val)}" placeholder="Default: ${esc(o.default ?? '')}" style="margin-top:6px">
+            `}
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="pill t" data-a="dlg_opt_reset" data-id="${esc(id)}" data-p="${esc(pName)}">Reset to Default</button>
+      <button class="pill" data-a="close">Done</button>
+    </div>
+  `);
+}
+
+const route = () => {
+  const p = location.hash.replace(/^#\/?/, '').split('/');
+  return { v: p[0] || 'home', id: decodeURIComponent(p[1] || '') };
+};
+addEventListener('hashchange', () => {
+  render();
+  if (route().v === 'builds') loadRuns().then(paintHist);
+});
+
+function theme() {
+  const d = document.documentElement, light = S.mode === 'light' || (S.mode === 'system' && matchMedia('(prefers-color-scheme: light)').matches);
+  d.classList.toggle('light', light);
+  d.classList.toggle('black', S.black && !light);
+  d.style.setProperty('--primary', S.accent);
+  d.style.setProperty('--fs', 16 * S.scale / 100 + 'px');
+}
+
+function render() {
+  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', builds: 'builds', settings: 'settings' }[r.v] || 'home';
+  document.querySelectorAll('.bb[data-nav]').forEach(b => b.classList.toggle('hl', b.dataset.nav === nav));
+  $('#fab').style.display = S.dirty ? 'block' : 'none';
+  m.innerHTML = ({ home: vHome, app: vApp, builds: vBuilds, settings: vSet }[r.v] || vHome)(r);
+  if (r.v === 'home') initGestures();
+  if (r.v === 'builds') paintLive();
+}
+
+const hdr = (t, sub, back) => `
+  <div class="top">
+    ${back ? `<button class="ib" data-a="go" data-h=""><i class="ms">arrow_back</i></button>` : '<div class="logo">P</div>'}
+    <h1>${esc(t)}<small>${esc(sub || '')}</small></h1>
+    ${back ? '' : '<button class="ib" data-a="go" data-h="settings"><i class="ms">settings</i></button>'}
+  </div>
+`;
+
+function appCard(a) {
+  const cat = S.cats[a.id];
+  const hasStock = hasStockApk(a.id);
+  const patchCount = cat && cat.patches ? cat.patches.length : 0;
+  const selectedCount = cat && cat.patches ? cat.patches.filter(p => eff(a, p)).length : 0;
+  const recVer = a.version || (cat && cat.info && cat.info.recommended_version) || 'Auto';
+
+  const rels = relsFor(a.id);
+  const latestRel = rels[0];
+  const patchedTag = latestRel ? latestRel.tag_name.replace(a.id + '-', '') : null;
+  const latestUpstream = S.upstreamTags[a.patches_repo] || (cat && cat.info && cat.info.patch_tag);
+  const hasUpdate = latestUpstream && patchedTag && (latestUpstream !== patchedTag);
+  const apkAsset = latestRel ? (latestRel.assets || []).find(x => x.name.endsWith('.apk')) : null;
+
+  return `
+    <div class="swipe-box">
+      <div class="swipe-bg right"><i class="ms">tune</i></div>
+      <div class="swipe-front" data-id="${esc(a.id)}">
+        <div class="app" data-a="start_flow" data-id="${esc(a.id)}">
+          <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
+          <div style="flex:1;min-width:0">
+            <div class="n">${esc(ttl(a))}<i class="ms">verified</i></div>
+            <div class="mono">${esc(a.package)}</div>
+            
+            <div>
+              ${patchCount ? `<span class="chip">${selectedCount} of ${patchCount} patches</span>` : '<span class="chip bad">No patch list yet</span>'}
+              <span class="chip">${esc(recVer)}</span>
+              ${hasStock ? '<span class="chip ok">APK ready</span>' : '<span class="chip bad">APK missing</span>'}
+              ${hasUpdate ? `<span class="chip warn">Update: ${esc(latestUpstream)}</span>` : (latestRel ? '<span class="chip ok">✓ Up to date</span>' : '')}
+            </div>
+
+            <div class="mono" style="margin-top:4px;font-family:inherit">
+              ${esc(a.patches_repo)} · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
+            </div>
+          </div>
+
+          <div class="menu-wrap" onclick="event.stopPropagation()">
+            <button class="ib" data-a="toggle_menu" data-id="${esc(a.id)}"><i class="ms">more_vert</i></button>
+            <div class="menu-pop" id="menu-${esc(a.id)}">
+              ${apkAsset ? `
+                <a class="menu-item" href="${esc(apkAsset.browser_download_url)}" download>
+                  <i class="ms">download</i> Download APK (${(apkAsset.size/1048576).toFixed(1)} MB)
+                </a>
+              ` : ''}
+              ${latestRel ? `
+                <a class="menu-item" href="${esc(latestRel.html_url)}" target="_blank" rel="noopener">
+                  <i class="ms">open_in_new</i> Open Release on GitHub
+                </a>
+              ` : ''}
+              <button class="menu-item" data-a="dlg_need_apk" data-id="${esc(a.id)}">
+                <i class="ms">inventory_2</i> Stock APK Instructions
+              </button>
+              <button class="menu-item" data-a="force_rebuild" data-id="${esc(a.id)}">
+                <i class="ms">restart_alt</i> Force Rebuild
+              </button>
+              <button class="menu-item" data-a="hide_app" data-id="${esc(a.id)}">
+                <i class="ms">visibility_off</i> Hide from Dashboard
+              </button>
+            </div>
+          </div>
+
+          <button class="pill" data-a="start_flow" data-id="${esc(a.id)}">Patch</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function listApps() {
+  const hidden = S.config.hidden_apps || [];
+  const appList = (S.config.apps || []).filter(a => !hidden.includes(a.id));
+
+  if (!appList.length) {
+    return `
+      <div class="card" style="text-align:center;padding:32px 14px">
+        <b style="font-size:1.1rem">No Active Apps</b>
+        <div style="color:var(--out);font-size:0.85rem;margin:8px 0 16px">Add an app or unhide existing apps in Settings.</div>
+        <button class="pill" data-a="addsrc"><i class="ms">add</i> Add App Source</button>
+      </div>
+    `;
+  }
+
+  return `<div class="grid">${appList.map(appCard).join('')}</div>`;
+}
+
+function vHome() {
+  const n = (S.config.apps || []).length;
+  return hdr('Patch Manager', S.connected ? `${S.owner}/${S.repo}` : 'Not connected') + `
+    <div class="banner">
+      <i class="ms" style="font-size:32px">${S.connected ? 'cloud_done' : 'cloud_off'}</i>
+      <div style="flex:1">
+        <div style="font-weight:500">${S.connected ? 'Repository Active' : 'Connect Repository'}</div>
+        <div class="s">${n} app(s) configured · Swipe 👉 for patches, 👈 to hide</div>
+      </div>
+      ${S.connected ? '<div class="dot"></div>' : '<button class="pill" style="background:#fff;color:#000" data-a="conn">Connect</button>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="pill o" data-a="addsrc"><i class="ms">add</i> Add App</button>
+      <button class="pill o" data-a="build_all"><i class="ms">bolt</i> Build All</button>
+    </div>
+    <div id="apps">${listApps()}</div>
+  `;
+}
+
+function vApp(r) {
+  const a = app(r.id);
+  if (!a) return hdr('App', '', 1) + '<div class="card">App not found</div>';
+
+  const cat = S.cats[a.id];
+  const inf = (cat && cat.info) || {};
+  const patches = cat ? cat.patches : [];
+  const selectedCount = patches.filter(p => eff(a, p)).length;
+
+  return hdr(ttl(a), a.package, 1) + `
+    <div class="card app" style="cursor:default">
+      <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
+      <div style="flex:1;min-width:0">
+        <div class="n">${esc(ttl(a))}</div>
+        <div class="mono">${esc(a.package)}</div>
+        <span class="chip p">${esc(a.patches_repo)}</span>
+        ${inf.patch_tag ? `<span class="chip">${esc(inf.patch_tag)}</span>` : ''}
+      </div>
+      <button class="pill" data-a="dispatch_app" data-id="${esc(a.id)}"><i class="ms">bolt</i> Patch</button>
+    </div>
+
+    <details class="card" open>
+      <summary style="font-size:0.85rem;color:var(--primary);cursor:pointer;font-weight:500">
+        Build Target & Architecture
+      </summary>
+      <div class="lbl">App Version</div>
+      <input type="text" list="ver-list-${esc(a.id)}" data-c="cfg" data-k="version" value="${esc(a.version)}" placeholder="Auto (${esc(inf.recommended_version || 'Latest')})">
+      <datalist id="ver-list-${esc(a.id)}">
+        ${(inf.compatible_versions || []).map(v => `<option value="${esc(v)}">`).join('')}
+      </datalist>
+
+      <div class="lbl">Architecture</div>
+      <select data-c="cfg" data-k="arch">
+        ${ARCH.map(x => `<option ${(a.arch || S.config.settings.default_arch)===x?'selected':''}>${x}</option>`).join('')}
+      </select>
+    </details>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 4px 6px">
+      <div class="sec-h" style="margin:0">Patches (${selectedCount}/${patches.length})</div>
+      <div class="chip ${S.onlySel ? 'p' : ''}" style="cursor:pointer" data-a="toggle_only_sel">
+        <i class="ms" style="font-size:16px">filter_alt</i> Selected only
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="pill t" data-a="bulk" data-v="all" data-id="${esc(a.id)}"><i class="ms">done_all</i> Enable all</button>
+      <button class="pill t" data-a="bulk" data-v="rec" data-id="${esc(a.id)}"><i class="ms">recommend</i> Recommended</button>
+      <button class="pill t" data-a="bulk" data-v="none" data-id="${esc(a.id)}"><i class="ms">clear_all</i> Disable all</button>
+    </div>
+
+    <div id="plist">${renderPatchesList(a, patches)}</div>
+  `;
+}
+
+function renderPatchesList(a, patches) {
+  if (!patches || !patches.length) return '<div class="card">No patch list loaded for this app.</div>';
+  return patches.filter(p => S.onlySel ? eff(a, p) : true).map(p => {
+    const on = eff(a, p);
+    const hasOpts = p.options && p.options.length;
+    const isCustom = a.options && a.options[p.name] && Object.keys(a.options[p.name]).length;
+
+    return `
+      <div class="card" style="padding:10px 14px;margin-bottom:8px">
+        <div class="row">
+          <div class="g">
+            <b>${esc(p.name)}</b>
+            ${p.enabled ? '' : '<span class="chip">Off by default</span>'}
+            ${isCustom ? '<span class="chip p">Customized</span>' : ''}
+            <div class="d">${esc(p.description || '')}</div>
+          </div>
+          ${hasOpts ? `
+            <button class="ib" title="Patch Options" data-a="open_opts" data-id="${esc(a.id)}" data-p="${esc(p.name)}">
+              <i class="ms" style="color:var(--primary)">settings</i>
+            </button>
+          ` : ''}
+          ${sw(on, `data-a="pt" data-id="${esc(a.id)}" data-n="${esc(p.name)}"`)}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* Builds View */
+function vBuilds() {
+  return hdr('Builds', 'GitHub Actions Execution', 1) + `
+    <div id="live"></div>
+    <div class="sec-h">Recent Workflow Runs</div>
+    <div id="hist"></div>
+  `;
+}
+
+function paintHist() {
+  const h = $('#hist'); if (!h) return;
+  h.innerHTML = S.runs.length ? S.runs.map(r => `
+    <a class="card row" style="text-decoration:none;color:inherit;display:flex" href="${esc(r.html_url)}" target="_blank" rel="noopener">
+      <i class="ms" style="color:var(--${r.conclusion==='success'?'ok':r.conclusion?'err':'primary'})">
+        ${r.conclusion==='success'?'check_circle':r.conclusion?'error':'sync'}
+      </i>
+      <div class="g">
+        <b>${esc(r.display_title || r.name)}</b>
+        <div class="d">${esc(r.event)} · ${ago(r.created_at)} · ${esc(r.conclusion || r.status)}</div>
+      </div>
+    </a>
+  `).join('') : '<div class="card d">No runs recorded.</div>';
+}
+
+function paintLive() {
+  const L = S.live, e = $('#live'); paintHist();
+  if (!e || !L) return;
+
+  const steps = [
+    { name: 'Load Patches', done: L.pct >= 20 },
+    { name: 'Read APK', done: L.pct >= 40 },
+    { name: 'Execute Patches', done: L.pct >= 70 },
+    { name: 'Write Output', done: L.pct >= 90 },
+    { name: 'Sign APK', done: L.pct >= 100 }
+  ];
+
+  e.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between">
+        <b>${esc(L.stage)}</b><b>${L.pct}%</b>
+      </div>
+      <div class="wavy-bar"><i style="width:${L.pct}%;${L.done?'animation:none':''}"></i></div>
+      
+      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap">
+        ${steps.map(s => `<span class="chip ${s.done?'ok':''}">${s.done?'✓ ':''}${s.name}</span>`).join('')}
+      </div>
+
+      <div id="term">${L.lines.map(l => `<div><span class="${l[0]}">[${l[0]}]</span> ${esc(l[1])}</div>`).join('')}</div>
+
+      ${L.done ? `
+        <div style="margin-top:12px;display:flex;gap:8px">
+          ${L.ok ? `<a class="pill" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/releases" target="_blank" rel="noopener"><i class="ms">download</i> Open Releases</a>` : ''}
+          <a class="pill o" style="text-decoration:none" href="${esc(L.url || '')}" target="_blank" rel="noopener">View CI Log ↗</a>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  const t = $('#term'); if (t) t.scrollTop = 1e5;
+}
+
+async function dispatchBuild(appId, force=true) {
+  if (S.dirty) { toast('Save your changes first!', 1); return; }
+  const L = S.live = { lines: [], pct: 5, stage: 'Dispatching', done: false, ok: false };
+  location.hash = '#/builds';
+  try {
+    const t0 = Date.now() - 6000;
+    await gh(`/actions/workflows/${S.wf}/dispatches`, {
+      method: 'POST',
+      body: JSON.stringify({ ref: S.branch, inputs: { app: appId || '', force: !!force } })
+    });
+    L.lines.push(['INFO', 'Workflow dispatch initiated...']);
+    paintLive();
+
+    const seen = new Set();
+    for (let k = 0; k < 250; k++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const rs = (await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=5`)).workflow_runs;
+      const run = rs.find(r => Date.parse(r.created_at) >= t0);
+      if (!run) continue;
+
+      L.run = run.id; L.url = run.html_url;
+      const st = (await gh(`/actions/runs/${run.id}/jobs`)).jobs.flatMap(j => j.steps || []);
+      st.forEach(s => {
+        const key = s.name + s.status;
+        if (s.status !== 'queued' && !seen.has(key)) {
           seen.add(key);
-          log(s.status=='completed'?(s.conclusion=='success'?'SUCCESS':s.conclusion=='skipped'?'INFO':'ERROR'):'INFO',s.name);
+          L.lines.push([s.status==='completed'?(s.conclusion==='success'?'SUCCESS':'ERROR'):'INFO', s.name]);
         }
       });
-      L.pct=st.length?Math.max(4,Math.round(st.filter(s=>s.status=='completed').length/st.length*100)):4;
-      L.stage=run.status=='completed'?(run.conclusion=='success'?'All done! 🎉':'Build '+run.conclusion):run.status.replace('_',' ');paintLive();
-      if(run.status=='completed'){
-        L.done=true;L.ok=run.conclusion=='success';
-        if(!L.ok)log('WARN','If the stock APK is missing, upload it on GitHub Releases and run again');
-        paintLive();await Promise.all([loadRels(),loadCats(),loadRuns()]);paintLive();return;
+
+      L.pct = st.length ? Math.max(10, Math.round(st.filter(s=>s.status==='completed').length / st.length * 100)) : 15;
+      L.stage = run.status === 'completed' ? (run.conclusion==='success'?'Completed! 🎉':'Build Failed') : run.status.replace('_', ' ');
+      paintLive();
+
+      if (run.status === 'completed') {
+        L.done = true; L.ok = run.conclusion === 'success';
+        await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
+        paintLive();
+        return;
       }
     }
-    log('ERROR','No run found. Check the Actions tab');
-  }catch(e){
-    log('ERROR',e.message);L.done=true;L.stage='Build failed';paintLive();
+  } catch(e) {
+    L.done = true; L.stage = 'Dispatch Failed';
+    L.lines.push(['ERROR', e.message]);
+    paintLive();
   }
 }
 
-/* stock upload */
-async function upload(id,f){
-  if(!f)return;
-  const bar=$('#upbar'),p=$('#upp'),t=$('#upt');
-  if(!EXT.test(f.name))return toast('Use an APK or APKM file',1);
-  try{
-    let rel=stockRel(id);
-    if(!rel){
-      try{rel=await gh('/releases/tags/stock-'+id)}
-      catch(e){
-        if(e.status!=404)throw e;
-        rel=await gh('/releases',{method:'POST',body:JSON.stringify({tag_name:'stock-'+id,name:'Stock APK for '+id,body:'Original APK files used for patching '+id,target_commitish:S.branch,prerelease:false})});
-      }
-    }
-    const nm=f.name,old=(rel.assets||[]).find(x=>x.name==nm);
-    if(old)await gh('/releases/assets/'+old.id,{method:'DELETE'});
-    bar.style.display='block';
+/* Settings View with Repository & Build Controls */
+let settingsTab = 0;
+function vSet() {
+  let b = '';
+  if (settingsTab === 0) {
+    b = `
+      <div class="card">
+        <b>Theme Mode</b>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          ${['system','light','dark'].map(m => `
+            <button class="pill ${S.mode===m?'':'o'}" data-a="set_theme" data-v="${m}">${m.toUpperCase()}</button>
+          `).join('')}
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="g">Pure Black (OLED)</div>
+          ${sw(S.black, 'data-a="sw_black"')}
+        </div>
+      </div>
+    `;
+  } else if (settingsTab === 1) {
+    const st = S.config.settings || { 
+      default_arch: 'arm64-v8a', 
+      auto_prune: true, 
+      keep_releases: 3, 
+      trigger_policy: 'on_new_patch', 
+      check_interval_hours: 6 
+    };
+    b = `
+      <!-- Repository & Build Controls -->
+      <div class="card">
+        <b>Repository & Build Automation</b>
+        <div class="d" style="margin:4px 0 12px">Control how GitHub Actions manages and cleans your repository.</div>
+        
+        <div class="lbl">When to Build (Trigger Policy)</div>
+        <select data-c="cfg_st" data-k="trigger_policy">
+          <option value="on_new_patch" ${st.trigger_policy==='on_new_patch'?'selected':''}>Only when new patch is released (Recommended)</option>
+          <option value="periodic_rebuild" ${st.trigger_policy==='periodic_rebuild'?'selected':''}>Always rebuild on schedule (Periodic fresh builds)</option>
+        </select>
 
-    await new Promise((ok,no)=>{
-      const x=new XMLHttpRequest();
-      x.open('POST',`https://uploads.github.com/repos/${S.owner}/${S.repo}/releases/${rel.id}/assets?name=${encodeURIComponent(nm)}`);
-      x.setRequestHeader('Authorization','Bearer '+S.token);
-      x.setRequestHeader('Content-Type','application/octet-stream');
-      x.setRequestHeader('Accept','application/vnd.github+json');
-      x.upload.onprogress=e=>{
-        if(e.lengthComputable){
-          p.style.width=e.loaded/e.total*100+'%';
-          t.textContent='Uploading '+Math.round(e.loaded/e.total*100)+'%';
+        <div class="lbl">Scheduled Check Frequency</div>
+        <select data-c="cfg_st" data-k="check_interval_hours">
+          <option value="2" ${st.check_interval_hours==2?'selected':''}>Every 2 hours</option>
+          <option value="6" ${st.check_interval_hours==6?'selected':''}>Every 6 hours (Recommended)</option>
+          <option value="12" ${st.check_interval_hours==12?'selected':''}>Every 12 hours</option>
+          <option value="24" ${st.check_interval_hours==24?'selected':''}>Once a day (24 hours)</option>
+        </select>
+
+        <div class="lbl">Default Device Architecture</div>
+        <select data-c="cfg_st" data-k="default_arch">
+          ${ARCH.map(x => `<option ${st.default_arch===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+
+        <div class="row" style="margin-top:10px">
+          <div class="g">
+            <b>Auto-Prune Older Releases</b>
+            <div class="d">Deletes old releases automatically so storage doesn't bloat.</div>
+          </div>
+          ${sw(st.auto_prune !== false, 'data-a="sw_autoprune"')}
+        </div>
+
+        <div class="lbl">Releases to Keep per App</div>
+        <select data-c="cfg_st" data-k="keep_releases">
+          <option value="1" ${st.keep_releases==1?'selected':''}>Keep 1 (Latest only)</option>
+          <option value="2" ${st.keep_releases==2?'selected':''}>Keep 2 releases</option>
+          <option value="3" ${st.keep_releases==3?'selected':''}>Keep 3 releases (Recommended)</option>
+          <option value="5" ${st.keep_releases==5?'selected':''}>Keep 5 releases</option>
+        </select>
+      </div>
+
+      <!-- Keystore Helper Card -->
+      <div class="card">
+        <b>Signing Keystore (KEYSTORE_B64)</b>
+        <div class="d" style="margin:4px 0 10px">Ensures all your patched APKs install over previous builds without signature errors.</div>
+        <a class="pill o" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/settings/secrets/actions" target="_blank" rel="noopener">
+          <i class="ms">key</i> Open Repository Secrets ↗
+        </a>
+      </div>
+
+      <!-- Hidden Apps -->
+      <div class="card">
+        <b>Hidden Apps</b>
+        ${(S.config.hidden_apps || []).length ? S.config.hidden_apps.map(id => `
+          <div class="row"><div class="g">${esc(id)}</div><button class="pill t" data-a="unhide" data-id="${esc(id)}">Unhide</button></div>
+        `).join('') : '<div class="d" style="margin-top:6px">No apps currently hidden.</div>'}
+      </div>
+
+      <div class="card">
+        <b>Connection</b>
+        <button class="pill o" data-a="conn" style="margin-top:6px">Edit GitHub Token</button>
+      </div>
+    `;
+  }
+  return hdr('Settings', '', 1) + `
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="pill ${settingsTab===0?'':'o'}" data-a="set_stab" data-v="0">Appearance</button>
+      <button class="pill ${settingsTab===1?'':'o'}" data-a="set_stab" data-v="1">Repository & System</button>
+    </div>
+    ${b}
+  `;
+}
+
+function dlgConnect() {
+  dlg(`
+    <h2>Connect Repository</h2>
+    <p>Provide a fine-grained token with Contents (RW) and Actions (RW).</p>
+    <div class="lbl">Owner</div><input type="text" id="c_owner" value="${esc(S.owner)}" placeholder="GitHub Username">
+    <div class="lbl">Repository</div><input type="text" id="c_repo" value="${esc(S.repo)}" placeholder="morphe-auto-patcher">
+    <div class="lbl">Branch</div><input type="text" id="c_branch" value="${esc(S.branch)}" placeholder="main">
+    <div class="lbl">Token</div><input type="password" id="c_token" value="${esc(S.token)}" placeholder="github_pat_...">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="pill t" data-a="close">Cancel</button>
+      <button class="pill" data-a="doconn">Connect</button>
+    </div>
+  `);
+}
+
+function dlgAddSource() {
+  const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
+  dlg(`
+    <h2>Add App</h2>
+    <p>Configure a target app and its Morphe patch bundle repository.</p>
+    <div class="lbl">App Identifier</div>
+    <input type="text" id="n_id" value="youtube" placeholder="youtube">
+    <div class="lbl">Package Name</div>
+    <input type="text" id="n_pkg" value="com.google.android.youtube" placeholder="com.google.android.youtube">
+    <div class="lbl">Patches Repository (owner/repo)</div>
+    <input type="text" id="n_src" value="MorpheApp/morphe-patches">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="pill t" data-a="close">Cancel</button>
+      <button class="pill" data-a="do_addsrc">Add App</button>
+    </div>
+  `);
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.menu-pop.on').forEach(el => el.classList.remove('on'));
+});
+
+Object.assign(A, {
+  go: t => location.hash = '#/' + t.dataset.h,
+  start_flow: t => startPatchFlow(t.dataset.id),
+  dlg_need_apk: t => showDownloadInstructions(t.dataset.id),
+  dlg_have_apk: t => { closeDlg(); location.hash = '#/app/' + encodeURIComponent(t.dataset.id); },
+  open_opts: t => openPatchOptions(t.dataset.id, t.dataset.p),
+  dispatch_app: t => dispatchBuild(t.dataset.id, true),
+  build_all: () => dispatchBuild('', true),
+  force_rebuild: t => dispatchBuild(t.dataset.id, true),
+  hide_app: t => hideApp(t.dataset.id),
+  toggle_menu: t => {
+    const m = $(`#menu-${t.dataset.id}`);
+    const isOpen = m.classList.contains('on');
+    document.querySelectorAll('.menu-pop.on').forEach(el => el.classList.remove('on'));
+    if (!isOpen) m.classList.add('on');
+  },
+  addsrc: dlgAddSource,
+  conn: dlgConnect,
+  close: closeDlg,
+  save: save,
+  toggle_only_sel: () => { S.onlySel = !S.onlySel; render(); },
+  bulk: t => {
+    const a = app(t.dataset.id); if (!a) return;
+    const cat = S.cats[a.id]; if (!cat) return;
+    a.enable = []; a.disable = [];
+    if (t.dataset.v !== 'rec') {
+      cat.patches.forEach(p => {
+        if ((t.dataset.v === 'all') !== !!p.enabled) {
+          (t.dataset.v === 'all' ? a.enable : a.disable).push(p.name);
         }
-      };
-      x.onload=()=>x.status<300?ok():no(new Error('Upload failed ('+x.status+')'));
-      x.onerror=()=>no(new Error('Browser blocked upload. Please upload directly on GitHub Releases page.'));
-      x.send(f);
-    });
-    await loadRels();toast('Stock APK uploaded');render();
-  }catch(e){
-    toast(e.message,1);
-    bar.style.display='none';
+      });
+    }
+    dirty(); render();
+  },
+  pt: t => {
+    const a = app(t.dataset.id); if (!a) return;
+    const cat = S.cats[a.id]; if (!cat) return;
+    const p = cat.patches.find(x => x.name === t.dataset.n); if (!p) return;
+    const on = !eff(a, p);
+    a.enable = (a.enable || []).filter(n => n !== p.name);
+    a.disable = (a.disable || []).filter(n => n !== p.name);
+    if (on !== !!p.enabled) (on ? a.enable : a.disable).push(p.name);
+    dirty();
+    t.classList.toggle('on', on);
+  },
+  sw_autoprune: t => {
+    S.config.settings = S.config.settings || {};
+    const cur = S.config.settings.auto_prune !== false;
+    S.config.settings.auto_prune = !cur;
+    t.classList.toggle('on', !cur);
+    dirty();
+  },
+  do_addsrc: () => {
+    const id = $('#n_id').value.trim().toLowerCase();
+    const pkg = $('#n_pkg').value.trim();
+    const repo = $('#n_src').value.trim();
+    if (!id || !pkg || !repo) return toast('All fields required', 1);
+
+    const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
+    S.config.apps = S.config.apps || [];
+    if (!S.config.apps.some(a => a.id === id)) {
+      S.config.apps.push({
+        id, package: pkg, patches_repo: repo, prerelease: false,
+        arch: defArch, version: '', force: false,
+        enable: [], disable: [], options: {}
+      });
+      dirty();
+    }
+    closeDlg();
+    loadLocalCatalogs().then(render);
+    toast(`Added ${id} ✔ Tap Save changes`);
+  },
+  doconn: () => {
+    S.owner = $('#c_owner').value.trim();
+    S.repo = $('#c_repo').value.trim();
+    S.branch = $('#c_branch').value.trim() || 'main';
+    S.token = $('#c_token').value.trim();
+    connect();
+  },
+  set_theme: t => { S.mode = t.dataset.v; persist(); theme(); render(); },
+  sw_black: t => { S.black = !S.black; persist(); theme(); render(); },
+  set_stab: t => { settingsTab = +t.dataset.v; render(); },
+  unhide: t => {
+    S.config.hidden_apps = (S.config.hidden_apps || []).filter(x => x !== t.dataset.id);
+    dirty(); render();
+  },
+  dlg_opt_sw: t => {
+    t.classList.toggle('on');
+    const a = app(t.dataset.id); if (!a) return;
+    a.options = a.options || {};
+    a.options[t.dataset.p] = a.options[t.dataset.p] || {};
+    a.options[t.dataset.p][t.dataset.k] = t.classList.contains('on');
+    dirty();
+  },
+  dlg_opt_reset: t => {
+    const a = app(t.dataset.id); if (!a) return;
+    if (a.options && a.options[t.dataset.p]) {
+      delete a.options[t.dataset.p];
+      dirty();
+      closeDlg();
+      openPatchOptions(t.dataset.id, t.dataset.p);
+    }
   }
-}
-
-/* settings */
-let tab=1;
-function vSet(){
-  const R=(ic,t,d,r)=>`<div class="row"><i class="ms" style="color:var(--primary)">${ic}</i><div class="g"><b style="font-size:.95rem">${t}</b><div class="d">${d}</div></div>${r||''}</div>`;
-  let b='';
-  if(tab==0)b=`<div class="card"><b>Theme</b><div class="seg" style="margin-top:10px">${['system','light','dark'].map(m=>`<b class="${S.mode==m?'on':''}" data-a="set" data-k="mode" data-v="${m}">${m[0].toUpperCase()+m.slice(1)}</b>`).join('')}</div>${R('contrast','Pure Black','True black backgrounds in dark mode',sw(S.black,'data-a="setb" data-k="black"'))}</div><div class="card"><b>Accent color</b><div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;align-items:center">${[['#A4C9FF','Blue'],['#80cbc4','Teal'],['#d0bcff','Purple'],['#ffb77c','Orange'],['#90D889','Green'],['#ffb4ab','Red'],['#f2b8d8','Pink']].map(c=>`<div class="sw-c ${S.accent==c[0]?'on':''}" style="background:${c[0]}" title="${c[1]}" data-a="set" data-k="accent" data-v="${c[0]}">${S.accent==c[0]?'<i class="ms" style="font-size:20px">check</i>':''}</div>`).join('')}<input type="color" value="${S.accent}" style="width:36px;height:36px;border:0;background:none" data-c="accent"></div></div><div class="card"><b>UI scale</b><div class="row"><div class="g"><input type="range" min="85" max="130" step="5" value="${S.scale}" data-c="scale" style="width:100%"></div><b>${S.scale}%</b></div></div>`;
-  if(tab==1)b=`<div class="card">${R('engineering','Expert mode','Choose patches and edit patch options',sw(S.expert,'data-a="expert"'))}${R('help','Confirm before building','Ask before dispatching a build',sw(S.confirm,'data-a="setb" data-k="confirm"'))}</div><div class="card"><b>Workflow file</b><div class="lbl">Dispatched by the Patch button</div><input type="text" value="${esc(S.wf)}" data-c="wf"></div><div class="card"><b>Branch</b><div class="lbl">Where config.json and docs/catalog live</div><input type="text" value="${esc(S.branch)}" data-c="branch"></div>`;
-  if(tab==2)b=`<div class="card"><b>Repository</b>${R('cloud',S.connected?esc(S.owner+'/'+S.repo):'Not connected',S.connected?'Branch '+esc(S.branch):'Connect to load your apps')}<p><button class="pill" data-a="conn">${S.token?'Edit connection':'Connect'}</button> ${S.token?'<button class="pill t" data-a="disc">Disconnect</button>':''}</p></div><div class="card"><b>Config</b><p style="margin-top:8px"><button class="pill o" data-a="exp">Export config.json</button> <label class="pill o" style="display:inline-block">Import<input type="file" accept=".json" hidden data-c="imp"></label></p></div><div class="card"><b>Signing keystore</b><div class="d" style="color:var(--out);font-size:.85rem;margin:6px 0">Add KEYSTORE_B64 in Actions secrets to sign with your own key.</div><a class="pill o" style="text-decoration:none" target="_blank" rel="noopener" href="https://github.com/${S.owner}/${S.repo}/settings/secrets/actions">Open secrets</a></div>`;
-  return hdr('Settings','',1)+`<div class="tabs">${[['palette','Appearance'],['tune','Advanced'],['phone_android','System']].map((t,i)=>`<div class="tab ${tab==i?'on':''}" data-a="tab" data-v="${i}"><i class="ms">${t[0]}</i>${t[1]}</div>`).join('')}</div>${b}`;
-}
-
-/* dialogs */
-const dlg=h=>{$('#dlg').innerHTML=h;$('#dbg').classList.add('on')},closeDlg=()=>$('#dbg').classList.remove('on');
-function dlgConnect(){
-  dlg(`<h2>Connect repository</h2><p>Use a fine-grained token with Contents (read and write), Actions (read and write). Stored strictly in this browser.</p>${['owner','repo','branch'].map(k=>`<input type="text" id="c_${k}" placeholder="${k}" value="${esc(S[k])}" style="margin-bottom:8px">`).join('')}<input type="password" id="c_token" placeholder="GitHub token" value="${esc(S.token)}"><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button class="pill t" data-a="close">Cancel</button><button class="pill" data-a="doconn">Connect</button></div>`);
-}
-
-let ns={pk:'',custom:false};
-function dlgAdd(){
-  const pr=Object.entries(PK);
-  dlg(`<h2>Add source</h2><p>Add a patch bundle from GitHub and pick the app to patch with it.</p><div class="lbl">Patch bundle (owner/repo)</div><input type="text" id="n_repo" value="MorpheApp/morphe-patches"><div class="lbl">App</div><div>${pr.map(([k,v])=>`<span class="chip ${ns.pk==k?'p':''}" style="padding:7px 14px;cursor:pointer" data-a="pickpk" data-k="${k}">${v[0]}</span>`).join('')}<span class="chip ${ns.custom?'p':''}" style="padding:7px 14px;cursor:pointer" data-a="pickpk" data-k="">Other</span></div>${ns.custom?'<div class="lbl">Package name</div><input type="text" id="n_pkg" placeholder="com.example.app">':''}<div class="row"><div class="g">Pre-release patches</div>${sw(ns.pre,'data-a="nspre"')}</div><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px"><button class="pill t" data-a="close">Cancel</button><button class="pill" data-a="doadd">Add</button></div>`);
-}
-
-async function doAdd(){
-  const m=$('#n_repo').value.match(/(?:github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/|$)/),pkg=ns.custom?($('#n_pkg')||{}).value?.trim():ns.pk;
-  if(!m)return toast('Enter owner/repo',1);if(!pkg)return toast('Pick an app',1);
-  const repo=m[1]+'/'+m[2],id=(PK[pkg]?{'com.google.android.youtube':'youtube','com.google.android.apps.youtube.music':'youtube-music','com.reddit.frontpage':'reddit'}[pkg]:pkg.split('.').pop()).toLowerCase();
-  if(app(id))return toast('That app is already added',1);
-  try{
-    const rs=await gh(`https://api.github.com/repos/${repo}/releases?per_page=15`,{},1),r=rs.find(r=>!r.draft&&(ns.pre||!r.prerelease)&&r.assets.some(a=>/\.mpp$/.test(a.name)));
-    if(!r)return toast('No release with a .mpp patch bundle found',1);
-    S.config.apps.push({id,package:pkg,patches_repo:repo,prerelease:!!ns.pre,arch:'arm64-v8a',version:'',apk_url:'',force:false,enable:[],disable:[],options:{}});
-    dirty();closeDlg();render();toast('Added '+id+' · latest '+r.tag_name+'. Save to fetch its patches');
-  }catch(e){toast(e.message,1);}
-}
-
-/* events */
-Object.assign(A,{
-  go:t=>location.hash='#/'+t.dataset.h,open:t=>location.hash='#/app/'+encodeURIComponent(t.dataset.id),build:t=>build(t.dataset.id),conn:dlgConnect,close:closeDlg,
-  addsrc:()=>{ns={pk:'com.google.android.youtube',custom:false,pre:false};dlgAdd()},
-  doconn:()=>{['owner','repo','branch','token'].forEach(k=>S[k]=$('#c_'+k).value.trim());S.branch=S.branch||'main';connect()},
-  disc:()=>{S.token='';S.connected=false;S.config={apps:[]};S.cats={};S.rels=[];persist();render()},
-  sort:()=>{S.sort={order:'name',name:'patched',patched:'order'}[S.sort];persist();render()},
-  filt:()=>{S.filter={all:'patched',patched:'not',not:'missing',missing:'all'}[S.filter];persist();render()},
-  save:save,pickpk:t=>{ns.pk=t.dataset.k;ns.custom=!t.dataset.k;dlgAdd()},nspre:()=>{ns.pre=!ns.pre;dlgAdd()},doadd:doAdd,
-  pt:t=>{
-    const a=app(t.dataset.id),p=S.cats[a.id].patches.find(x=>x.name==t.dataset.n),on=!eff(a,p);
-    a.enable=(a.enable||[]).filter(n=>n!=p.name);a.disable=(a.disable||[]).filter(n=>n!=p.name);
-    if(on!=!!p.enabled)(on?a.enable:a.disable).push(p.name);dirty();
-    t.classList.toggle('on',on);
-    const cnt=$('#pcount');if(cnt)cnt.textContent=`${S.cats[a.id].patches.filter(p=>eff(a,p)).length} of ${S.cats[a.id].patches.length} selected`;
-  },
-  bulk:t=>{
-    const a=app(t.dataset.id),v=t.dataset.v;a.enable=[];a.disable=[];
-    if(v!='rec')S.cats[a.id].patches.forEach(p=>{if(v=='all'!=!!p.enabled)(v=='all'?a.enable:a.disable).push(p.name)});
-    dirty();render();
-  },
-  cfgsw:t=>{const a=app(t.dataset.id);a[t.dataset.k]=!a[t.dataset.k];dirty();t.classList.toggle('on',a[t.dataset.k])},
-  optsw:t=>{
-    const a=app(location.hash.split('/')[2]&&decodeURIComponent(location.hash.split('/')[2])),on=t.classList.contains('on'),v=on?'false':'true';
-    setOpt(a,t.dataset.p,t.dataset.k,v==t.dataset.d.toLowerCase()?'':v);t.classList.toggle('on',!on);
-  },
-  pm:t=>{S.pm=t.dataset.v;render()},onlysel:()=>{S.onlySel=!S.onlySel;render()},
-  rmapp:t=>{if(confirm('Remove '+t.dataset.id+' from config.json? Existing releases stay.')){S.config.apps=S.config.apps.filter(a=>a.id!=t.dataset.id);dirty();location.hash='#/'}},
-  delrel:async t=>{if(!confirm('Delete release '+t.dataset.t+'?'))return;try{await gh('/releases/'+t.dataset.id,{method:'DELETE'});await loadRels();render();toast('Release deleted')}catch(e){toast(e.message,1)}},
-  cancel:async()=>{try{await gh('/actions/runs/'+S.live.run+'/cancel',{method:'POST'});toast('Cancel requested')}catch(e){toast(e.message,1)}},
-  tab:t=>{tab=+t.dataset.v;render()},
-  set:t=>{S[t.dataset.k]=t.dataset.v;persist();theme();render()},
-  setb:t=>{S[t.dataset.k]=!S[t.dataset.k];persist();theme();render()},
-  expert:()=>{if(S.expert){S.expert=false;S.pm='simple';persist();render()}else dlg(`<h2>Enable Expert mode?</h2><p>Expert mode allows choosing individual patches and options.</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="pill t" data-a="close">Cancel</button><button class="pill" data-a="doexp">Enable</button></div>`)},
-  doexp:()=>{S.expert=true;S.pm='expert';persist();closeDlg();render()},
-  exp:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S.config,null,2)],{type:'application/json'}));a.download='config.json';a.click()}
 });
 
-function setOpt(a,pn,k,v){
-  a.options=a.options||{};const o=a.options[pn]=a.options[pn]||{};
-  if(v==='')delete o[k];else o[k]=v;
-  if(!Object.keys(o).length)delete a.options[pn];
-  dirty();
-}
-
-Object.assign(C,{
-  srch:()=>$('#apps').innerHTML=listApps(),
-  psrch:()=>{const a=app(route().id);$('#plist').innerHTML=plist(a)},
-  accent:e=>{S.accent=e.value;persist();theme()},
-  scale:e=>{S.scale=+e.value;persist();theme();render()},
-  wf:e=>{S.wf=e.value.trim()||'build.yml';persist()},
-  branch:e=>{S.branch=e.value.trim()||'main';persist()},
-  cfg:e=>{const a=app(route().id);a[e.dataset.k]=e.value.trim();dirty()},
-  opt:e=>{setOpt(app(route().id),e.dataset.p,e.dataset.k,e.value.trim())},
-  upload:e=>upload(e.dataset.id,e.files[0]),
-  imp:e=>{const f=e.files[0];if(!f)return;f.text().then(t=>{try{const j=JSON.parse(t);if(!Array.isArray(j.apps))throw 0;S.config=j;dirty();render();toast('Imported. Save to push it')}catch(x){toast('Not a valid config.json',1)}})}
+Object.assign(C, {
+  cfg: e => {
+    const a = app(route().id);
+    if (a) { a[e.dataset.k] = e.value.trim(); dirty(); }
+  },
+  cfg_st: e => {
+    S.config.settings = S.config.settings || {};
+    S.config.settings[e.dataset.k] = e.value;
+    dirty();
+  },
+  dlg_opt_text: e => {
+    const a = app(e.dataset.id); if (!a) return;
+    a.options = a.options || {};
+    a.options[e.dataset.p] = a.options[e.dataset.p] || {};
+    a.options[e.dataset.p][e.dataset.k] = e.value.trim();
+    dirty();
+  }
 });
 
-document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a])A[t.dataset.a](t,e)});
-document.addEventListener('input',e=>{const n=e.target.dataset&&e.target.dataset.c;if(n=='srch'||n=='psrch')C[n](e.target)});
-document.addEventListener('change',e=>{const n=e.target.dataset&&e.target.dataset.c;if(n&&n!='srch'&&n!='psrch')C[n](e.target)});
-$('#dbg').addEventListener('click',e=>{if(e.target.id=='dbg')closeDlg()});
-matchMedia('(prefers-color-scheme: light)').addEventListener('change',theme);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-a]');
+  if (t && A[t.dataset.a]) A[t.dataset.a](t, e);
+});
+document.addEventListener('change', e => {
+  const n = e.target.dataset && e.target.dataset.c;
+  if (n && C[n]) C[n](e.target);
+});
+$('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
+matchMedia('(prefers-color-scheme: light)').addEventListener('change', theme);
 
+/* Background Animation */
 (function(){
-  const c=$('#bg'),x=c.getContext('2d');let w,h,o=[];
-  function r(){w=c.width=innerWidth;h=c.height=innerHeight;o=[...Array(6)].map(()=>({x:Math.random()*w,y:Math.random()*h,r:60+Math.random()*120,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2}))}
-  r();addEventListener('resize',r);
-  (function f(){x.clearRect(0,0,w,h);o.forEach(a=>{a.x=(a.x+a.vx+w)%w;a.y=(a.y+a.vy+h)%h;x.beginPath();x.arc(a.x,a.y,a.r,0,7);x.fillStyle='rgba(30,90,168,.08)';x.fill()});requestAnimationFrame(f)})();
+  const c = $('#bg'), x = c.getContext('2d'); let w, h, o = [];
+  function r() {
+    w = c.width = innerWidth; h = c.height = innerHeight;
+    o = [...Array(6)].map(() => ({ x: Math.random()*w, y: Math.random()*h, r: 60 + Math.random()*120, vx: (Math.random() - 0.5)*0.2, vy: (Math.random() - 0.5)*0.2 }));
+  }
+  r(); addEventListener('resize', r);
+  (function f(){
+    x.clearRect(0,0,w,h);
+    o.forEach(a => {
+      a.x = (a.x + a.vx + w) % w; a.y = (a.y + a.vy + h) % h;
+      x.beginPath(); x.arc(a.x, a.y, a.r, 0, 7);
+      x.fillStyle = 'rgba(30,90,168,0.08)'; x.fill();
+    });
+    requestAnimationFrame(f);
+  })();
 })();
 
-theme();render();
-if(S.token&&S.owner&&S.repo)connect(1);else if(!S.token)setTimeout(dlgConnect,300);
-</script></body></html>
+theme(); render();
+if (S.token && S.owner && S.repo) connect(1); else if (!S.token) setTimeout(dlgConnect, 300);
+</script>
+</body>
+</html>
