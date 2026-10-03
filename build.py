@@ -195,6 +195,11 @@ def resolve_stock_apk(app_id, package, app_version):
         if m: return m[0]
         m = glob.glob(f"apks/{package}*.apk*") + glob.glob(f"apks/{package}*.apkm*")
         if m: return m[0]
+        # Fallback: find any apk/apkm in apks/ directory (handles underscored filenames)
+        all_apks = glob.glob("apks/*.apk") + glob.glob("apks/*.apkm")
+        if all_apks:
+            all_apks.sort(key=os.path.getmtime, reverse=True)
+            return all_apks[0]
         return None
 
     local_file = find_local()
