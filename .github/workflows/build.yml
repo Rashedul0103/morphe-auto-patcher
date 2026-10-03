@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - 'config.json'
+      - 'build.py'
+      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       app:
@@ -73,7 +75,14 @@ jobs:
           git add docs/catalog/
           if ! git diff --cached --quiet; then
             git commit -m "Update patch catalog [skip ci]"
-            git pull --rebase origin ${{ github.ref_name }}
+            git fetch origin ${{ github.ref_name }}
+            if ! git rebase origin/${{ github.ref_name }}; then
+              echo "Rebase conflict detected. Safely resetting and re-applying catalog."
+              git rebase --abort
+              git reset --soft origin/${{ github.ref_name }}
+              git add docs/catalog/
+              git commit -m "Update patch catalog [skip ci]"
+            fi
             git push origin ${{ github.ref_name }}
           else
             echo "No catalog changes to commit."
