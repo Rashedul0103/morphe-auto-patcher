@@ -9,9 +9,21 @@
       "version": "",
       "apk_url": "",
       "force": false,
-      "enable": [],
+      "enable": [
+        "Clone app"
+      ],
       "disable": [],
       "options": {}
     }
-  ]
+  ],
+  "settings": {
+    "default_arch": "arm64-v8a",
+    "auto_prune": true,
+    "keep_releases": 3,
+    "trigger_policy": "on_new_patch",
+    "check_interval_hours": 6,
+    "discord_webhook": ""
+  },
+  "sources": [],
+  "hidden_apps": []
 }
