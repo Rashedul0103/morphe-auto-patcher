@@ -129,6 +129,19 @@ input:focus, select:focus { border-color: var(--primary); }
 @media (min-width:700px) { .hero-action { width:auto; margin-top:0; } }
 .file-drop { border:1px dashed var(--out); border-radius:20px; padding:22px 16px; text-align:center; background:color-mix(in srgb,var(--card-high) 70%,transparent); }
 .file-drop:hover { border-color:var(--primary); }
+
+.dashboard-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:10px 0; }
+.stat { background:var(--card); border:1px solid #8882; border-radius:18px; padding:10px 8px; text-align:center; }
+.stat b { display:block; font-size:1.05rem; font-weight:500; }
+.stat span { display:block; font-size:.68rem; color:var(--out); margin-top:2px; }
+.patch-tools { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+.patch-tools input { flex:1; min-width:0; }
+@media (max-width:520px) {
+  .dashboard-stats { gap:6px; }
+  .stat { padding:9px 5px; }
+  .patch-tools { align-items:stretch; flex-direction:column; }
+  .patch-tools .pill { justify-content:center; }
+}
 </style>
 </head>
 <body>
@@ -210,7 +223,7 @@ let S = {
     sources: [], apps: [], hidden_apps: [] 
   },
   cats: {}, rels: [], runs: [], upstreamTags: {}, dirty: false,
-  onlySel: false, live: null, connected: false, localApks: {}, sourceSearch: ''
+  onlySel: false, live: null, connected: false, localApks: {}, sourceSearch: '', patchSearch: {}
 };
 
 if (/github\.io$/.test(location.hostname)) {
@@ -923,8 +936,24 @@ function listApps() {
   return `<div class="grid">${appList.map(appCard).join('')}</div>`;
 }
 
+function dashboardSummary() {
+  const apps = (S.config.apps || []).filter(a => !(S.config.hidden_apps || []).includes(a.id));
+  let ready = 0, attention = 0, updates = 0;
+  apps.forEach(a => {
+    const info = (S.cats[a.id] && S.cats[a.id].info) || {};
+    const st = apkReadiness(a, info);
+    if (st.state === 'ready') ready++; else attention++;
+    const rel = relsFor(a.id)[0];
+    const patchTag = rel ? rel.tag_name.replace(a.id + '-', '') : '';
+    const sourceTag = S.upstreamTags[a.patches_repo] || info.patch_tag || '';
+    if (patchTag && sourceTag && patchTag !== sourceTag) updates++;
+  });
+  return { total: apps.length, ready, attention, updates };
+}
+
 function vHome() {
   const n = (S.config.apps || []).length;
+  const sum = dashboardSummary();
   return hdr('Patch Manager', S.connected ? `${S.owner}/${S.repo}` : 'Not connected') + `
     <div class="banner">
       <i class="ms" style="font-size:32px">${S.connected ? 'cloud_done' : 'cloud_off'}</i>
@@ -934,10 +963,18 @@ function vHome() {
       </div>
       ${S.connected ? '<div class="dot"></div>' : '<button class="pill" style="background:#fff;color:#000" data-a="conn">Connect</button>'}
     </div>
+    ${S.connected ? `
+      <div class="dashboard-stats">
+        <div class="stat"><b>${sum.total}</b><span>Apps</span></div>
+        <div class="stat"><b>${sum.ready}</b><span>APK Ready</span></div>
+        <div class="stat"><b>${sum.updates}</b><span>Updates</span></div>
+      </div>
+    ` : ''}
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="pill o" data-a="addsrc"><i class="ms">add</i> Add App</button>
-      <button class="pill o" data-a="build_all"><i class="ms">bolt</i> Build All</button>
+      ${S.connected ? '<button class="pill o" data-a="build_all"><i class="ms">bolt</i> Build Ready Apps</button>' : ''}
     </div>
+    ${S.connected && sum.attention ? `<div class="d" style="margin:2px 4px 10px"><i class="ms" style="font-size:16px;vertical-align:-3px">info</i> ${sum.attention} app(s) need APK attention before they can be built.</div>` : ''}
     <div id="apps">${listApps()}</div>
   `;
 }
@@ -1019,9 +1056,13 @@ function vApp(r) {
       <div class="chip ${S.onlySel ? 'p' : ''}" style="cursor:pointer" data-a="toggle_only_sel"><i class="ms" style="font-size:16px">filter_alt</i> Selected only</div>
     </div>
 
+    <div class="patch-tools">
+      <input type="search" data-c="patch_search" data-id="${esc(a.id)}" value="${esc((S.patchSearch && S.patchSearch[a.id]) || '')}" placeholder="Search patches…">
+      <button class="pill o" data-a="bulk" data-v="rec" data-id="${esc(a.id)}"><i class="ms">recommend</i> Recommended</button>
+    </div>
+
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
       <button class="pill t" data-a="bulk" data-v="all" data-id="${esc(a.id)}"><i class="ms">done_all</i> Enable all</button>
-      <button class="pill t" data-a="bulk" data-v="rec" data-id="${esc(a.id)}"><i class="ms">recommend</i> Recommended</button>
       <button class="pill t" data-a="bulk" data-v="none" data-id="${esc(a.id)}"><i class="ms">clear_all</i> Disable all</button>
     </div>
 
@@ -1031,7 +1072,14 @@ function vApp(r) {
 
 function renderPatchesList(a, patches) {
   if (!patches || !patches.length) return '<div class="card">No patch list loaded for this app.</div>';
-  return patches.filter(p => S.onlySel ? eff(a, p) : true).map(p => {
+  const q = String((S.patchSearch && S.patchSearch[a.id]) || '').trim().toLowerCase();
+  const visible = patches.filter(p => {
+    if (S.onlySel && !eff(a, p)) return false;
+    if (!q) return true;
+    return (String(p.name || '') + ' ' + String(p.description || '')).toLowerCase().includes(q);
+  });
+  if (!visible.length) return '<div class="card d">No patches match the current search/filter.</div>';
+  return visible.map(p => {
     const on = eff(a, p);
     const hasOpts = p.options && p.options.length;
     const isCustom = a.options && a.options[p.name] && Object.keys(a.options[p.name]).length;
@@ -1791,6 +1839,11 @@ Object.assign(A, {
 Object.assign(C, {
   source_search: e => {
     S.sourceSearch = e.value;
+    render();
+  },
+  patch_search: e => {
+    S.patchSearch = S.patchSearch || {};
+    S.patchSearch[e.dataset.id] = e.value;
     render();
   },
   cfg: e => {
