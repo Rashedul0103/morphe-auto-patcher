@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 import os
 import re
 import time
@@ -112,7 +112,7 @@ class APKMirrorProvider:
             raise ProviderError("APKMirror app page is not configured")
         search_url = (
             "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
-            + requests.utils.quote(str(query))
+            + quote(str(query))
         )
         response = self._get(search_url)
         soup = BeautifulSoup(response.text, "html.parser")
