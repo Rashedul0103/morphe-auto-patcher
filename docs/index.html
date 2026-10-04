@@ -245,7 +245,8 @@ function officialIconUrl(a) {
   return domain ? 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128' : '';
 }
 function appIconUrl(a) {
-  return (a && a.icon_url) || officialIconUrl(a);
+  const info = (a && S.cats[a.id] && S.cats[a.id].info) || {};
+  return info.icon_url || (a && a.icon_url) || officialIconUrl(a);
 }
 function appIconHtml(a) {
   const label = esc((ttl(a)[0] || 'A').toUpperCase());
@@ -1257,7 +1258,7 @@ function vPatchedApps() {
     ${rows.map(x => `
       <div class="card">
         <div class="app-hero">
-          <div class="ico" style="background:linear-gradient(135deg,${hue(x.a)})">${esc((ttl(x.a)[0] || 'A').toUpperCase())}</div>
+          ${appIconHtml(x.a)}
           <div class="hero-copy">
             <b>${esc(ttl(x.a))}</b>
             <div class="mono">${esc(x.a.package)}</div>
