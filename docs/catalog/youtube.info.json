@@ -8,6 +8,7 @@
     "20.21.37"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.16.256",
+  "stock_signer_sha256": [],
   "apk_acquisition": {
     "status": "downloaded",
     "provider": "stock_release",
