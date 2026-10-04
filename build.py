@@ -92,6 +92,41 @@ def release_exists(tag):
     ok, _ = run_cmd(["gh", "release", "view", tag, "--json", "tagName"], silent=True)
     return ok
 
+def patch_source_candidates(app, package, config):
+    """Return enabled patch repositories in preferred order.
+
+    Order:
+    1. app.patch_sources (explicit per-app priority)
+    2. enabled configured sources that advertise this package
+    3. legacy app.patches_repo
+    """
+    repos = []
+
+    def add(repo):
+        if isinstance(repo, str):
+            value = repo.strip()
+            if value and value not in repos:
+                repos.append(value)
+
+    for repo in app.get("patch_sources", []):
+        add(repo)
+
+    for source in config.get("sources", []):
+        if not isinstance(source, dict) or source.get("enabled") is False:
+            continue
+        apps = source.get("apps", [])
+        packages = {
+            (entry.get("package") if isinstance(entry, dict) else entry)
+            for entry in apps
+            if entry
+        }
+        if package in packages:
+            add(source.get("repo", ""))
+
+    add(app.get("patches_repo", ""))
+    return repos
+
+
 def prune_old_releases(app_id, keep_count=3):
     if keep_count <= 0: return
     ok, out = run_cmd(["gh", "release", "list", "--limit", "30", "--json", "tagName,isDraft"])
@@ -426,11 +461,16 @@ def main():
 
         if target_app_filter and app_id != target_app_filter: continue
 
-        patches_repo = app['patches_repo']
         package = app['package']
         arch = app.get('arch') or repo_settings.get('default_arch', 'arm64-v8a')
         apk_arch = app.get('apk_arch') or "auto"
         allow_prerelease = app.get('prerelease', False)
+        source_repos = patch_source_candidates(app, package, config)
+
+        if not source_repos:
+            print(f"Failed: no patch sources configured for {app_id}")
+            has_errors = True
+            continue
 
         if is_scheduled and trigger_policy == "periodic_rebuild":
             force = True
@@ -439,9 +479,67 @@ def main():
 
         print(f"\n{'='*40}\nProcessing App: {app_id}\n{'='*40}")
 
-        tag_name = get_latest_tag(patches_repo, allow_prerelease)
-        if not tag_name:
-            print(f"Failed to get release tag for {patches_repo}")
+        tag_name = None
+        patches_repo = None
+        mpp_file = None
+        compatible_versions = []
+        patches_list = []
+        source_attempts = []
+
+        for idx, candidate_repo in enumerate(source_repos):
+            candidate_tag = get_latest_tag(candidate_repo, allow_prerelease)
+            if not candidate_tag:
+                source_attempts.append({"repo": candidate_repo, "status": "no_release"})
+                continue
+
+            candidate_mpp = f"{app_id}-patches-{idx}.mpp"
+            dl_cmd = [
+                "gh", "release", "download", candidate_tag,
+                "--pattern", "*.mpp",
+                "-R", candidate_repo,
+                "-O", candidate_mpp,
+                "--clobber"
+            ]
+            ok_dl, dl_out = run_cmd(dl_cmd)
+            if not ok_dl or not os.path.exists(candidate_mpp):
+                source_attempts.append({"repo": candidate_repo, "status": "download_failed", "error": dl_out})
+                continue
+
+            ok_v, versions_out = run_cmd([
+                "java", "-jar", cli_jar, "list-versions",
+                "--patches", candidate_mpp, "-f", package
+            ])
+            candidate_versions = parse_versions(versions_out, package) if ok_v else []
+
+            ok_p, patches_out = run_cmd([
+                "java", "-jar", cli_jar, "list-patches", "-o",
+                "--patches", candidate_mpp, "-f", package
+            ])
+            candidate_patches = parse_patches(patches_out) if ok_p else []
+
+            if not candidate_patches or not candidate_versions:
+                source_attempts.append({
+                    "repo": candidate_repo,
+                    "status": "incompatible",
+                    "tag": candidate_tag
+                })
+                if os.path.exists(candidate_mpp):
+                    os.remove(candidate_mpp)
+                continue
+
+            tag_name = candidate_tag
+            patches_repo = candidate_repo
+            mpp_file = candidate_mpp
+            compatible_versions = candidate_versions
+            patches_list = candidate_patches
+            print(f"Selected patch source for {app_id}: {candidate_repo} @ {candidate_tag}")
+            break
+
+        if not patches_list or not mpp_file or not patches_repo:
+            raw_file = os.path.join(catalog_dir, f"{app_id}.raw.txt")
+            with open(raw_file, 'w') as f:
+                f.write(json.dumps({"source_attempts": source_attempts}, indent=2))
+            print(f"Error: No compatible patch source found for {app_id}")
             has_errors = True
             continue
 
@@ -452,28 +550,6 @@ def main():
         elif release_exists(release_tag) and force:
             print(f"Force flag active. Deleting existing release {release_tag}...")
             run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
-
-        mpp_file = f"{app_id}-patches.mpp"
-        dl_cmd = ["gh", "release", "download", tag_name, "--pattern", "*.mpp", "-R", patches_repo, "-O", mpp_file, "--clobber"]
-        ok, _ = run_cmd(dl_cmd)
-        if not ok or not os.path.exists(mpp_file):
-            print(f"Error: Failed to download {mpp_file}")
-            has_errors = True
-            continue
-
-        ok_v, versions_out = run_cmd(["java", "-jar", cli_jar, "list-versions", "--patches", mpp_file, "-f", package])
-        compatible_versions = parse_versions(versions_out, package) if ok_v else []
-
-        ok_p, patches_out = run_cmd(["java", "-jar", cli_jar, "list-patches", "-o", "--patches", mpp_file, "-f", package])
-        patches_list = parse_patches(patches_out) if ok_p else []
-
-        if not patches_list:
-            raw_file = os.path.join(catalog_dir, f"{app_id}.raw.txt")
-            with open(raw_file, 'w') as f:
-                f.write(patches_out if patches_out else "CLI returned no output.")
-            print(f"Warning: No patches parsed. Debug details written to {raw_file}")
-            has_errors = True
-            continue
             
         with open(os.path.join(catalog_dir, f"{app_id}.json"), 'w') as f:
             json.dump(patches_list, f, indent=2)
@@ -498,6 +574,9 @@ def main():
                 "recommended_version": app_version,
                 "compatible_versions": compatible_versions,
                 "apkmirror_url": apkmirror_url,
+                "patch_source": patches_repo,
+                "patch_source_attempts": source_attempts,
+                "patch_source_candidates": source_repos,
                 "stock_signer_sha256": prior_signers
             }, f, indent=2)
 
