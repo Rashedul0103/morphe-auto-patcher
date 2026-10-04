@@ -107,7 +107,34 @@ class APKMirrorProvider:
             raise ProviderError("Cloudflare challenge page detected")
         return response
 
-    def get_version_page(self, target_version: str) -> str:
+    def _discover_app_page(self, query: str) -> str:
+        if not query:
+            raise ProviderError("APKMirror app page is not configured")
+        search_url = (
+            "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
+            + requests.utils.quote(str(query))
+        )
+        response = self._get(search_url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        candidates = []
+        for anchor in soup.find_all("a", href=True):
+            href = anchor["href"]
+            if "/apk/" not in href:
+                continue
+            title = anchor.get_text(" ", strip=True)
+            candidates.append((_normalize_url(search_url, href), title))
+        if not candidates:
+            raise ProviderError(f"APKMirror app search returned no app page for {query}")
+        normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
+        def score(item):
+            title = re.sub(r"[^a-z0-9]+", " ", item[1].lower()).strip()
+            return sum(1 for token in normalized_query.split() if len(token) >= 2 and token in title)
+        candidates.sort(key=score, reverse=True)
+        return candidates[0][0]
+
+    def get_version_page(self, target_version: str, app_query: str = "") -> str:
+        if not self.base_url:
+            self.base_url = self._discover_app_page(app_query).rstrip("/") + "/"
         response = self._get(self.base_url)
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -228,8 +255,8 @@ class APKMirrorProvider:
         bundle_penalty = -100 if candidate.is_bundle else 0
         return arch_score + dpi_score + bundle_penalty
 
-    def resolve(self, target_version: str, preferred_arch: str = "auto") -> list[ApkCandidate]:
-        version_url = self.get_version_page(target_version)
+    def resolve(self, target_version: str, preferred_arch: str = "auto", app_query: str = "") -> list[ApkCandidate]:
+        version_url = self.get_version_page(target_version, app_query=app_query)
         variants = self.get_variants(version_url)
         exact_variants = []
 
@@ -382,14 +409,23 @@ def acquire_from_providers(
 
         try:
             if provider_name == "apkmirror":
-                provider = APKMirrorProvider(base_url)
+                provider = APKMirrorProvider(base_url or "")
             elif provider_name == "uptodown":
                 provider = UptodownProvider(base_url)
             else:
                 attempts.append({"provider": provider_name, "status": "unsupported"})
                 continue
 
-            candidates = provider.resolve(target_version, preferred_arch)
+            if provider_name == "apkmirror":
+                app_query = (
+                    app_config.get("name")
+                    or app_config.get("android_package")
+                    or app_config.get("package")
+                    or app_id
+                )
+                candidates = provider.resolve(target_version, preferred_arch, app_query=app_query)
+            else:
+                candidates = provider.resolve(target_version, preferred_arch)
             if not candidates:
                 raise ProviderError("No compatible candidate found")
 
