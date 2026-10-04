@@ -36,5 +36,10 @@
     "sha256": "724d2bf15d31dac98db00d82914db3876edf66e62fe2845001f204209ecf4c00",
     "size_bytes": 184012881,
     "signer_sha256": []
+  },
+  "build_status": {
+    "status": "running",
+    "stage": "patch_source",
+    "updated_at": 1791107720
   }
 }
