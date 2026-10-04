@@ -334,13 +334,17 @@ async function loadLocalCatalogs() {
 
 async function checkUpstreamUpdates() {
   for (const a of (S.config.apps || [])) {
-    if (!a.patches_repo) continue;
-    try {
-      const rels = await gh(`https://api.github.com/repos/${a.patches_repo}/releases?per_page=1`, {}, 1);
-      if (Array.isArray(rels) && rels.length > 0) {
-        S.upstreamTags[a.patches_repo] = rels[0].tag_name || rels[0].tagName;
-      }
-    } catch(e){}
+    const repos = Array.isArray(a.patch_sources) && a.patch_sources.length
+      ? a.patch_sources
+      : (a.patches_repo ? [a.patches_repo] : []);
+    for (const repo of repos) {
+      try {
+        const rels = await gh(`https://api.github.com/repos/${repo}/releases?per_page=1`, {}, 1);
+        if (Array.isArray(rels) && rels.length > 0) {
+          S.upstreamTags[repo] = rels[0].tag_name || rels[0].tagName;
+        }
+      } catch(e){}
+    }
   }
 }
 
@@ -797,6 +801,29 @@ function vApp(r) {
       </div>
       <button class="pill" data-a="dispatch_app" data-id="${esc(a.id)}"><i class="ms">bolt</i> Patch</button>
     </div>
+
+    <details class="card" open>
+      <summary style="font-size:0.85rem;color:var(--primary);cursor:pointer;font-weight:500">
+        Patch Sources
+      </summary>
+      ${(() => {
+        const repos = Array.isArray(a.patch_sources) && a.patch_sources.length
+          ? a.patch_sources
+          : (a.patches_repo ? [a.patches_repo] : []);
+        const sourceMap = Object.fromEntries((S.config.sources || []).map(x => [x.repo, x]));
+        return repos.length
+          ? repos.map((repo, idx) => \`<div class="row">
+                <div class="g">
+                  <b>${idx + 1}. ${esc(repo)}</b>
+                  <div class="d">${sourceMap[repo]?.tag ? 'Release ' + esc(sourceMap[repo].tag) : 'Legacy / not inspected'}${sourceMap[repo]?.enabled === false ? ' · Disabled' : ''}</div>
+                </div>
+                ${idx > 0 ? \`<button class="pill t" data-a="source_up" data-id="${esc(a.id)}" data-idx="${idx}">↑</button>\` : ''}
+                ${idx < repos.length - 1 ? \`<button class="pill t" data-a="source_down" data-id="${esc(a.id)}" data-idx="${idx}">↓</button>\` : ''}
+              </div>\`).join('')
+          : '<div class="d" style="margin-top:8px">No patch source configured.</div>';
+      })()}
+      <div class="d" style="margin-top:8px">The builder tries these sources in this order and skips a source if it does not actually contain patches for this app.</div>
+    </details>
 
     <details class="card" open>
       <summary style="font-size:0.85rem;color:var(--primary);cursor:pointer;font-weight:500">
@@ -1330,6 +1357,24 @@ Object.assign(A, {
     const isOpen = m.classList.contains('on');
     document.querySelectorAll('.menu-pop.on').forEach(el => el.classList.remove('on'));
     if (!isOpen) m.classList.add('on');
+  },
+  source_up: t => {
+    const a = app(t.dataset.id); if (!a) return;
+    a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+    const i = +t.dataset.idx;
+    if (i <= 0 || i >= a.patch_sources.length) return;
+    [a.patch_sources[i - 1], a.patch_sources[i]] = [a.patch_sources[i], a.patch_sources[i - 1]];
+    a.patches_repo = a.patch_sources[0] || a.patches_repo;
+    dirty(); render();
+  },
+  source_down: t => {
+    const a = app(t.dataset.id); if (!a) return;
+    a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+    const i = +t.dataset.idx;
+    if (i < 0 || i >= a.patch_sources.length - 1) return;
+    [a.patch_sources[i], a.patch_sources[i + 1]] = [a.patch_sources[i + 1], a.patch_sources[i]];
+    a.patches_repo = a.patch_sources[0] || a.patches_repo;
+    dirty(); render();
   },
   toggle_autopatch: t => {
     const a = app(t.dataset.id);
