@@ -426,7 +426,7 @@ function buildStatusView(a, info) {
     </div>`;
 }
 const app = id => (S.config.apps || []).find(a => a.id === id);
-const ttl = a => a.name || getAppMeta(a.package).name || a.id;
+const ttl = a => getAppMeta(a.package).name || a.id;
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
 const hue = a => getAppMeta(a.package).color;
 const eff = (a, p) => (a.enable || []).includes(p.name) ? true : (a.disable || []).includes(p.name) ? false : !!p.enabled;
@@ -841,80 +841,7 @@ function configuredSourceForRepo(repo) {
 }
 
 function appByPackage(pkg) {
-  const key = String(pkg || '').trim().toLowerCase();
-  return (S.config.apps || []).find(x =>
-    String(x.package || '').trim().toLowerCase() === key ||
-    String(x.android_package || '').trim().toLowerCase() === key
-  );
-}
-
-function normalizeAndroidPackage(value) {
-  return String(value || '').trim().replace(/^["']|["']$/g, '');
-}
-
-function extractPlayPackage(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  try {
-    const u = new URL(raw);
-    if (/(.|^)play\.google\.com$/i.test(u.hostname)) {
-      return normalizeAndroidPackage(u.searchParams.get('id') || '');
-    }
-  } catch(e) {}
-  return /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/i.test(raw) ? raw : '';
-}
-
-function normalizeLookupText(value) {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-
-function matchConfiguredPatchApps(name, androidPackage) {
-  const wantedName = normalizeLookupText(name);
-  const wantedPkg = normalizeLookupText(androidPackage);
-  const pkgLeaf = wantedPkg.split('.').pop();
-  const hits = [];
-
-  for (const src of (S.config.sources || [])) {
-    if (src.enabled === false) continue;
-
-    for (const item of (src.apps || [])) {
-      const patchPackage = typeof item === 'string' ? item : (item.package || '');
-      const appName = typeof item === 'string'
-        ? getAppMeta(patchPackage).name
-        : (item.name || getAppMeta(patchPackage).name);
-
-      const pn = normalizeLookupText(patchPackage);
-      const an = normalizeLookupText(appName);
-      let score = 0;
-
-      if (wantedName && an === wantedName) score += 100;
-      else if (wantedName && (an.includes(wantedName) || wantedName.includes(an))) score += 50;
-
-      if (wantedPkg && pn === wantedPkg) score += 120;
-      if (pkgLeaf && (pn === pkgLeaf || an === pkgLeaf)) score += 25;
-
-      if (score > 0) {
-        hits.push({ repo: src.repo, package: patchPackage, name: appName, source: src, score });
-      }
-    }
-  }
-
-  hits.sort((a,b) => b.score - a.score);
-  const unique = new Map();
-  hits.forEach(x => {
-    const key = x.repo + '|' + x.package;
-    if (!unique.has(key)) unique.set(key, x);
-  });
-  return Array.from(unique.values());
-}
-
-function appIdFromName(name, pkg) {
-  const seed = String(name || pkg || 'app').toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  const base = seed || 'app';
-  let id = base, n = 2;
-  while ((S.config.apps || []).some(a => a.id === id)) id = base + '-' + n++;
-  return id;
+  return (S.config.apps || []).find(x => x.package === pkg);
 }
 
 function sourceAppId(pkg) {
@@ -1050,7 +977,7 @@ function listApps() {
       <div class="card" style="text-align:center;padding:32px 14px">
         <b style="font-size:1.1rem">No Active Apps</b>
         <div style="color:var(--out);font-size:0.85rem;margin:8px 0 16px">Add an app or unhide existing apps in Settings.</div>
-        <button class="pill" data-a="addapp"><i class="ms">add</i> Add App</button>
+        <button class="pill" data-a="addsrc"><i class="ms">add</i> Add App Source</button>
       </div>
     `;
   }
@@ -1093,7 +1020,7 @@ function vHome() {
       </div>
     ` : ''}
     <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button class="pill o" data-a="addapp"><i class="ms">add</i> Add App</button>
+      <button class="pill o" data-a="addsrc"><i class="ms">add</i> Add App</button>
       ${S.connected ? '<button class="pill o" data-a="build_all"><i class="ms">bolt</i> Build Ready Apps</button>' : ''}
     </div>
     ${S.connected && sum.attention ? `<div class="d" style="margin:2px 4px 10px"><i class="ms" style="font-size:16px;vertical-align:-3px">info</i> ${sum.attention} app(s) need APK attention before they can be built.</div>` : ''}
@@ -1115,7 +1042,7 @@ function vApp(r) {
   return hdr(ttl(a), a.package, 1) + `
     <div class="card">
       <div class="app-hero">
-        ${appIconHtml(a)}
+        <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
         <div class="hero-copy">
           <div class="n">${esc(ttl(a))}</div>
           <div class="mono">${esc(a.package)}</div>
@@ -1260,7 +1187,7 @@ function vSources() {
         <div style="font-weight:500">${sources.length} configured source(s)</div>
         <div class="s">Browse compatible apps across all sources. Add an app without retyping its package or repository.</div>
       </div>
-      <button class="pill" data-a="addpatchsource"><i class="ms">add</i> Add Source</button>
+      <button class="pill" data-a="addsrc"><i class="ms">add</i> Add Source</button>
     </div>
 
     <input type="search" data-c="source_search" value="${esc(S.sourceSearch || '')}" placeholder="Search source, app or package…">
@@ -1739,120 +1666,6 @@ function dlgConnect() {
   `);
 }
 
-/* Automatic Add App dialog */
-let newAppInspection = null;
-
-function dlgAddApp() {
-  newAppInspection = null;
-  dlg(
-    '<h2>Add App</h2>' +
-    '<p>Enter an app name plus a Google Play URL or Android package. The manager will find matching patch sources automatically.</p>' +
-    '<div class="lbl">App name</div>' +
-    '<input type="text" id="n_app_name" placeholder="e.g. Duolingo">' +
-    '<div class="lbl">Google Play URL or Android package</div>' +
-    '<input type="text" id="n_app_play" placeholder="https://play.google.com/store/apps/details?id=com.example.app">' +
-    '<div class="d" style="margin-top:6px">A Google Play URL is preferred because it gives the exact Android package ID.</div>' +
-    '<div id="app_inspect_result" style="margin-top:12px"></div>' +
-    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">' +
-      '<button class="pill t" data-a="close">Cancel</button>' +
-      '<button class="pill" data-a="inspect_app"><i class="ms">search</i> Find App</button>' +
-    '</div>'
-  );
-}
-
-function inspectAppEntry() {
-  const name = (($('n_app_name') || {}).value || '').trim();
-  const raw = (($('n_app_play') || {}).value || '').trim();
-  const androidPackage = extractPlayPackage(raw);
-  const matches = matchConfiguredPatchApps(name, androidPackage);
-  const result = $('#app_inspect_result');
-
-  if (!name && !androidPackage) return toast('Enter an app name, Play Store URL, or package ID.', 1);
-  if (!result) return;
-
-  if (!matches.length) {
-    result.innerHTML = '<div class="warnb">No matching app was found in the currently configured patch sources. Add/inspect the source first, or use the Sources page to discover compatible apps.</div>';
-    newAppInspection = null;
-    return;
-  }
-
-  const best = matches[0];
-  const existing = androidPackage ? appByPackage(androidPackage) : null;
-  const exactPackage = androidPackage || (existing && (existing.android_package || existing.package)) || '';
-
-  newAppInspection = {
-    name: name || best.name,
-    androidPackage: exactPackage,
-    matches
-  };
-
-  result.innerHTML =
-    '<div class="card" style="background:var(--card-high);margin:8px 0">' +
-      '<b>' + esc(newAppInspection.name) + '</b>' +
-      '<div class="d" style="margin-top:4px">' +
-        (exactPackage ? 'Android package: <span class="mono">' + esc(exactPackage) + '</span>' : 'Android package: <b>needs confirmation</b>') +
-      '</div>' +
-      '<div class="d" style="margin-top:4px">Matching patch sources: ' + matches.length + '</div>' +
-    '</div>' +
-    matches.slice(0, 6).map((m, i) =>
-      '<div class="row" style="padding:7px 0">' +
-        '<div class="g"><b>' + (i + 1) + '. ' + esc(m.name || m.package) + '</b><div class="d">' + esc(m.repo) + ' · patch target ' + esc(m.package) + '</div></div>' +
-        '<span class="chip ' + (i === 0 ? 'p' : '') + '">' + (i === 0 ? 'Selected' : 'Compatible') + '</span>' +
-      '</div>'
-    ).join('') +
-    (!exactPackage ? '<div class="warnb" style="margin-top:8px">Enter the Google Play URL or exact Android package ID to continue. This prevents the wrong APK from being selected.</div>' : '') +
-    '<button class="pill" data-a="do_add_app" ' + (exactPackage ? '' : 'disabled') + ' style="width:100%;justify-content:center;margin-top:10px"><i class="ms">playlist_add</i> Add App</button>';
-}
-
-function doAddApp() {
-  if (!newAppInspection || !newAppInspection.androidPackage) return toast('Confirm the exact Android package first.', 1);
-
-  const selected = newAppInspection.matches[0];
-  const repos = Array.from(new Set(newAppInspection.matches.map(x => x.repo)));
-  const existing = appByPackage(newAppInspection.androidPackage);
-  S.config.apps = Array.isArray(S.config.apps) ? S.config.apps : [];
-
-  if (existing) {
-    existing.name = existing.name || newAppInspection.name;
-    existing.android_package = existing.android_package || newAppInspection.androidPackage;
-    existing.patch_package = existing.patch_package || selected.package;
-    existing.patch_sources = Array.isArray(existing.patch_sources) ? existing.patch_sources : (existing.patches_repo ? [existing.patches_repo] : []);
-    for (const repo of repos) if (!existing.patch_sources.includes(repo)) existing.patch_sources.push(repo);
-    existing.patches_repo = existing.patches_repo || repos[0];
-    dirty(); closeDlg(); render();
-    return toast(existing.name + ' was already configured; compatible sources were refreshed.');
-  }
-
-  const id = appIdFromName(newAppInspection.name, newAppInspection.androidPackage);
-  const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
-  const appConfig = {
-    id,
-    name: newAppInspection.name,
-    package: newAppInspection.androidPackage,
-    android_package: newAppInspection.androidPackage,
-    patch_package: selected.package,
-    patches_repo: repos[0],
-    patch_sources: repos,
-    prerelease: repos.some(repo => { const s = configuredSourceForRepo(repo); return s && s.prerelease === true; }),
-    arch: defArch,
-    apk_arch: 'auto',
-    apk_providers: ['apkmirror','uptodown'],
-    apk_sources: {},
-    play_store_url: /^https?:\/\/play\.google\.com\//i.test((($('n_app_play') || {}).value || '').trim()) ? (($('n_app_play') || {}).value || '').trim() : '',
-    version: '',
-    force: false,
-    auto_patch: true,
-    enable: [],
-    disable: [],
-    options: {}
-  };
-  S.config.apps.push(appConfig);
-
-  dirty(); closeDlg(); render();
-  toast(appConfig.name + ' added with ' + repos.length + ' compatible patch source(s). Save changes.');
-}
-
-
 /* Dynamic Add Source Dialog */
 let newSourceInspection = null;
 
@@ -2118,11 +1931,7 @@ Object.assign(A, {
     render();
     toast(`${ttl(a)} Auto-Patch: ${a.auto_patch ? 'Enabled' : 'Disabled'}`);
   },
-  addapp: dlgAddApp,
-  addpatchsource: dlgAddSource,
   addsrc: dlgAddSource,
-  inspect_app: inspectAppEntry,
-  do_add_app: doAddApp,
   inspect_src: inspectEnteredSource,
   select_inspected_pkg: t => {
     document.querySelectorAll('#src_inspect_result .chip').forEach(c => c.classList.remove('p'));

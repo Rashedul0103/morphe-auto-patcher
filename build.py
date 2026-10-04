@@ -9,7 +9,6 @@ import tempfile
 import time
 import urllib.parse
 import urllib.request
-import zipfile
 
 from apk_providers import acquire_from_providers
 from apk_validator import ApkValidationError, validate_apk
@@ -791,13 +790,6 @@ def main():
         compatible_versions = []
         patches_list = []
         source_attempts = []
-        selected_patch_filter = patch_filter
-
-        filter_candidates = []
-        for value in (patch_filter, app.get("name"), android_package, package):
-            value = str(value or "").strip()
-            if value and value not in filter_candidates:
-                filter_candidates.append(value)
 
         for idx, candidate_repo in enumerate(source_repos):
             candidate_tag = get_latest_tag(candidate_repo, allow_prerelease)
@@ -818,35 +810,23 @@ def main():
                 source_attempts.append({"repo": candidate_repo, "status": "download_failed", "error": dl_out})
                 continue
 
-            compatible_for_filter = None
-            patches_for_filter = None
-            successful_filter = None
+            ok_v, versions_out = run_cmd([
+                "java", "-jar", cli_jar, "list-versions",
+                "--patches", candidate_mpp, "-f", patch_filter
+            ])
+            candidate_versions = parse_versions(versions_out, patch_filter) if ok_v else []
 
-            for filter_value in filter_candidates:
-                ok_v, versions_out = run_cmd([
-                    "java", "-jar", cli_jar, "list-versions",
-                    "--patches", candidate_mpp, "-f", filter_value
-                ])
-                candidate_versions = parse_versions(versions_out, filter_value) if ok_v else []
+            ok_p, patches_out = run_cmd([
+                "java", "-jar", cli_jar, "list-patches", "-o",
+                "--patches", candidate_mpp, "-f", patch_filter
+            ])
+            candidate_patches = parse_patches(patches_out) if ok_p else []
 
-                ok_p, patches_out = run_cmd([
-                    "java", "-jar", cli_jar, "list-patches", "-o",
-                    "--patches", candidate_mpp, "-f", filter_value
-                ])
-                candidate_patches = parse_patches(patches_out) if ok_p else []
-
-                if candidate_patches and candidate_versions:
-                    compatible_for_filter = candidate_versions
-                    patches_for_filter = candidate_patches
-                    successful_filter = filter_value
-                    break
-
-            if not compatible_for_filter or not patches_for_filter:
+            if not candidate_patches or not candidate_versions:
                 source_attempts.append({
                     "repo": candidate_repo,
                     "status": "incompatible",
-                    "tag": candidate_tag,
-                    "filters_tried": filter_candidates
+                    "tag": candidate_tag
                 })
                 if os.path.exists(candidate_mpp):
                     os.remove(candidate_mpp)
@@ -855,10 +835,9 @@ def main():
             tag_name = candidate_tag
             patches_repo = candidate_repo
             mpp_file = candidate_mpp
-            compatible_versions = compatible_for_filter
-            patches_list = patches_for_filter
-            selected_patch_filter = successful_filter
-            print(f"Selected patch source for {app_id}: {candidate_repo} @ {candidate_tag} using filter '{successful_filter}'")
+            compatible_versions = candidate_versions
+            patches_list = candidate_patches
+            print(f"Selected patch source for {app_id}: {candidate_repo} @ {candidate_tag}")
             break
 
         if not patches_list or not mpp_file or not patches_repo:
@@ -911,7 +890,7 @@ def main():
                 "compatible_versions": compatible_versions,
                 "apkmirror_url": apkmirror_url,
                 "patch_source": patches_repo,
-                "patch_filter": selected_patch_filter,
+                "patch_filter": patch_filter,
                 "android_package": android_package or package,
                 "patch_source_attempts": source_attempts,
                 "patch_source_candidates": source_repos,
