@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791119645
+    "updated_at": 1791120633
   },
   "patch_source_attempts": [
     {
@@ -14,5 +14,7 @@
   ],
   "patch_source_candidates": [
     "hoo-dles/morphe-patches"
-  ]
+  ],
+  "icon_url": "catalog/icons/duolingo.png",
+  "icon_source": "google_play"
 }

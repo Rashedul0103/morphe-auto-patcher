@@ -14,11 +14,13 @@
     "MorpheApp/morphe-patches"
   ],
   "stock_signer_sha256": [],
+  "icon_url": "catalog/icons/youtube.png",
+  "icon_source": "google_play",
   "build_status": {
     "status": "failed",
     "stage": "output_validation",
     "reason": "Wrong package: expected com.google.android.youtube, found app.morphe.android.youtube.",
-    "updated_at": 1791119645
+    "updated_at": 1791120633
   },
   "apk_acquisition": {
     "status": "downloaded",
