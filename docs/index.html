@@ -486,7 +486,8 @@ function openUploadApkDialog(id) {
   const a = app(id);
   const cat = S.cats[id];
   const info = cat && cat.info ? cat.info : {};
-  const version = info.recommended_version || a.version || 'requested version';
+  const acq = info.apk_acquisition || {};
+  const version = acq.target_version || info.recommended_version || a.version || 'requested version';
   dlg(`
     <h2>Upload Stock APK</h2>
     <p><b>${esc(ttl(a))}</b> · expected version <b>${esc(version)}</b></p>
@@ -790,10 +791,16 @@ function vApp(r) {
         ${(inf.compatible_versions || []).map(v => `<option value="${esc(v)}">`).join('')}
       </datalist>
 
-      <div class="lbl">Architecture</div>
+      <div class="lbl">Patch Output Architecture</div>
       <select data-c="cfg" data-k="arch">
         ${ARCH.map(x => `<option ${(a.arch || S.config.settings.default_arch)===x?'selected':''}>${x}</option>`).join('')}
       </select>
+      <div class="lbl">APK Download Architecture</div>
+      <select data-c="cfg" data-k="apk_arch">
+        <option value="auto" ${(a.apk_arch || 'auto')==='auto'?'selected':''}>Automatic (recommended)</option>
+        ${ARCH.map(x => `<option value="${x}" ${(a.apk_arch || 'auto')===x?'selected':''}>${x}</option>`).join('')}
+      </select>
+      <div class="d">Automatic chooses a compatible stock APK. This is separate from the patch output architecture.</div>
     </details>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 4px 6px">
