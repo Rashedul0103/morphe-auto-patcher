@@ -802,7 +802,9 @@ def main():
                 "patch_source": patches_repo,
                 "patch_source_attempts": source_attempts,
                 "patch_source_candidates": source_repos,
-                "stock_signer_sha256": prior_signers,\n                "icon_url": icon_path,\n                "icon_source": icon_source,
+                "stock_signer_sha256": prior_signers,
+                "icon_url": icon_path,
+                "icon_source": icon_source,
                 "build_status": {"status": "running", "stage": "apk_acquisition", "updated_at": now}
             }, f, indent=2)
 
