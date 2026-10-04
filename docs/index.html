@@ -108,6 +108,27 @@ input:focus, select:focus { border-color: var(--primary); }
 @keyframes sh { to { background-position: -200%; } }
 #term { background: #0a0b0c; color: #e3e2e6; border-radius: 16px; padding: 12px; font: 0.75rem/1.5 ui-monospace, monospace; max-height: 320px; overflow-y: auto; margin-top: 10px; }
 .INFO { color: #8ab4f8; } .SUCCESS { color: #90D889; } .ERROR { color: #FFB4AB; }
+
+.status-card { background: var(--card-high); border: 1px solid #8882; border-radius: 20px; padding: 14px; margin: 10px 0; }
+.status-title { display:flex; align-items:center; gap:8px; font-weight:500; }
+.status-icon { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:var(--sv); color:var(--on); flex:none; }
+.status-icon.ok { background:color-mix(in srgb,var(--ok) 25%,transparent); color:var(--ok); }
+.status-icon.warn { background:color-mix(in srgb,var(--warn) 25%,transparent); color:var(--warn); }
+.status-icon.bad { background:color-mix(in srgb,var(--err) 22%,transparent); color:var(--err); }
+.step-list { display:flex; flex-direction:column; gap:7px; margin-top:12px; }
+.step { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--out); }
+.step.current { color:var(--on); font-weight:500; }
+.step.done { color:var(--ok); }
+.step-dot { width:8px; height:8px; border-radius:50%; background:var(--sv); flex:none; }
+.step.current .step-dot { background:var(--primary); box-shadow:0 0 0 4px var(--pc); }
+.step.done .step-dot { background:var(--ok); }
+.action-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.app-hero { display:flex; gap:12px; align-items:center; }
+.app-hero .hero-copy { flex:1; min-width:0; }
+.hero-action { width:100%; justify-content:center; margin-top:8px; }
+@media (min-width:700px) { .hero-action { width:auto; margin-top:0; } }
+.file-drop { border:1px dashed var(--out); border-radius:20px; padding:22px 16px; text-align:center; background:color-mix(in srgb,var(--card-high) 70%,transparent); }
+.file-drop:hover { border-color:var(--primary); }
 </style>
 </head>
 <body>
@@ -250,6 +271,66 @@ function apkReadiness(a, info) {
   if (hasStockAsset && !stock) return {state:'unknown', label:'Stock APK present', detail:'Release contains an APK, but its metadata has not been recorded yet.', target:target};
   if (acquisition.status === 'downloaded' && stock) return {state:'warning', label:'APK metadata needs refresh', detail:'Recorded ' + (stock.version_name || 'unknown') + ' · target ' + (target || 'Auto'), target:target};
   return {state:'unknown', label:'APK not checked', detail: target ? 'Target version: ' + target : 'No target version selected.', target:target};
+}
+
+
+function targetVersionFor(a, info) {
+  info = info || {};
+  const acq = info.apk_acquisition || {};
+  return acq.target_version || info.recommended_version || a.version || 'Auto';
+}
+
+function latestPatchedAsset(a) {
+  const rel = relsFor(a.id)[0];
+  if (!rel) return null;
+  const asset = (rel.assets || []).find(x => /\\.apk$/i.test(x.name));
+  return asset ? { ...asset, release: rel } : null;
+}
+
+function renderBuildTimeline(stage, status) {
+  const order = [
+    ['patch_source', 'Patch source'],
+    ['apk_acquisition', 'Stock APK'],
+    ['patching', 'Applying patches'],
+    ['output_validation', 'Verify patched APK'],
+    ['publishing', 'Publishing'],
+    ['completed', 'Completed']
+  ];
+  const idx = Math.max(0, order.findIndex(x => x[0] === stage));
+  return '<div class="step-list">' + order.map((x, i) => {
+    const done = status === 'success' ? i < order.length - 1 : (status === 'running' && i < idx);
+    const current = status === 'running' && i === idx;
+    return '<div class="step '+(done?'done ':'')+(current?'current':'')+'"><span class="step-dot"></span><span>'+(done?'✓ ':'')+esc(x[1])+'</span></div>';
+  }).join('') + '</div>';
+}
+
+function renderAppStatus(a, info) {
+  const readiness = apkReadiness(a, info);
+  const st = (info && info.build_status) || {};
+  const asset = latestPatchedAsset(a);
+  const acq = (info && info.apk_acquisition) || {};
+  const version = targetVersionFor(a, info);
+  let tone = readiness.state === 'ready' ? 'ok' : readiness.state === 'manual' ? 'bad' : 'warn';
+  let icon = readiness.state === 'ready' ? 'verified' : readiness.state === 'manual' ? 'error' : 'help';
+  let label = readiness.state === 'ready' ? 'APK ready' : readiness.state === 'manual' ? 'APK required' : 'APK needs checking';
+  let detail = readiness.state === 'ready'
+    ? version + ' · ' + ((info.stock_apk && info.stock_apk.architectures || []).join(', ') || 'architecture verified')
+    : readiness.detail;
+
+  let action = '';
+  if (asset) {
+    action = '<div class="action-row"><a class="pill" style="text-decoration:none" href="'+esc(asset.browser_download_url)+'" download><i class="ms">download</i> Download Patched APK</a><a class="pill o" style="text-decoration:none" href="'+esc(asset.release.html_url)+'" target="_blank" rel="noopener">View Release ↗</a></div>';
+  } else if (readiness.state === 'manual') {
+    action = '<div class="action-row"><button class="pill" data-a="dlg_need_apk" data-id="'+esc(a.id)+'"><i class="ms">download</i> Get Exact APK</button><button class="pill o" data-a="dlg_upload_apk" data-id="'+esc(a.id)+'"><i class="ms">upload</i> Upload APK</button></div>';
+  } else if (readiness.state === 'ready') {
+    action = '<div class="action-row"><button class="pill" data-a="dispatch_app" data-id="'+esc(a.id)+'"><i class="ms">bolt</i> Start Patch</button></div>';
+  } else {
+    action = '<div class="action-row"><button class="pill" data-a="start_flow" data-id="'+esc(a.id)+'"><i class="ms">play_arrow</i> Prepare APK</button></div>';
+  }
+
+  const build = st.status ? '<div style="margin-top:12px"><div class="d">Last build</div><div style="margin-top:4px"><span class="chip '+(st.status==='success'?'ok':st.status==='failed'?'bad':'warn')+'">'+esc(st.status==='success'?'Completed':st.status==='failed'?'Failed':'Running')+'</span> '+esc(st.stage || '')+'</div></div>' : '';
+
+  return '<div class="status-card"><div class="status-title"><span class="status-icon '+tone+'"><i class="ms" style="font-size:18px">'+icon+'</i></span><div style="flex:1"><b>'+esc(label)+'</b><div class="d" style="margin-top:3px">'+esc(detail)+'</div></div></div>'+build+action+'</div>';
 }
 
 function buildStatusView(a, info) {
@@ -477,31 +558,44 @@ function startPatchFlow(id) {
   const a = app(id);
   if (!a) return toast('App not found', 1);
   const cat = S.cats[id];
-  const recVer = cat && cat.info ? (cat.info.recommended_version || '') : '';
-  const acquisition = cat && cat.info ? (cat.info.apk_acquisition || {}) : {};
-  const readiness = apkReadiness(a, cat && cat.info);
-  const ready = readiness.state === 'ready';
-  const targetVersion = readiness.target || recVer || a.version || 'Auto';
+  const info = cat && cat.info ? cat.info : {};
+  const readiness = apkReadiness(a, info);
+  const version = targetVersionFor(a, info);
+  const asset = latestPatchedAsset(a);
 
-  if (acquisition.status === 'manual_required') return showManualApkFlow(id);
+  if (asset) {
+    dlg(`
+      <h2>Patch Ready</h2>
+      <p><b>${esc(ttl(a))}</b> · target <b>${esc(version)}</b></p>
+      <div class="status-card">
+        <div class="status-title">
+          <span class="status-icon ok"><i class="ms">verified</i></span>
+          <div><b>Patched APK available</b><div class="d" style="margin-top:3px">Morphe ${esc((info.patch_tag || asset.release.tag_name || '').replace(/^v/, 'v'))}</div></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <a class="pill" style="text-decoration:none" href="${esc(asset.browser_download_url)}" download><i class="ms">download</i> Download APK</a>
+        <a class="pill o" style="text-decoration:none" href="${esc(asset.release.html_url)}" target="_blank" rel="noopener">View Release ↗</a>
+      </div>
+      <button class="pill t" data-a="close">Close</button>
+    `);
+    return;
+  }
+
+  if (readiness.state === 'manual') return showManualApkFlow(id);
 
   dlg(`
-    <h2>${ready ? 'Stock APK Verified' : 'Prepare Stock APK'}</h2>
-    <p>Targeting <b>${esc(ttl(a))}</b> · exact version <b>${esc(targetVersion)}</b>.</p>
-    <div class="card" style="background:var(--card-high)">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <b>Stock APK</b>
-        <span class="chip ${readiness.state === 'ready' ? 'ok' : readiness.state === 'manual' ? 'bad' : 'warn'}">${esc(readiness.label)}</span>
-      </div>
-      <div class="d" style="margin-top:6px">
-        ${esc(readiness.detail)}
-      </div>
+    <h2>${readiness.state === 'ready' ? 'Ready to Patch' : 'Prepare Stock APK'}</h2>
+    <p>${esc(ttl(a))} · exact version <b>${esc(version)}</b></p>
+    ${renderAppStatus(a, info)}
+    ${readiness.state === 'ready'
+      ? '<div class="d" style="margin-top:8px">The verified stock APK is ready. Starting the patch will run validation again on GitHub before patching.</div>'
+      : '<div class="d" style="margin-top:8px">The manager will only accept an untouched APK matching the exact target version. Architecture is selected automatically.</div>'}
+    <div class="action-row">
+      ${readiness.state === 'ready' ? '<button class="pill" data-a="dispatch_app" data-id="${esc(id)}"><i class="ms">bolt</i> Start Patch</button>' : ''}
+      ${readiness.state !== 'ready' ? '<button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Get Exact APK</button><button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> I Already Have It</button>' : ''}
+      <button class="pill t" data-a="close">Cancel</button>
     </div>
-    ${ready
-      ? `<button class="pill" data-a="dispatch_app" data-id="${esc(id)}"><i class="ms">bolt</i> Start Build</button>`
-      : `<button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Recover Exact APK</button>
-         <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> I Already Have the APK</button>`}
-    <button class="pill t" data-a="close">Cancel</button>
   `);
 }
 
@@ -516,24 +610,25 @@ function showManualApkFlow(id) {
   const acquisition = info.apk_acquisition || {};
   const urls = Array.isArray(acquisition.manual_urls) ? acquisition.manual_urls : [];
   const exact = urls.find(u => /apkmirror\\.com/i.test(u)) || urls[0] || info.apkmirror_url || '';
-  const version = acquisition.target_version || info.recommended_version || a.version || 'the requested version';
+  const version = targetVersionFor(a, info);
   const attempts = Array.isArray(acquisition.attempts) ? acquisition.attempts : [];
   const attemptText = attempts.length
     ? attempts.slice(0, 5).map(x => (x.provider || 'provider') + ': ' + (x.status || 'failed')).join(' · ')
-    : 'APKMirror and other automatic providers did not produce a verified APK.';
+    : 'No verified APK was returned by the automatic providers.';
 
   dlg(`
-    <h2>Manual APK Required</h2>
-    <p><b>${esc(ttl(a))}</b> · exact version <b>${esc(version)}</b></p>
-    <div class="card" style="background:var(--card-high)">
-      <b>Automatic download failed.</b>
-      <div class="d" style="margin-top:6px">
-        Download the untouched original APK for this exact version. Do not use an already-patched APK.
-      </div>
-      <div class="d" style="margin-top:6px"><b>Automatic checks:</b> ${esc(attemptText)}</div>
+    <h2>Get Exact APK</h2>
+    <p><b>${esc(ttl(a))}</b> · required version <b>${esc(version)}</b></p>
+    <div class="status-card">
+      <div class="status-title"><span class="status-icon bad"><i class="ms">error</i></span><div><b>Manual APK required</b><div class="d" style="margin-top:3px">Automatic acquisition did not produce a verified APK.</div></div></div>
+      <div class="d" style="margin-top:10px"><b>Provider attempts:</b> ${esc(attemptText)}</div>
     </div>
-    ${exact ? `<a class="pill" style="text-decoration:none;justify-content:center;margin-top:14px" href="${esc(exact)}" target="_blank" rel="noopener"><i class="ms">download</i> Download Exact APK ↗</a>` : ''}
-    <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> Select Downloaded APK</button>
+    <div class="card" style="background:var(--card-high)">
+      <b>Use an untouched original APK</b>
+      <div class="d" style="margin-top:5px">Do not upload an already-patched APK. The system will verify package, exact version, architecture and signer before the build proceeds.</div>
+    </div>
+    ${exact ? '<a class="pill hero-action" style="text-decoration:none;justify-content:center" href="${esc(exact)}" target="_blank" rel="noopener"><i class="ms">download</i> Download Exact APK ↗</a>' : ''}
+    <button class="pill o hero-action" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> Upload Downloaded APK</button>
     <button class="pill t" data-a="close">Cancel</button>
   `);
 }
@@ -542,18 +637,18 @@ function openUploadApkDialog(id) {
   const a = app(id);
   const cat = S.cats[id];
   const info = cat && cat.info ? cat.info : {};
-  const acq = info.apk_acquisition || {};
-  const version = acq.target_version || info.recommended_version || a.version || 'requested version';
+  const version = targetVersionFor(a, info);
   dlg(`
     <h2>Upload Stock APK</h2>
     <p><b>${esc(ttl(a))}</b> · expected version <b>${esc(version)}</b></p>
     <input id="stock_apk_file" data-app-id="${esc(id)}" type="file" accept=".apk,application/vnd.android.package-archive" style="display:none">
-    <div class="card" style="background:var(--card-high);text-align:center;padding:18px">
-      <i class="ms" style="font-size:40px;color:var(--primary)">upload_file</i>
-      <div style="margin-top:6px"><b>Choose the untouched APK</b></div>
-      <div class="d" style="margin-top:5px">It will be uploaded to the stock release automatically.</div>
+    <div class="file-drop">
+      <i class="ms" style="font-size:44px;color:var(--primary)">upload_file</i>
+      <div style="margin-top:8px"><b>Select the untouched APK</b></div>
+      <div class="d" style="margin-top:5px">You do not need to select an ABI or release. The manager handles that.</div>
       <button class="pill" style="margin-top:14px" data-a="choose_apk_file" data-id="${esc(id)}"><i class="ms">folder_open</i> Choose APK</button>
     </div>
+    <div class="d" style="margin-top:10px">After upload, GitHub performs the authoritative APK verification before patching.</div>
     <button class="pill t" data-a="close">Cancel</button>
   `);
 }
@@ -623,12 +718,14 @@ async function uploadStockApk(id, file) {
 
   dlg(`
     <h2>APK Uploaded</h2>
-    <div class="card" style="background:var(--card-high)">
-      <b>${esc(result.name || file.name)}</b>
-      <div class="d" style="margin-top:5px">The APK is stored only. Start verification to check package, exact version, architecture and signer before patching.</div>
+    <p><b>${esc(ttl(app(id)))}</b> · file stored successfully</p>
+    <div class="status-card">
+      <div class="status-title"><span class="status-icon warn"><i class="ms">fact_check</i></span><div><b>Verification is next</b><div class="d" style="margin-top:3px">The upload only stores the APK. GitHub will verify package, exact version, architecture and signer when the build starts.</div></div></div>
     </div>
-    <button class="pill" data-a="upload_retry_build" data-id="${esc(id)}"><i class="ms">play_arrow</i> Verify & Build</button>
-    <button class="pill t" data-a="close">Done</button>
+    <div class="action-row">
+      <button class="pill" data-a="upload_retry_build" data-id="${esc(id)}"><i class="ms">verified</i> Verify & Start Patch</button>
+      <button class="pill t" data-a="close">Done</button>
+    </div>
   `);
 }
 
@@ -754,90 +851,56 @@ const hdr = (t, sub, back) => `
 
 function appCard(a) {
   const cat = S.cats[a.id];
-  const hasStock = hasStockApk(a.id);
-  const patchCount = cat && cat.patches ? cat.patches.length : 0;
-  const selectedCount = cat && cat.patches ? cat.patches.filter(p => eff(a, p)).length : 0;
-  const recVer = a.version || (cat && cat.info && cat.info.recommended_version) || 'Auto';
-
+  const info = (cat && cat.info) || {};
+  const patches = cat && cat.patches ? cat.patches : [];
+  const selectedCount = patches.filter(p => eff(a, p)).length;
+  const recVer = a.version || info.recommended_version || 'Auto';
   const rels = relsFor(a.id);
   const latestRel = rels[0];
-  const patchedTag = latestRel ? latestRel.tag_name.replace(a.id + '-', '') : null;
-  const sourceList = Array.isArray(a.patch_sources) && a.patch_sources.length
-    ? a.patch_sources
-    : (a.patches_repo ? [a.patches_repo] : []);
-  const latestUpstream = S.upstreamTags[a.patches_repo] || (cat && cat.info && cat.info.patch_tag);
-  const hasUpdate = latestUpstream && patchedTag && (latestUpstream !== patchedTag);
-  const apkAsset = latestRel ? (latestRel.assets || []).find(x => x.name.endsWith('.apk')) : null;
+  const asset = latestPatchedAsset(a);
   const isAutoPatch = a.auto_patch !== false;
-  const acq = (cat && cat.info && cat.info.apk_acquisition) || {};
-  const stock = (cat && cat.info && cat.info.stock_apk) || null;
-  const sourceLabel = acq.provider === 'stock_release'
-    ? 'stock-' + a.id
-    : acq.provider === 'configured_url'
-      ? 'Configured APK URL'
-      : acq.provider
-        ? acq.provider
-        : 'Not recorded';
-  const sourceVersion = acq.target_version || (stock && stock.version_name) || recVer;
+  const sourceList = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+  const readiness = apkReadiness(a, info);
 
   return `
     <div class="swipe-box">
-      <div class="swipe-bg right"><i class="ms">tune</i></div>
+      <div class="swipe-bg right"><i class="ms">tune</i> View Patches</div>
       <div class="swipe-front" data-id="${esc(a.id)}">
-        <div class="app" data-a="start_flow" data-id="${esc(a.id)}">
+        <div class="app-hero">
           <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
-          <div style="flex:1;min-width:0">
-            <div class="n">${esc(ttl(a))}<i class="ms">verified</i></div>
+          <div class="hero-copy">
+            <div class="n">${esc(ttl(a))}</div>
             <div class="mono">${esc(a.package)}</div>
-            
             <div>
-              ${patchCount ? `<span class="chip">${selectedCount} of ${patchCount} patches</span>` : '<span class="chip bad">No patch list yet</span>'}
+              ${patches.length ? `<span class="chip">${selectedCount} of ${patches.length} patches</span>` : '<span class="chip bad">No patch list yet</span>'}
               <span class="chip">${esc(recVer)}</span>
-              ${hasStock ? '<span class="chip ok">APK ready</span>' : '<span class="chip bad">APK missing</span>'}
-              ${hasUpdate ? `<span class="chip warn">Update: ${esc(latestUpstream)}</span>` : (latestRel ? '<span class="chip ok">✓ Up to date</span>' : '')}
-              
-              <!-- Per-App Auto-Patch Toggle Button -->
-              <span class="chip ${isAutoPatch ? 'p' : ''}" style="cursor:pointer" data-a="toggle_autopatch" data-id="${esc(a.id)}" title="Toggle automatic scheduled building">
+              <span class="chip ${readiness.state==='ready'?'ok':readiness.state==='manual'?'bad':'warn'}">${esc(readiness.label)}</span>
+              ${asset ? '<span class="chip ok">Patched APK available</span>' : (latestRel ? '<span class="chip warn">Build exists</span>' : '')}
+              <span class="chip ${isAutoPatch ? 'p' : ''}" style="cursor:pointer" data-a="toggle_autopatch" data-id="${esc(a.id)}">
                 <i class="ms" style="font-size:14px">${isAutoPatch ? 'check_box' : 'check_box_outline_blank'}</i> Auto-Patch
               </span>
             </div>
-
-            <div class="mono" style="margin-top:4px;font-family:inherit">
-              ${sourceList.length > 1 ? sourceList.length + ' patch sources' : esc(sourceList[0] || 'No patch source')} · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
-            </div>
-            <div class="d" style="margin-top:4px">
-              Source APK: <b>${esc(sourceLabel)}</b> · YouTube ${esc(sourceVersion)}
-              ${latestRel ? ' → Output: <b>' + esc(latestRel.tag_name) + '</b>' : ''}
+            <div class="mono" style="margin-top:5px;font-family:inherit">
+              ${sourceList.length > 1 ? sourceList.length + ' patch sources' : esc(sourceList[0] || 'No patch source')}
+              · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
             </div>
           </div>
-
           <div class="menu-wrap">
             <button class="ib" data-a="toggle_menu" data-id="${esc(a.id)}"><i class="ms">more_vert</i></button>
             <div class="menu-pop" id="menu-${esc(a.id)}">
-              ${apkAsset ? `
-                <a class="menu-item" href="${esc(apkAsset.browser_download_url)}" download>
-                  <i class="ms">download</i> Download APK (${(apkAsset.size/1048576).toFixed(1)} MB)
-                </a>
+              ${asset ? `
+                <a class="menu-item" href="${esc(asset.browser_download_url)}" download><i class="ms">download</i> Download Patched APK</a>
               ` : ''}
               ${latestRel ? `
-                <a class="menu-item" href="${esc(latestRel.html_url)}" target="_blank" rel="noopener">
-                  <i class="ms">open_in_new</i> Open Release on GitHub
-                </a>
+                <a class="menu-item" href="${esc(latestRel.html_url)}" target="_blank" rel="noopener"><i class="ms">open_in_new</i> Open Release on GitHub</a>
               ` : ''}
-              <button class="menu-item" data-a="dlg_need_apk" data-id="${esc(a.id)}">
-                <i class="ms">inventory_2</i> Stock APK Instructions
-              </button>
-              <button class="menu-item" data-a="force_rebuild" data-id="${esc(a.id)}">
-                <i class="ms">restart_alt</i> Force Rebuild
-              </button>
-              <button class="menu-item" data-a="hide_app" data-id="${esc(a.id)}">
-                <i class="ms">visibility_off</i> Hide from Dashboard
-              </button>
+              <button class="menu-item" data-a="dlg_need_apk" data-id="${esc(a.id)}"><i class="ms">inventory_2</i> Get Exact Stock APK</button>
+              <button class="menu-item" data-a="force_rebuild" data-id="${esc(a.id)}"><i class="ms">restart_alt</i> Force Rebuild</button>
+              <button class="menu-item" data-a="hide_app" data-id="${esc(a.id)}"><i class="ms">visibility_off</i> Hide from Dashboard</button>
             </div>
           </div>
-
-          <button class="pill" data-a="start_flow" data-id="${esc(a.id)}">Patch</button>
         </div>
+        ${renderAppStatus(a, info)}
       </div>
     </div>
   `;
@@ -887,89 +950,73 @@ function vApp(r) {
   const inf = (cat && cat.info) || {};
   const patches = cat ? cat.patches : [];
   const selectedCount = patches.filter(p => eff(a, p)).length;
+  const asset = latestPatchedAsset(a);
+  const readiness = apkReadiness(a, inf);
 
   return hdr(ttl(a), a.package, 1) + `
-    <div class="card app" style="cursor:default">
-      <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
-      <div style="flex:1;min-width:0">
-        <div class="n">${esc(ttl(a))}</div>
-        <div class="mono">${esc(a.package)}</div>
-        <span class="chip p">${esc(a.patches_repo)}</span>
-        ${inf.patch_tag ? `<span class="chip">${esc(inf.patch_tag)}</span>` : ''}
+    <div class="card">
+      <div class="app-hero">
+        <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
+        <div class="hero-copy">
+          <div class="n">${esc(ttl(a))}</div>
+          <div class="mono">${esc(a.package)}</div>
+          <div>
+            <span class="chip">${esc(inf.patch_tag ? 'Morphe ' + inf.patch_tag : 'Patch source not loaded')}</span>
+            ${asset ? '<span class="chip ok">Patched APK available</span>' : ''}
+          </div>
+        </div>
       </div>
-      <button class="pill" data-a="dispatch_app" data-id="${esc(a.id)}"><i class="ms">bolt</i> Patch</button>
+      ${renderAppStatus(a, inf)}
     </div>
 
-    <details class="card" open>
-      <summary style="font-size:0.85rem;color:var(--primary);cursor:pointer;font-weight:500">
-        Patch Sources
-      </summary>
-      ${(() => {
-        const repos = Array.isArray(a.patch_sources) && a.patch_sources.length
-          ? a.patch_sources
-          : (a.patches_repo ? [a.patches_repo] : []);
-        const sourceMap = Object.fromEntries((S.config.sources || []).map(x => [x.repo, x]));
-        return repos.length
-          ? repos.map((repo, idx) => `<div class="row">
-                <div class="g">
-                  <b>${idx + 1}. ${esc(repo)}</b>
-                  <div class="d">${sourceMap[repo]?.tag ? 'Release ' + esc(sourceMap[repo].tag) : 'Legacy / not inspected'}${sourceMap[repo]?.enabled === false ? ' · Disabled' : ''}</div>
-                </div>
-                ${idx > 0 ? `<button class="pill t" data-a="source_up" data-id="${esc(a.id)}" data-idx="${idx}">↑</button>` : ''}
-                ${idx < repos.length - 1 ? `<button class="pill t" data-a="source_down" data-id="${esc(a.id)}" data-idx="${idx}">↓</button>` : ''}
-              </div>`).join('')
-          : '<div class="d" style="margin-top:8px">No patch source configured.</div>';
-      })()}
-      <div class="d" style="margin-top:8px">The builder tries these sources in this order and skips a source if it does not actually contain patches for this app.</div>
+    ${buildStatusView(a, inf)}
+
+    <details class="card">
+      <summary style="font-size:.85rem;color:var(--primary);cursor:pointer;font-weight:500">Patch Sources</summary>
+      <div style="margin-top:8px">
+        ${(() => {
+          const repos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+          const sourceMap = Object.fromEntries((S.config.sources || []).map(x => [x.repo, x]));
+          return repos.length ? repos.map((repo, idx) => `
+            <div class="row">
+              <div class="g">
+                <b>${idx + 1}. ${esc(repo)}</b>
+                <div class="d">${sourceMap[repo]?.tag ? 'Release ' + esc(sourceMap[repo].tag) : 'Legacy / not inspected'}${sourceMap[repo]?.enabled === false ? ' · Disabled' : ''}</div>
+              </div>
+              ${idx > 0 ? `<button class="pill t" data-a="source_up" data-id="${esc(a.id)}" data-idx="${idx}" title="Move up">↑</button>` : ''}
+              ${idx < repos.length - 1 ? `<button class="pill t" data-a="source_down" data-id="${esc(a.id)}" data-idx="${idx}" title="Move down">↓</button>` : ''}
+            </div>`).join('') : '<div class="d">No patch source configured.</div>';
+        })()}
+      </div>
+      <div class="d" style="margin-top:8px">Sources are tried in this order. A source is skipped when it does not contain a compatible patch for this app.</div>
     </details>
 
-    <details class="card" open>
-      <summary style="font-size:0.85rem;color:var(--primary);cursor:pointer;font-weight:500">
-        Build Target & Architecture
-      </summary>
+    <details class="card">
+      <summary style="font-size:.85rem;color:var(--primary);cursor:pointer;font-weight:500">Build Target & Advanced APK Settings</summary>
       <div class="lbl">App Version</div>
       <input type="text" list="ver-list-${esc(a.id)}" data-c="cfg" data-k="version" value="${esc(a.version)}" placeholder="Auto (${esc(inf.recommended_version || 'Latest')})">
       <datalist id="ver-list-${esc(a.id)}">
         ${(inf.compatible_versions || []).map(v => `<option value="${esc(v)}">`).join('')}
       </datalist>
 
-      ${(() => {
-        const st = apkReadiness(a, inf);
-        const cls = st.state === "ready" ? "ok" : st.state === "manual" ? "bad" : st.state === "warning" ? "warn" : "";
-        const icon = st.state === "ready" ? "verified" : st.state === "manual" ? "error" : "help";
-        return '<div class="card" style="background:var(--card-high);margin:10px 0 4px"><div class="row"><div class="g"><b>APK Readiness</b><div style="margin-top:5px"><span class="chip '+cls+'"><i class="ms" style="font-size:15px">'+icon+'</i> '+esc(st.label)+'</span></div><div class="d" style="margin-top:5px">'+esc(st.detail)+'</div></div>' + (st.state === "manual" ? '<button class="pill" data-a="dlg_need_apk" data-id="'+esc(a.id)+'"><i class="ms">download</i> Recover APK</button>' : "") + '</div></div>';
-      })()}
-
-      ${buildStatusView(a, inf)}
-      
-      <div class="card" style="background:var(--card-high);margin:10px 0 4px">
-        <b>APK Provenance</b>
-        <div class="d" style="margin-top:5px">
-          Source: <b>${esc(((inf.apk_acquisition||{}).provider === 'stock_release' ? 'stock-' + a.id : (inf.apk_acquisition||{}).provider || 'Automatic'))}</b>
-          · Version: <b>${esc((inf.apk_acquisition||{}).target_version || inf.recommended_version || a.version || 'Auto')}</b>
-        </div>
-        <div class="d" style="margin-top:3px">
-          The source APK is copied to a temporary workspace, validated, and patched. The stock release is not modified by the patch operation.
-        </div>
-      </div>
-
       <div class="lbl">Patch Output Architecture</div>
       <select data-c="cfg" data-k="arch">
         ${ARCH.map(x => `<option ${(a.arch || S.config.settings.default_arch)===x?'selected':''}>${x}</option>`).join('')}
       </select>
+
+      <div class="d" style="margin-top:4px">This controls the patched output. APK download architecture stays automatic unless you change it in configuration.</div>
+
       <div class="lbl">APK Download Architecture</div>
       <select data-c="cfg" data-k="apk_arch">
         <option value="auto" ${(a.apk_arch || 'auto')==='auto'?'selected':''}>Automatic (recommended)</option>
         ${ARCH.map(x => `<option value="${x}" ${(a.apk_arch || 'auto')===x?'selected':''}>${x}</option>`).join('')}
       </select>
-      <div class="d">Automatic chooses a compatible stock APK. This is separate from the patch output architecture.</div>
+      <div class="d">Most users should leave this on Automatic.</div>
     </details>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 4px 6px">
       <div class="sec-h" style="margin:0">Patches (${selectedCount}/${patches.length})</div>
-      <div class="chip ${S.onlySel ? 'p' : ''}" style="cursor:pointer" data-a="toggle_only_sel">
-        <i class="ms" style="font-size:16px">filter_alt</i> Selected only
-      </div>
+      <div class="chip ${S.onlySel ? 'p' : ''}" style="cursor:pointer" data-a="toggle_only_sel"><i class="ms" style="font-size:16px">filter_alt</i> Selected only</div>
     </div>
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
@@ -1112,36 +1159,61 @@ function paintHist() {
 }
 
 function paintLive() {
-  const L = S.live, e = $('#live'); paintHist();
+  const L = S.live, e = $('#live');
+  paintHist();
   if (!e || !L) return;
 
+  const phaseMap = {
+    'Dispatching':'Preparing build…',
+    'Build in progress':'Building patched APK…',
+    'Completed! 🎉':'Build complete',
+    'Build Failed':'Build failed',
+    'Dispatch Failed':'Could not start build',
+    'Build monitor timed out':'Build monitoring timed out'
+  };
+
   const steps = [
-    { name: 'Load Patches', done: L.pct >= 20 },
-    { name: 'Read APK', done: L.pct >= 40 },
-    { name: 'Execute Patches', done: L.pct >= 70 },
-    { name: 'Write Output', done: L.pct >= 90 },
-    { name: 'Sign APK', done: L.pct >= 100 }
+    ['Load Patches', L.pct >= 20],
+    ['Verify stock APK', L.pct >= 40],
+    ['Apply patches', L.pct >= 70],
+    ['Verify patched APK', L.pct >= 90],
+    ['Publish release', L.pct >= 100]
   ];
+
+  let result = '';
+  if (L.done) {
+    if (L.ok && L.downloadUrl) {
+      result = `
+        <div class="status-card" style="margin-top:14px">
+          <div class="status-title"><span class="status-icon ok"><i class="ms">verified</i></span><div><b>Patched APK ready</b><div class="d" style="margin-top:3px">${esc(L.releaseTag || '')}</div></div></div>
+          <div class="action-row">
+            <a class="pill" style="text-decoration:none" href="${esc(L.downloadUrl)}" download><i class="ms">download</i> Download Patched APK</a>
+            ${L.releaseUrl ? '<a class="pill o" style="text-decoration:none" href="${esc(L.releaseUrl)}" target="_blank" rel="noopener">View Release ↗</a>' : ''}
+          </div>
+        </div>`;
+    } else if (L.ok) {
+      result = '<div class="status-card"><div class="status-title"><span class="status-icon ok"><i class="ms">verified</i></span><b>Build completed</b></div><div class="d" style="margin-top:6px">The release was published successfully.</div></div>';
+    } else {
+      result = `
+        <div class="status-card">
+          <div class="status-title"><span class="status-icon bad"><i class="ms">error</i></span><div><b>Build failed</b><div class="d" style="margin-top:3px">${esc(L.lines.filter(x=>x[0]==='ERROR').slice(-1)[0]?.[1] || 'See the run details for the exact failure.')}</div></div></div>
+          <div class="action-row"><a class="pill o" style="text-decoration:none" href="${esc(L.url || '')}" target="_blank" rel="noopener">Open CI Details ↗</a></div>
+        </div>`;
+    }
+  }
 
   e.innerHTML = `
     <div class="card">
-      <div style="display:flex;justify-content:space-between">
-        <b>${esc(L.stage)}</b><b>${L.pct}%</b>
-      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><b>${esc(phaseMap[L.stage] || L.stage)}</b><b>${L.pct}%</b></div>
       <div class="wavy-bar"><i style="width:${L.pct}%;${L.done?'animation:none':''}"></i></div>
-      
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        ${steps.map(s => `<span class="chip ${s.done?'ok':''}">${s.done?'✓ ':''}${s.name}</span>`).join('')}
+      <div class="step-list">
+        ${steps.map(s => '<div class="step '+(s[1]?'done':'')+(s[1]?'':' current')+'"><span class="step-dot"></span><span>'+ (s[1] ? '✓ ' : '') + esc(s[0]) + '</span></div>').join('')}
       </div>
-
-      <div id="term">${L.lines.map(l => `<div><span class="${l[0]}">[${l[0]}]</span> ${esc(l[1])}</div>`).join('')}</div>
-
-      ${L.done ? `
-        <div style="margin-top:12px;display:flex;gap:8px">
-          ${L.ok ? `<a class="pill" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/releases" target="_blank" rel="noopener"><i class="ms">download</i> Open Releases</a>` : ''}
-          <a class="pill o" style="text-decoration:none" href="${esc(L.url || '')}" target="_blank" rel="noopener">View CI Log ↗</a>
-        </div>
-      ` : ''}
+      <details style="margin-top:12px">
+        <summary style="color:var(--primary);font-size:.8rem;cursor:pointer">Technical build log</summary>
+        <div id="term">${L.lines.map(l => `<div><span class="${l[0]}">[${l[0]}]</span> ${esc(l[1])}</div>`).join('')}</div>
+      </details>
+      ${result}
     </div>
   `;
   const t = $('#term'); if (t) t.scrollTop = 1e5;
@@ -1151,7 +1223,7 @@ async function dispatchBuild(appId, force=true) {
   if (S.dirty) { toast('Save your changes first!', 1); return; }
   if (S.live && !S.live.done) { toast('A build is already being tracked.', 1); return; }
 
-  const L = S.live = { lines: [], pct: 5, stage: 'Dispatching', done: false, ok: false };
+  const L = S.live = { lines: [], pct: 5, stage: 'Dispatching', done: false, ok: false, app: appId || '' };
   location.hash = '#/builds';
 
   try {
@@ -1225,6 +1297,20 @@ async function dispatchBuild(appId, force=true) {
         L.done = true;
         L.ok = run.conclusion === 'success';
         await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
+        const builtAsset = latestPatchedAsset(appId ? app(appId) : (L.app ? app(L.app) : null));
+        if (builtAsset) {
+          L.downloadUrl = builtAsset.browser_download_url;
+          L.releaseUrl = builtAsset.release.html_url;
+          L.releaseTag = builtAsset.release.tag_name;
+        } else {
+          const candidate = S.rels.find(r => appId && r.tag_name.startsWith(appId + '-'));
+          const fallbackAsset = candidate && (candidate.assets || []).find(x => /\\.apk$/i.test(x.name));
+          if (fallbackAsset) {
+            L.downloadUrl = fallbackAsset.browser_download_url;
+            L.releaseUrl = candidate.html_url;
+            L.releaseTag = candidate.tag_name;
+          }
+        }
         paintLive();
         return;
       }
