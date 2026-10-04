@@ -1115,7 +1115,7 @@ function vApp(r) {
   return hdr(ttl(a), a.package, 1) + `
     <div class="card">
       <div class="app-hero">
-        <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
+        ${appIconHtml(a)}
         <div class="hero-copy">
           <div class="n">${esc(ttl(a))}</div>
           <div class="mono">${esc(a.package)}</div>
