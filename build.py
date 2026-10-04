@@ -231,6 +231,21 @@ def _clean_app_workspace(app_id):
     return root, stock_dir, patched_dir
 
 
+def _update_info_metadata(info_path, **updates):
+    """Merge structured build/acquisition state into an app info catalog."""
+    try:
+        data = {}
+        if os.path.exists(info_path):
+            with open(info_path, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        data.update(updates)
+        os.makedirs(os.path.dirname(info_path), exist_ok=True)
+        with open(info_path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2)
+    except Exception as exc:
+        print(f"Warning: Failed to update {info_path}: {exc}")
+
+
 def _download_url(url, destination):
     os.makedirs(os.path.dirname(destination), exist_ok=True)
     req = urllib.request.Request(
@@ -452,6 +467,11 @@ def main():
 
     for app in apps:
         app_id = app['id']
+        info_path = os.path.join(catalog_dir, f"{app_id}.info.json")
+        _update_info_metadata(
+            info_path,
+            build_status={"status": "running", "stage": "patch_source", "updated_at": now}
+        )
 
         # Skip apps with auto_patch turned off during scheduled runs
         auto_patch = app.get('auto_patch', True)
@@ -539,6 +559,17 @@ def main():
             raw_file = os.path.join(catalog_dir, f"{app_id}.raw.txt")
             with open(raw_file, 'w') as f:
                 f.write(json.dumps({"source_attempts": source_attempts}, indent=2))
+            _update_info_metadata(
+                info_path,
+                patch_source_attempts=source_attempts,
+                patch_source_candidates=source_repos,
+                build_status={
+                    "status": "failed",
+                    "stage": "patch_source",
+                    "reason": "No compatible patch source found.",
+                    "updated_at": now,
+                },
+            )
             print(f"Error: No compatible patch source found for {app_id}")
             has_errors = True
             continue
@@ -558,7 +589,6 @@ def main():
         query = f"{app_id} {app_version}".strip()
         apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
         
-        info_path = os.path.join(catalog_dir, f"{app_id}.info.json")
         prior_signers = []
         if os.path.exists(info_path):
             try:
@@ -577,7 +607,8 @@ def main():
                 "patch_source": patches_repo,
                 "patch_source_attempts": source_attempts,
                 "patch_source_candidates": source_repos,
-                "stock_signer_sha256": prior_signers
+                "stock_signer_sha256": prior_signers,
+                "build_status": {"status": "running", "stage": "apk_acquisition", "updated_at": now}
             }, f, indent=2)
 
         apk_path, apk_info, acquisition = resolve_stock_apk(
@@ -598,6 +629,15 @@ def main():
             print(f"Warning: Failed to update acquisition metadata: {exc}")
 
         if not apk_path:
+            _update_info_metadata(
+                info_path,
+                build_status={
+                    "status": "failed",
+                    "stage": "apk_acquisition",
+                    "reason": acquisition.get("error") or "No valid stock APK could be acquired.",
+                    "updated_at": now,
+                },
+            )
             print(f"⚠️ ACTION REQUIRED: Manual stock APK required for '{app_id}'")
             manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
             stock_release_url = (
@@ -626,6 +666,10 @@ def main():
             has_errors = True
             continue
 
+        _update_info_metadata(
+            info_path,
+            build_status={"status": "running", "stage": "patching", "updated_at": now},
+        )
         output_apk = os.path.join(".work", app_id, "patched", f"{app_id}-patched.apk")
         os.makedirs(os.path.dirname(output_apk), exist_ok=True)
         if os.path.exists(output_apk): os.remove(output_apk)
@@ -654,11 +698,55 @@ def main():
         ok, patch_out = run_cmd(patch_cmd)
 
         if not ok or not os.path.exists(output_apk):
+            _update_info_metadata(
+                info_path,
+                build_status={
+                    "status": "failed",
+                    "stage": "patching",
+                    "reason": "Morphe patch command failed or produced no APK.",
+                    "updated_at": now,
+                },
+            )
             print(f"Error: Patching failed for {app_id}!")
             with open(f"{app_id}-patch-error.log", 'w') as f: f.write(patch_out)
             has_errors = True
             continue
 
+        _update_info_metadata(
+            info_path,
+            build_status={"status": "running", "stage": "output_validation", "updated_at": now},
+        )
+        try:
+            patched_info = validate_apk(
+                output_apk,
+                expected_package=package,
+                expected_version=app_version,
+                expected_arch=arch,
+            )
+        except ApkValidationError as exc:
+            _update_info_metadata(
+                info_path,
+                build_status={
+                    "status": "failed",
+                    "stage": "output_validation",
+                    "reason": str(exc),
+                    "updated_at": now,
+                },
+            )
+            with open(f"{app_id}-output-validation-error.log", 'w') as f: f.write(str(exc))
+            print(f"Error: Patched APK validation failed for {app_id}: {exc}")
+            has_errors = True
+            continue
+
+        try:
+            _update_info_metadata(info_path, patched_apk=patched_info.to_dict())
+        except Exception:
+            pass
+
+        _update_info_metadata(
+            info_path,
+            build_status={"status": "running", "stage": "publishing", "updated_at": now},
+        )
         print(f"Publishing release: {release_tag}")
         with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md') as tf:
             tf.write(f"Auto-patched {app_id}\n\n- **Patch:** {tag_name}\n- **App Version:** {app_version or 'Auto'}\n- **Architecture:** {arch}\n")
@@ -671,10 +759,28 @@ def main():
                 "--title", f"{app_id} {tag_name}",
                 "--notes-file", notes_file
             ]
-            ok_rel, _ = run_cmd(create_cmd)
-            if not ok_rel: 
+            ok_rel, rel_out = run_cmd(create_cmd)
+            if not ok_rel:
+                _update_info_metadata(
+                    info_path,
+                    build_status={
+                        "status": "failed",
+                        "stage": "publishing",
+                        "reason": rel_out or "GitHub release creation failed.",
+                        "updated_at": now,
+                    },
+                )
                 has_errors = True
             else:
+                _update_info_metadata(
+                    info_path,
+                    build_status={
+                        "status": "success",
+                        "stage": "completed",
+                        "release_tag": release_tag,
+                        "updated_at": now,
+                    },
+                )
                 print(f"✅ Release {release_tag} published successfully!")
                 if auto_prune:
                     prune_old_releases(app_id, keep_releases_count)
