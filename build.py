@@ -12,6 +12,8 @@ import urllib.request
 
 from apk_providers import acquire_from_providers
 from apk_validator import ApkValidationError, validate_apk
+from bs4 import BeautifulSoup
+import requests
 
 CONFIG_FILE = "config.json"
 
@@ -246,6 +248,196 @@ def _update_info_metadata(info_path, **updates):
         print(f"Warning: Failed to update {info_path}: {exc}")
 
 
+ICON_DIR = os.path.join("docs", "catalog", "icons")
+ICON_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".avif")
+
+
+def _looks_like_android_package(value):
+    return bool(re.match(r"^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$", str(value or "").strip(), re.I))
+
+
+def _icon_safe_id(app_id):
+    value = re.sub(r"[^a-zA-Z0-9._-]+", "-", str(app_id or "app")).strip(".-")
+    return value or "app"
+
+
+def _icon_normalize_text(value):
+    return re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
+
+
+def _play_headers():
+    return {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+
+
+def _play_meta_image(soup):
+    selectors = [
+        ('meta[property="og:image"]', "content"),
+        ('meta[name="twitter:image"]', "content"),
+        ('meta[itemprop="image"]', "content"),
+    ]
+    for selector, attr in selectors:
+        node = soup.select_one(selector)
+        if node and node.get(attr):
+            return node.get(attr).strip()
+    for node in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(node.string or node.get_text())
+        except Exception:
+            continue
+        items = data if isinstance(data, list) else [data]
+        for item in items:
+            if isinstance(item, dict):
+                image = item.get("image")
+                if isinstance(image, str) and image.startswith("http"):
+                    return image
+                if isinstance(image, list):
+                    for image_item in image:
+                        if isinstance(image_item, str) and image_item.startswith("http"):
+                            return image_item
+    return ""
+
+
+def _play_detail(session, package_name, expected_query=""):
+    url = "https://play.google.com/store/apps/details?id=" + urllib.parse.quote(package_name, safe="._-") + "&hl=en&gl=US"
+    try:
+        response = session.get(url, headers=_play_headers(), timeout=20)
+        if response.status_code != 200:
+            return None
+        soup = BeautifulSoup(response.text, "html.parser")
+        title_node = soup.select_one('meta[property="og:title"]')
+        title = (title_node.get("content") if title_node else "") or (soup.title.get_text(" ", strip=True) if soup.title else "")
+        icon_url = _play_meta_image(soup)
+        if not icon_url:
+            return None
+        query_text = _icon_normalize_text(expected_query)
+        title_text = _icon_normalize_text(title)
+        score = sum(1 for token in query_text.split() if len(token) >= 2 and token in title_text)
+        return {"package": package_name, "title": title, "icon_url": icon_url, "score": score}
+    except Exception as exc:
+        print(f"Warning: Play Store detail lookup failed for {package_name}: {exc}")
+        return None
+
+
+def _find_play_store_icon(app_id, app):
+    session = requests.Session()
+    package_value = str(app.get("play_store_package") or app.get("package") or "").strip()
+    explicit_url = str(app.get("play_store_url") or "").strip()
+
+    if explicit_url:
+        parsed = urllib.parse.urlparse(explicit_url)
+        pkg = urllib.parse.parse_qs(parsed.query).get("id", [""])[0]
+        if pkg:
+            direct = _play_detail(session, pkg, app.get("name") or app_id)
+            if direct:
+                return direct
+
+    if _looks_like_android_package(package_value):
+        direct = _play_detail(session, package_value, app.get("name") or app_id)
+        if direct:
+            return direct
+
+    queries = []
+    for raw in (app.get("name"), str(app_id).replace("-", " "), package_value):
+        q = str(raw or "").strip()
+        if q and not _looks_like_android_package(q) and q.lower() not in {x.lower() for x in queries}:
+            queries.append(q)
+
+    for query in queries:
+        search_url = "https://play.google.com/store/search?c=apps&q=" + urllib.parse.quote_plus(query) + "&hl=en&gl=US"
+        try:
+            response = session.get(search_url, headers=_play_headers(), timeout=20)
+            if response.status_code != 200:
+                continue
+            soup = BeautifulSoup(response.text, "html.parser")
+            package_ids = []
+            seen = set()
+            for link in soup.select('a[href*="/store/apps/details?id="]'):
+                href = link.get("href", "")
+                pkg = urllib.parse.parse_qs(urllib.parse.urlparse(href).query).get("id", [""])[0]
+                if pkg and pkg not in seen:
+                    seen.add(pkg)
+                    package_ids.append(pkg)
+            if not package_ids:
+                package_ids = list(dict.fromkeys(re.findall(r"/store/apps/details\\?id=([A-Za-z0-9._-]+)", response.text)))
+            candidates = []
+            for pkg in package_ids[:12]:
+                candidate = _play_detail(session, pkg, query)
+                if candidate:
+                    candidates.append(candidate)
+            if candidates:
+                candidates.sort(key=lambda x: x.get("score", 0), reverse=True)
+                best = candidates[0]
+                if best.get("score", 0) > 0:
+                    return best
+        except Exception as exc:
+            print(f"Warning: Play Store search failed for '{query}': {exc}")
+    return None
+
+
+def _cache_icon(app_id, icon_url):
+    if not icon_url or not icon_url.startswith("http"):
+        return None
+    os.makedirs(ICON_DIR, exist_ok=True)
+    try:
+        response = requests.get(icon_url, headers=_play_headers(), timeout=30)
+        if response.status_code != 200:
+            return None
+        content_type = (response.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        if not content_type.startswith("image/"):
+            return None
+        data = response.content
+        if not data or len(data) > 4 * 1024 * 1024:
+            return None
+        ext = {
+            "image/png": ".png",
+            "image/jpeg": ".jpg",
+            "image/jpg": ".jpg",
+            "image/webp": ".webp",
+            "image/avif": ".avif",
+        }.get(content_type, ".png")
+        safe_id = _icon_safe_id(app_id)
+        for old_ext in ICON_EXTENSIONS:
+            old = os.path.join(ICON_DIR, safe_id + old_ext)
+            if not old.endswith(ext) and os.path.exists(old):
+                os.remove(old)
+        path = os.path.join(ICON_DIR, safe_id + ext)
+        with open(path, "wb") as fh:
+            fh.write(data)
+        return "catalog/icons/" + os.path.basename(path)
+    except Exception as exc:
+        print(f"Warning: Failed to cache icon for {app_id}: {exc}")
+        return None
+
+
+def _existing_cached_icon(app_id):
+    safe_id = _icon_safe_id(app_id)
+    os.makedirs(ICON_DIR, exist_ok=True)
+    for ext in ICON_EXTENSIONS:
+        path = os.path.join(ICON_DIR, safe_id + ext)
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            return "catalog/icons/" + os.path.basename(path)
+    return None
+
+
+def ensure_app_icon(app_id, app):
+    cached = _existing_cached_icon(app_id)
+    if cached:
+        return cached, "cache"
+    result = _find_play_store_icon(app_id, app)
+    if not result:
+        print(f"Icon lookup: no reliable Google Play icon found for {app_id}.")
+        return "", ""
+    cached_path = _cache_icon(app_id, result.get("icon_url", ""))
+    if not cached_path:
+        return "", ""
+    print(f"Icon lookup: {app_id} -> {result.get('package')} ({result.get('title', '').strip()})")
+    return cached_path, "google_play"
+
+
 def _download_url(url, destination):
     os.makedirs(os.path.dirname(destination), exist_ok=True)
     req = urllib.request.Request(
@@ -472,6 +664,9 @@ def main():
             info_path,
             build_status={"status": "running", "stage": "patch_source", "updated_at": now}
         )
+        icon_path, icon_source = ensure_app_icon(app_id, app)
+        if icon_path:
+            _update_info_metadata(info_path, icon_url=icon_path, icon_source=icon_source)
 
         # Skip apps with auto_patch turned off during scheduled runs
         auto_patch = app.get('auto_patch', True)
@@ -607,7 +802,7 @@ def main():
                 "patch_source": patches_repo,
                 "patch_source_attempts": source_attempts,
                 "patch_source_candidates": source_repos,
-                "stock_signer_sha256": prior_signers,
+                "stock_signer_sha256": prior_signers,\n                "icon_url": icon_path,\n                "icon_source": icon_source,
                 "build_status": {"status": "running", "stage": "apk_acquisition", "updated_at": now}
             }, f, indent=2)
 
