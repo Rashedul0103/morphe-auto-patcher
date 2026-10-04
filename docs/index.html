@@ -47,7 +47,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 .swipe-front { position: relative; background: var(--card); border-radius: 24px; padding: 14px; border: 1px solid #8882; transition: transform 0.15s ease-out; touch-action: pan-y; z-index: 1; }
 
 .app { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-.ico { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: #fff; flex: none; font-weight: 700; font-size: 1.4rem; }
+.ico { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: #fff; flex: none; font-weight: 700; font-size: 1.4rem; overflow: hidden; position: relative; }\n.ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .n { font-weight: 500; display: flex; gap: 4px; align-items: center; }
 .mono { font: 0.72rem ui-monospace, monospace; color: var(--out); word-break: break-all; }
 .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 3px 8px; border-radius: 8px; background: var(--sv); margin: 4px 4px 0 0; }
@@ -211,6 +211,44 @@ function getAppMeta(pkg) {
   const raw = parts[parts.length - 1] || pkg || 'app';
   const name = raw.charAt(0).toUpperCase() + raw.slice(1);
   return { name, color: '#1E5AA8,#00AFAE' };
+}
+
+const ICON_DOMAINS = {
+  'com.google.android.youtube': 'youtube.com',
+  'com.google.android.apps.youtube.music': 'music.youtube.com',
+  'com.duolingo': 'duolingo.com',
+  'Duolingo': 'duolingo.com',
+  'com.facebook.katana': 'facebook.com',
+  'com.facebook.orca': 'messenger.com',
+  'com.instagram.android': 'instagram.com',
+  'com.instagram.barcelona': 'threads.net',
+  'com.reddit.frontpage': 'reddit.com',
+  'com.twitter.android': 'x.com',
+  'tv.twitch.android.app': 'twitch.tv',
+  'com.zhiliaoapp.musically': 'tiktok.com',
+  'com.ss.android.ugc.trill': 'tiktok.com'
+};
+const APP_NAME_DOMAINS = {
+  'Facebook':'facebook.com','Messenger':'messenger.com','YouTube':'youtube.com','YouTube Music':'music.youtube.com',
+  'Duolingo':'duolingo.com','Reddit':'reddit.com','Twitter / X':'x.com','Twitch':'twitch.tv','TikTok':'tiktok.com',
+  'Instagram':'instagram.com','Threads':'threads.net','GitHub':'github.com','SoundCloud':'soundcloud.com',
+  'Sofascore':'sofascore.com','CamScanner':'camscanner.com','Prime Video':'primevideo.com','Proton VPN':'protonvpn.com'
+};
+function officialIconUrl(a) {
+  const pkg = String(a && a.package || '');
+  const name = ttl(a);
+  const domain = ICON_DOMAINS[pkg] || APP_NAME_DOMAINS[name] || '';
+  return domain ? 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128' : '';
+}
+function appIconUrl(a) {
+  return (a && a.icon_url) || officialIconUrl(a);
+}
+function appIconHtml(a) {
+  const label = esc((ttl(a)[0] || 'A').toUpperCase());
+  const url = appIconUrl(a);
+  const bg = 'background:linear-gradient(135deg, ' + hue(a) + ')';
+  if (!url) return '<div class="ico" style="' + bg + '">' + label + '</div>';
+  return '<div class="ico" style="' + bg + '"><img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\';"><span style="display:none;width:100%;height:100%;place-items:center">' + label + '</span></div>';
 }
 
 const ARCH = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
@@ -886,7 +924,7 @@ function appCard(a) {
       <div class="swipe-bg right"><i class="ms">tune</i> View Patches</div>
       <div class="swipe-front" data-id="${esc(a.id)}">
         <div class="app-hero">
-          <div class="ico" style="background:linear-gradient(135deg, ${hue(a)})">${esc(ttl(a)[0].toUpperCase())}</div>
+          ${appIconHtml(a)}
           <div class="hero-copy">
             <div class="n">${esc(ttl(a))}</div>
             <div class="mono">${esc(a.package)}</div>
@@ -1682,6 +1720,22 @@ async function inspectEnteredSource() {
     const tag = rel.tag_name || rel.tagName;
 
     let patchesData = null;
+    let sourceIconUrl = '';
+    const iconPaths = [
+      'assets/icons/icon-256.png',
+      'assets/icon.png',
+      'icon.png',
+      'assets/icons/icon-128.png',
+      'assets/icons/icon-512.png',
+      'assets/icon.svg',
+      'icon.svg'
+    ];
+    for (const path of iconPaths) {
+      try {
+        const ir = await gh('https://api.github.com/repos/' + repo + '/contents/' + path + '?ref=' + encodeURIComponent(tag), {}, 1);
+        if (ir && ir.download_url) { sourceIconUrl = ir.download_url; break; }
+      } catch(e) {}
+    }
     const asset = (rel.assets || []).find(a => a.name === 'patches-list.json');
     if (asset) {
       try {
@@ -1767,6 +1821,7 @@ async function inspectEnteredSource() {
       repo, tag, prerelease: pre,
       packages: pkgList,
       versions: discoveredVersions,
+      iconUrl: sourceIconUrl,
       selectedPkg: pkgList[0] || '',
       releaseName: rel.name || tag,
       patchCount: patchEntries.length || null,
@@ -1897,6 +1952,7 @@ Object.assign(A, {
       tag: newSourceInspection.tag,
       release_name: newSourceInspection.releaseName || newSourceInspection.tag,
       patch_count: newSourceInspection.patchCount,
+      icon_url: newSourceInspection.iconUrl || '',
       apps: newSourceInspection.packages.map(p => ({ package: p, name: getAppMeta(p).name })),
       last_inspected: new Date().toISOString()
     };
@@ -1911,7 +1967,7 @@ Object.assign(A, {
         patch_sources: [newSourceInspection.repo],
         prerelease: newSourceInspection.prerelease,
         arch: defArch, apk_arch: 'auto', version: (((newSourceInspection.versions || {})[pkg] || [])[0] || ''), force: false,
-        auto_patch: true, enable: [], disable: [], options: {}
+        auto_patch: true, icon_url: newSourceInspection.iconUrl || officialIconUrl({package: pkg}), enable: [], disable: [], options: {}
       };
       S.config.apps.push(a);
     } else {
@@ -1919,6 +1975,7 @@ Object.assign(A, {
       if (!a.patch_sources.includes(newSourceInspection.repo)) a.patch_sources.push(newSourceInspection.repo);
       if (!a.patches_repo) a.patches_repo = newSourceInspection.repo;
       if (!a.version) a.version = (((newSourceInspection.versions || {})[pkg] || [])[0] || a.version || '');
+      if (!a.icon_url) a.icon_url = newSourceInspection.iconUrl || officialIconUrl(a);
     }
 
     dirty();
