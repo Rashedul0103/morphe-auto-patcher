@@ -130,6 +130,7 @@ def validate_apk(
     expected_version: str = "",
     expected_arch: str = "auto",
     expected_signer_sha256: list[str] | None = None,
+    allowed_packages: list[str] | None = None,
 ) -> ApkInfo:
     if not path or not os.path.isfile(path):
         raise ApkValidationError("APK file does not exist.")
@@ -154,9 +155,13 @@ def validate_apk(
     info = _parse_badging(path, _run_aapt(path))
     info.signer_sha256 = _extract_signers(path)
 
-    if expected_package and info.package != expected_package:
+    allowed = {str(x).strip() for x in (allowed_packages or []) if str(x).strip()}
+    if expected_package:
+        allowed.add(expected_package)
+    if allowed and info.package not in allowed:
+        expected_text = ", ".join(sorted(allowed))
         raise ApkValidationError(
-            f"Wrong package: expected {expected_package}, found {info.package}."
+            f"Wrong package: expected one of {expected_text}, found {info.package}."
         )
 
     if expected_version and info.version_name != expected_version:
