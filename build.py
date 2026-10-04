@@ -122,7 +122,13 @@ def patch_source_candidates(app, package, config):
             for entry in apps
             if entry
         }
-        if package in packages:
+        match_keys = {
+            str(package or "").strip(),
+            str(app.get("patch_package") or "").strip(),
+            str(app.get("name") or "").strip(),
+        }
+        match_keys.discard("")
+        if packages.intersection(match_keys):
             add(source.get("repo", ""))
 
     add(app.get("patches_repo", ""))
@@ -413,6 +419,81 @@ def _cache_icon(app_id, icon_url):
         return None
 
 
+def _android_tool(name):
+    explicit = os.environ.get(name.upper())
+    if explicit and os.path.isfile(explicit):
+        return explicit
+    found = shutil.which(name)
+    if found:
+        return found
+    android_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+    if android_home:
+        build_tools = os.path.join(android_home, "build-tools")
+        if os.path.isdir(build_tools):
+            versions = sorted(os.listdir(build_tools), reverse=True)
+            for version in versions:
+                candidate = os.path.join(build_tools, version, name)
+                if os.path.isfile(candidate):
+                    return candidate
+    return None
+
+
+def extract_apk_icon(apk_path, app_id):
+    """Extract a concrete launcher image from the exact validated APK."""
+    tool = _android_tool("aapt2") or _android_tool("aapt")
+    if not tool or not apk_path or not os.path.isfile(apk_path):
+        return None
+    ok, output = run_cmd([tool, "dump", "badging", apk_path], silent=True)
+    if not ok:
+        return None
+    icon_paths = []
+    for pattern in (
+        r"application:\s+.*?icon='([^']+)'",
+        r"application-icon-\d+['\"]?\s*[:=]\s*['\"]?([^'\"\s]+)",
+    ):
+        icon_paths.extend(re.findall(pattern, output or "", re.I))
+    icon_paths = list(dict.fromkeys(icon_paths))
+    try:
+        with zipfile.ZipFile(apk_path) as archive:
+            names = archive.namelist()
+            # Prefer the launcher path reported by aapt, then fall back to
+            # the largest concrete PNG/WebP under res/mipmap*.
+            candidates = []
+            for name in icon_paths:
+                clean = str(name).lstrip("/")
+                if clean in names and not clean.lower().endswith(".xml"):
+                    candidates.append(clean)
+            if not candidates:
+                candidates = [
+                    n for n in names
+                    if n.lower().startswith(("res/mipmap", "res/drawable"))
+                    and n.lower().endswith((".png", ".webp", ".jpg", ".jpeg"))
+                ]
+                candidates.sort(key=lambda n: archive.getinfo(n).file_size, reverse=True)
+                candidates = candidates[:1]
+            if not candidates:
+                return None
+            chosen = candidates[0]
+            data = archive.read(chosen)
+    except Exception as exc:
+        print(f"Warning: APK icon extraction failed for {app_id}: {exc}")
+        return None
+
+    ext = os.path.splitext(chosen)[1].lower()
+    if ext not in (".png", ".webp", ".jpg", ".jpeg"):
+        return None
+    os.makedirs(ICON_DIR, exist_ok=True)
+    safe_id = _icon_safe_id(app_id)
+    path = os.path.join(ICON_DIR, safe_id + "-apk" + ext)
+    try:
+        with open(path, "wb") as fh:
+            fh.write(data)
+        return "catalog/icons/" + os.path.basename(path)
+    except Exception as exc:
+        print(f"Warning: Failed to save APK icon for {app_id}: {exc}")
+        return None
+
+
 def _existing_cached_icon(app_id):
     safe_id = _icon_safe_id(app_id)
     os.makedirs(ICON_DIR, exist_ok=True)
@@ -677,10 +758,19 @@ def main():
         if target_app_filter and app_id != target_app_filter: continue
 
         package = app['package']
+        patch_filter = str(app.get('patch_package') or package).strip()
+        android_package = str(app.get('android_package') or "").strip()
+        if not android_package and _looks_like_android_package(package):
+            android_package = package
+        if not android_package:
+            play_meta = _find_play_store_icon(app_id, app)
+            if play_meta and play_meta.get("package"):
+                android_package = str(play_meta["package"]).strip()
+                print(f"Resolved Android package for {app_id}: {android_package}")
         arch = app.get('arch') or repo_settings.get('default_arch', 'arm64-v8a')
         apk_arch = app.get('apk_arch') or "auto"
         allow_prerelease = app.get('prerelease', False)
-        source_repos = patch_source_candidates(app, package, config)
+        source_repos = patch_source_candidates(app, patch_filter, config)
 
         if not source_repos:
             print(f"Failed: no patch sources configured for {app_id}")
@@ -722,13 +812,13 @@ def main():
 
             ok_v, versions_out = run_cmd([
                 "java", "-jar", cli_jar, "list-versions",
-                "--patches", candidate_mpp, "-f", package
+                "--patches", candidate_mpp, "-f", patch_filter
             ])
-            candidate_versions = parse_versions(versions_out, package) if ok_v else []
+            candidate_versions = parse_versions(versions_out, patch_filter) if ok_v else []
 
             ok_p, patches_out = run_cmd([
                 "java", "-jar", cli_jar, "list-patches", "-o",
-                "--patches", candidate_mpp, "-f", package
+                "--patches", candidate_mpp, "-f", patch_filter
             ])
             candidate_patches = parse_patches(patches_out) if ok_p else []
 
@@ -800,6 +890,8 @@ def main():
                 "compatible_versions": compatible_versions,
                 "apkmirror_url": apkmirror_url,
                 "patch_source": patches_repo,
+                "patch_filter": patch_filter,
+                "android_package": android_package or package,
                 "patch_source_attempts": source_attempts,
                 "patch_source_candidates": source_repos,
                 "stock_signer_sha256": prior_signers,
@@ -809,8 +901,14 @@ def main():
             }, f, indent=2)
 
         apk_path, apk_info, acquisition = resolve_stock_apk(
-            app_id, package, app_version, app, expected_signer_sha256=prior_signers
+            app_id, android_package or package, app_version, app, expected_signer_sha256=prior_signers
         )
+
+        if apk_path and apk_info and not icon_path:
+            apk_icon_path = extract_apk_icon(apk_path, app_id)
+            if apk_icon_path:
+                icon_path, icon_source = apk_icon_path, "apk"
+                _update_info_metadata(info_path, icon_url=icon_path, icon_source=icon_source)
 
         try:
             existing_info = {}
@@ -914,11 +1012,15 @@ def main():
             build_status={"status": "running", "stage": "output_validation", "updated_at": now},
         )
         try:
+            expected_output_packages = [android_package or package]
+            if "Clone app" in (app.get("enable") or []):
+                expected_output_packages.append(f"app.morphe.android.{app_id}")
             patched_info = validate_apk(
                 output_apk,
-                expected_package=package,
+                expected_package=android_package or package,
                 expected_version=app_version,
                 expected_arch=arch,
+                allowed_packages=expected_output_packages,
             )
         except ApkValidationError as exc:
             _update_info_metadata(
