@@ -78,7 +78,7 @@ jobs:
           from pathlib import Path
           import re
           html = Path("docs/index.html").read_text(encoding="utf-8-sig")
-          scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", html, re.S | re.I)
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.S | re.I)
           if not scripts:
               raise SystemExit("No script block found in docs/index.html")
           Path("/tmp/patch-manager-ui.js").write_text(scripts[-1], encoding="utf-8")
