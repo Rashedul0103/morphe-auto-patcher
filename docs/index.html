@@ -120,7 +120,7 @@ input:focus, select:focus { border-color: var(--primary); }
 
 <div id="dock">
   <button class="bb" data-nav="home" data-a="go" data-h=""><i class="ms">home</i>Apps</button>
-  <button class="bb" data-a="addsrc"><i class="ms">source</i>Sources</button>
+  <button class="bb" data-nav="sources" data-a="go" data-h="sources"><i class="ms">source</i>Sources</button>
   <button class="bb" data-nav="builds" data-a="go" data-h="builds"><i class="ms">construction</i>Builds</button>
   <button class="bb" data-nav="settings" data-a="go" data-h="settings"><i class="ms">settings</i>Settings</button>
 </div>
@@ -189,7 +189,7 @@ let S = {
     sources: [], apps: [], hidden_apps: [] 
   },
   cats: {}, rels: [], runs: [], upstreamTags: {}, dirty: false,
-  onlySel: false, live: null, connected: false, localApks: {}
+  onlySel: false, live: null, connected: false, localApks: {}, sourceSearch: ''
 };
 
 if (/github\.io$/.test(location.hostname)) {
@@ -624,6 +624,49 @@ const route = () => {
   const p = location.hash.replace(/^#\/?/, '').split('/');
   return { v: p[0] || 'home', id: decodeURIComponent(p[1] || '') };
 };
+
+function configuredSourceForRepo(repo) {
+  return (S.config.sources || []).find(x => x.repo === repo);
+}
+
+function appByPackage(pkg) {
+  return (S.config.apps || []).find(x => x.package === pkg);
+}
+
+function sourceAppId(pkg) {
+  const parts = String(pkg || '').split('.').filter(Boolean);
+  let base = (parts[parts.length - 1] || 'app').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+  if (!base) base = 'app';
+  let id = base, n = 2;
+  while ((S.config.apps || []).some(a => a.id === id && a.package !== pkg)) id = base + '-' + n++;
+  return id;
+}
+
+function addDiscoveredApp(pkg, repo) {
+  const src = configuredSourceForRepo(repo);
+  if (!src) return toast('Source is not configured. Inspect and add it first.', 1);
+  S.config.apps = Array.isArray(S.config.apps) ? S.config.apps : [];
+  let a = appByPackage(pkg);
+
+  if (!a) {
+    const id = sourceAppId(pkg);
+    const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
+    a = {
+      id, package: pkg, patches_repo: repo, patch_sources: [repo],
+      prerelease: src.prerelease === true, arch: defArch, apk_arch: 'auto',
+      version: '', force: false, auto_patch: true, enable: [], disable: [], options: {}
+    };
+    S.config.apps.push(a);
+  } else {
+    a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+    if (!a.patch_sources.includes(repo)) a.patch_sources.push(repo);
+    if (!a.patches_repo) a.patches_repo = repo;
+  }
+
+  dirty();
+  render();
+  toast('App added to Apps. Save changes.');
+}
 addEventListener('hashchange', () => {
   render();
   if (route().v === 'builds') loadRuns().then(paintHist);
@@ -638,10 +681,10 @@ function theme() {
 }
 
 function render() {
-  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', builds: 'builds', settings: 'settings' }[r.v] || 'home';
+  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', sources: 'sources', builds: 'builds', settings: 'settings' }[r.v] || 'home';
   document.querySelectorAll('.bb[data-nav]').forEach(b => b.classList.toggle('hl', b.dataset.nav === nav));
   $('#fab').style.display = S.dirty ? 'block' : 'none';
-  m.innerHTML = ({ home: vHome, app: vApp, builds: vBuilds, settings: vSet }[r.v] || vHome)(r);
+  m.innerHTML = ({ home: vHome, app: vApp, sources: vSources, builds: vBuilds, settings: vSet }[r.v] || vHome)(r);
   if (r.v === 'home') initGestures();
   if (r.v === 'builds') paintLive();
 }
@@ -901,6 +944,83 @@ function renderPatchesList(a, patches) {
       </div>
     `;
   }).join('');
+}
+
+/* Sources View */
+function vSources() {
+  const sources = Array.isArray(S.config.sources) ? S.config.sources : [];
+  const q = (S.sourceSearch || '').trim().toLowerCase();
+  const filteredSources = sources.filter(src => {
+    if (!q) return true;
+    const hay = [src.repo, src.tag, src.release_name, ...(src.apps || []).map(a => typeof a === 'string' ? a : (a.name || a.package || ''))].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  const apps = new Map();
+  for (const src of sources) {
+    if (src.enabled === false) continue;
+    for (const item of (src.apps || [])) {
+      const pkg = typeof item === 'string' ? item : item.package;
+      if (!pkg) continue;
+      const name = typeof item === 'string' ? getAppMeta(pkg).name : (item.name || getAppMeta(pkg).name);
+      if (!apps.has(pkg)) apps.set(pkg, { package: pkg, name, sources: [] });
+      apps.get(pkg).sources.push(src.repo);
+    }
+  }
+
+  const appList = Array.from(apps.values())
+    .filter(x => !q || (x.name + ' ' + x.package + ' ' + x.sources.join(' ')).toLowerCase().includes(q))
+    .sort((a,b) => a.name.localeCompare(b.name));
+
+  return hdr('Patch Sources', 'Repository & App Compatibility') + `
+    <div class="banner">
+      <i class="ms" style="font-size:32px">hub</i>
+      <div style="flex:1">
+        <div style="font-weight:500">${sources.length} configured source(s)</div>
+        <div class="s">Browse compatible apps across all sources. Add an app without retyping its package or repository.</div>
+      </div>
+      <button class="pill" data-a="addsrc"><i class="ms">add</i> Add Source</button>
+    </div>
+
+    <input type="search" data-c="source_search" value="${esc(S.sourceSearch || '')}" placeholder="Search source, app or package…">
+
+    <div class="sec-h">Configured Sources</div>
+    ${filteredSources.length ? filteredSources.map(src => `
+      <div class="card">
+        <div class="row">
+          <div class="ico" style="width:42px;height:42px;font-size:15px;flex:none">${esc((src.repo || 'S')[0].toUpperCase())}</div>
+          <div class="g">
+            <b>${esc(src.repo || 'Unknown source')}</b>
+            <div class="d">Release ${esc(src.tag || 'unknown')} · ${src.patch_count || '?'} patches · ${(src.apps || []).length} app(s)</div>
+          </div>
+          <button class="pill t" data-a="source_toggle" data-repo="${esc(src.repo)}">${src.enabled === false ? 'Enable' : 'Disable'}</button>
+        </div>
+      </div>
+    `).join('') : '<div class="card d">No configured sources match your search.</div>'}
+
+    <div class="sec-h">Discover Apps</div>
+    ${appList.length ? appList.map(x => {
+      const existing = appByPackage(x.package);
+      const repo = x.sources[0];
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="ico" style="width:42px;height:42px;font-size:15px;flex:none;background:linear-gradient(135deg, ${hue({package:x.package})})">${esc(x.name[0]?.toUpperCase() || '?')}</div>
+            <div class="g">
+              <b>${esc(x.name)}</b>
+              <div class="mono">${esc(x.package)}</div>
+              <div class="d">Source: ${x.sources.map(esc).join(' · ')}</div>
+            </div>
+            ${existing
+              ? '<span class="chip ok">Added</span>'
+              : `<button class="pill" data-a="source_app_add" data-repo="${esc(repo)}" data-pkg="${esc(x.package)}">Add</button>`}
+          </div>
+        </div>
+      `;
+    }).join('') : '<div class="card d">No compatible apps available yet. Add and inspect a patch source first.</div>'}
+
+    <div class="d" style="margin:12px 4px">A source can provide many apps. Adding one here creates the app configuration and makes this repository its first patch-source candidate; adding another source later adds it to the priority list.</div>
+  `;
 }
 
 /* Builds View */
@@ -1367,6 +1487,13 @@ Object.assign(A, {
     a.patches_repo = a.patch_sources[0] || a.patches_repo;
     dirty(); render();
   },
+  source_toggle: t => {
+    const src = configuredSourceForRepo(t.dataset.repo);
+    if (!src) return;
+    src.enabled = src.enabled === false;
+    dirty(); render();
+  },
+  source_app_add: t => addDiscoveredApp(t.dataset.pkg, t.dataset.repo),
   source_down: t => {
     const a = app(t.dataset.id); if (!a) return;
     a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
@@ -1508,6 +1635,10 @@ Object.assign(A, {
 });
 
 Object.assign(C, {
+  source_search: e => {
+    S.sourceSearch = e.value;
+    render();
+  },
   cfg: e => {
     const a = app(route().id);
     if (a) { a[e.dataset.k] = e.value.trim(); dirty(); }
