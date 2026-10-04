@@ -110,6 +110,14 @@ input:focus, select:focus { border-color: var(--primary); }
 .INFO { color: #8ab4f8; } .SUCCESS { color: #90D889; } .ERROR { color: #FFB4AB; }
 
 .status-card { background: var(--card-high); border: 1px solid #8882; border-radius: 20px; padding: 14px; margin: 10px 0; }
+.build-collapsible { padding: 0; overflow: hidden; }
+.build-collapsible > summary { list-style: none; cursor: pointer; padding: 14px; }
+.build-collapsible > summary::-webkit-details-marker { display: none; }
+.build-collapsible[open] > summary { border-bottom: 1px solid #8882; }
+.build-collapsible .status-title { width: 100%; }
+.expand-icon { transition: transform .18s ease; color: var(--out); flex: none; }
+.build-collapsible[open] .expand-icon { transform: rotate(180deg); }
+.collapsible-content { padding: 0 14px 14px; }
 .status-title { display:flex; align-items:center; gap:8px; font-weight:500; }
 .status-icon { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:var(--sv); color:var(--on); flex:none; }
 .status-icon.ok { background:color-mix(in srgb,var(--ok) 25%,transparent); color:var(--ok); }
@@ -296,7 +304,7 @@ function targetVersionFor(a, info) {
 function latestPatchedAsset(a) {
   const rel = relsFor(a.id)[0];
   if (!rel) return null;
-  const asset = (rel.assets || []).find(x => /\\.apk$/i.test(x.name));
+  const asset = (rel.assets || []).find(x => /\.apk$/i.test(x.name));
   return asset ? { ...asset, release: rel } : null;
 }
 
@@ -321,12 +329,11 @@ function renderAppStatus(a, info) {
   const readiness = apkReadiness(a, info);
   const st = (info && info.build_status) || {};
   const asset = latestPatchedAsset(a);
-  const acq = (info && info.apk_acquisition) || {};
   const version = targetVersionFor(a, info);
-  let tone = readiness.state === 'ready' ? 'ok' : readiness.state === 'manual' ? 'bad' : 'warn';
-  let icon = readiness.state === 'ready' ? 'verified' : readiness.state === 'manual' ? 'error' : 'help';
-  let label = readiness.state === 'ready' ? 'APK ready' : readiness.state === 'manual' ? 'APK required' : 'APK needs checking';
-  let detail = readiness.state === 'ready'
+  const tone = readiness.state === 'ready' ? 'ok' : readiness.state === 'manual' ? 'bad' : 'warn';
+  const icon = readiness.state === 'ready' ? 'verified' : readiness.state === 'manual' ? 'error' : 'help';
+  const label = readiness.state === 'ready' ? 'APK ready' : readiness.state === 'manual' ? 'APK required' : 'APK needs checking';
+  const detail = readiness.state === 'ready'
     ? version + ' · ' + ((info.stock_apk && info.stock_apk.architectures || []).join(', ') || 'architecture verified')
     : readiness.detail;
 
@@ -343,9 +350,8 @@ function renderAppStatus(a, info) {
 
   const build = st.status ? '<div style="margin-top:12px"><div class="d">Last build</div><div style="margin-top:4px"><span class="chip '+(st.status==='success'?'ok':st.status==='failed'?'bad':'warn')+'">'+esc(st.status==='success'?'Completed':st.status==='failed'?'Failed':'Running')+'</span> '+esc(st.stage || '')+'</div></div>' : '';
 
-  return '<div class="status-card"><div class="status-title"><span class="status-icon '+tone+'"><i class="ms" style="font-size:18px">'+icon+'</i></span><div style="flex:1"><b>'+esc(label)+'</b><div class="d" style="margin-top:3px">'+esc(detail)+'</div></div></div>'+build+action+'</div>';
+  return '<details class="status-card build-collapsible"><summary><span class="status-title"><span class="status-icon '+tone+'"><i class="ms" style="font-size:18px">'+icon+'</i></span><span style="flex:1"><b>'+esc(label)+'</b><span class="d" style="display:block;margin-top:3px">'+esc(detail)+'</span></span><i class="ms expand-icon">expand_more</i></span></summary><div class="collapsible-content">'+build+action+'</div></details>';
 }
-
 function buildStatusView(a, info) {
   const st = (info && info.build_status) || {};
   if (!st.status) return '';
@@ -703,7 +709,7 @@ async function uploadReleaseAsset(release, file, onProgress) {
 }
 
 async function uploadStockApk(id, file) {
-  if (!file || !/\\.apk$/i.test(file.name)) throw new Error('Please select an .apk file.');
+  if (!file || !/\.apk$/i.test(file.name)) throw new Error('Please select an .apk file.');
   if (file.size < 1024) throw new Error('The selected file is too small to be a valid APK.');
 
   const release = await ensureStockRelease(id);
@@ -846,10 +852,10 @@ function theme() {
 }
 
 function render() {
-  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', sources: 'sources', builds: 'builds', settings: 'settings' }[r.v] || 'home';
+  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', sources: 'sources', builds: 'builds', settings: 'settings', patched: 'patched' }[r.v] || 'home';
   document.querySelectorAll('.bb[data-nav]').forEach(b => b.classList.toggle('hl', b.dataset.nav === nav));
   $('#fab').style.display = S.dirty ? 'block' : 'none';
-  m.innerHTML = ({ home: vHome, app: vApp, sources: vSources, builds: vBuilds, settings: vSet }[r.v] || vHome)(r);
+  m.innerHTML = ({ home: vHome, app: vApp, sources: vSources, builds: vBuilds, settings: vSet, patched: vPatchedApps }[r.v] || vHome)(r);
   if (r.v === 'home') initGestures();
   if (r.v === 'builds') paintLive();
 }
@@ -858,7 +864,7 @@ const hdr = (t, sub, back) => `
   <div class="top">
     ${back ? `<button class="ib" data-a="go" data-h=""><i class="ms">arrow_back</i></button>` : '<div class="logo">P</div>'}
     <h1>${esc(t)}<small>${esc(sub || '')}</small></h1>
-    ${back ? '' : '<button class="ib" data-a="go" data-h="settings"><i class="ms">settings</i></button>'}
+    ${back ? '' : '<button class="ib" data-a="go" data-h="patched" title="Patched apps" aria-label="Patched apps"><i class="ms">download_done</i></button>'}
   </div>
 `;
 
@@ -1182,6 +1188,53 @@ function vSources() {
   `;
 }
 
+/* Patched Apps View */
+function vPatchedApps() {
+  const rows = [];
+  (S.config.apps || []).forEach(a => {
+    relsFor(a.id).forEach(rel => {
+      (rel.assets || []).filter(x => /\.apk$/i.test(x.name)).forEach(asset => rows.push({ a, rel, asset }));
+    });
+  });
+  rows.sort((x,y) => Date.parse(y.rel.published_at || y.rel.created_at || 0) - Date.parse(x.rel.published_at || x.rel.created_at || 0));
+
+  if (!rows.length) {
+    return hdr('Patched Apps', 'No patched APKs published yet', 1) + `
+      <div class="card" style="text-align:center;padding:32px 14px">
+        <i class="ms" style="font-size:40px;color:var(--out)">download_done</i>
+        <div style="font-weight:500;margin-top:8px">No patched APK available</div>
+        <div class="d" style="margin:6px 0">Patched APKs will appear here after a successful build publishes a release.</div>
+      </div>
+    `;
+  }
+
+  return hdr('Patched Apps', rows.length + ' APK file(s) available', 1) + `
+    <div class="card">
+      <div class="d">All published patched APKs are listed here, regardless of whether the stock APK was acquired automatically or supplied manually.</div>
+    </div>
+    ${rows.map(x => `
+      <div class="card">
+        <div class="app-hero">
+          <div class="ico" style="background:linear-gradient(135deg,${hue(x.a)})">${esc((ttl(x.a)[0] || 'A').toUpperCase())}</div>
+          <div class="hero-copy">
+            <b>${esc(ttl(x.a))}</b>
+            <div class="mono">${esc(x.a.package)}</div>
+            <div style="margin-top:5px">
+              <span class="chip ok">Patched APK</span>
+              <span class="chip p">${esc(x.rel.tag_name || 'release')}</span>
+            </div>
+          </div>
+        </div>
+        <div class="d" style="margin-top:10px">Published ${esc(ago(x.rel.published_at || x.rel.created_at))}</div>
+        <div class="action-row">
+          <a class="pill" style="text-decoration:none" href="${esc(x.asset.browser_download_url)}" download><i class="ms">download</i> Download APK</a>
+          <a class="pill o" style="text-decoration:none" href="${esc(x.rel.html_url)}" target="_blank" rel="noopener">View Release ↗</a>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
 /* Builds View */
 function vBuilds() {
   return hdr('Builds', 'GitHub Actions Execution', 1) + `
@@ -1352,7 +1405,7 @@ async function dispatchBuild(appId, force=true) {
           L.releaseTag = builtAsset.release.tag_name;
         } else {
           const candidate = S.rels.find(r => appId && r.tag_name.startsWith(appId + '-'));
-          const fallbackAsset = candidate && (candidate.assets || []).find(x => /\\.apk$/i.test(x.name));
+          const fallbackAsset = candidate && (candidate.assets || []).find(x => /\.apk$/i.test(x.name));
           if (fallbackAsset) {
             L.downloadUrl = fallbackAsset.browser_download_url;
             L.releaseUrl = candidate.html_url;
@@ -1659,11 +1712,40 @@ async function inspectEnteredSource() {
       : (patchesData && Array.isArray(patchesData.patches) ? patchesData.patches : []);
 
     const discoveredPkgs = new Set();
+    const discoveredVersions = {};
+    const addCompatibility = (pkg, versions) => {
+      if (!pkg) return;
+      const vals = Array.isArray(versions)
+        ? versions
+        : (versions && typeof versions === 'object'
+          ? Object.values(versions).flatMap(v => Array.isArray(v) ? v : [v])
+          : (versions == null ? [] : [versions]));
+      discoveredPkgs.add(pkg);
+      discoveredVersions[pkg] = Array.from(new Set([
+        ...(discoveredVersions[pkg] || []),
+        ...vals.map(v => typeof v === 'object' && v ? (v.version || '') : String(v || '')).filter(Boolean)
+      ]));
+    };
     patchEntries.forEach(p => {
-      (p.compatiblePackages || []).forEach(cp => {
-        const pkg = cp.name || cp.packageName;
-        if (pkg) discoveredPkgs.add(pkg);
-      });
+      const cp = p && p.compatiblePackages;
+      if (Array.isArray(cp)) {
+        cp.forEach(x => {
+          if (typeof x === 'string') addCompatibility(x, []);
+          else if (x && typeof x === 'object') addCompatibility(x.name || x.packageName || x.package || '', x.versions || x.targets || []);
+        });
+      } else if (cp && typeof cp === 'object') {
+        Object.entries(cp).forEach(([pkg, versions]) => addCompatibility(pkg, versions));
+      }
+
+      const compat = p && p.compatibility;
+      if (Array.isArray(compat)) {
+        compat.forEach(x => addCompatibility(
+          x && (x.packageName || x.package || x.name),
+          x && Array.isArray(x.targets) ? x.targets.map(t => t && t.version).filter(Boolean) : []
+        ));
+      } else if (compat && typeof compat === 'object') {
+        Object.entries(compat).forEach(([pkg, data]) => addCompatibility(pkg, data));
+      }
     });
 
     if (discoveredPkgs.size === 0) {
@@ -1684,6 +1766,7 @@ async function inspectEnteredSource() {
     newSourceInspection = {
       repo, tag, prerelease: pre,
       packages: pkgList,
+      versions: discoveredVersions,
       selectedPkg: pkgList[0] || '',
       releaseName: rel.name || tag,
       patchCount: patchEntries.length || null,
@@ -1722,7 +1805,7 @@ async function inspectEnteredSource() {
   } catch(e) {
     resDiv.innerHTML = `<div class="warnb" style="margin:8px 0">Could not inspect automatically (${esc(e.message)}). Specify package manually:</div>
       <input type="text" id="custom_inspected_pkg" placeholder="com.example.app">`;
-    newSourceInspection = { repo, tag: 'latest', prerelease: pre, packages: [], selectedPkg: '' };
+    newSourceInspection = { repo, tag: 'latest', prerelease: pre, packages: [], versions: {}, selectedPkg: '' };
     addBtn.disabled = false;
   }
 }
@@ -1827,7 +1910,7 @@ Object.assign(A, {
         id, package: pkg, patches_repo: newSourceInspection.repo,
         patch_sources: [newSourceInspection.repo],
         prerelease: newSourceInspection.prerelease,
-        arch: defArch, apk_arch: 'auto', version: '', force: false,
+        arch: defArch, apk_arch: 'auto', version: (((newSourceInspection.versions || {})[pkg] || [])[0] || ''), force: false,
         auto_patch: true, enable: [], disable: [], options: {}
       };
       S.config.apps.push(a);
@@ -1835,6 +1918,7 @@ Object.assign(A, {
       a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : [];
       if (!a.patch_sources.includes(newSourceInspection.repo)) a.patch_sources.push(newSourceInspection.repo);
       if (!a.patches_repo) a.patches_repo = newSourceInspection.repo;
+      if (!a.version) a.version = (((newSourceInspection.versions || {})[pkg] || [])[0] || a.version || '');
     }
 
     dirty();
