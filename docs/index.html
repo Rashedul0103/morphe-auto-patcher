@@ -660,6 +660,9 @@ function appCard(a) {
   const rels = relsFor(a.id);
   const latestRel = rels[0];
   const patchedTag = latestRel ? latestRel.tag_name.replace(a.id + '-', '') : null;
+  const sourceList = Array.isArray(a.patch_sources) && a.patch_sources.length
+    ? a.patch_sources
+    : (a.patches_repo ? [a.patches_repo] : []);
   const latestUpstream = S.upstreamTags[a.patches_repo] || (cat && cat.info && cat.info.patch_tag);
   const hasUpdate = latestUpstream && patchedTag && (latestUpstream !== patchedTag);
   const apkAsset = latestRel ? (latestRel.assets || []).find(x => x.name.endsWith('.apk')) : null;
@@ -698,7 +701,7 @@ function appCard(a) {
             </div>
 
             <div class="mono" style="margin-top:4px;font-family:inherit">
-              ${esc(a.patches_repo)} · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
+              ${sourceList.length > 1 ? sourceList.length + ' patch sources' : esc(sourceList[0] || 'No patch source')} · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
             </div>
             <div class="d" style="margin-top:4px">
               Source APK: <b>${esc(sourceLabel)}</b> · YouTube ${esc(sourceVersion)}
@@ -1258,10 +1261,26 @@ async function inspectEnteredSource() {
     const pkgList = Array.from(discoveredPkgs);
     const mppAsset = (rel.assets || []).find(a => /\.mpp$/i.test(a.name));
     if (!pkgList.length && !mppAsset) throw new Error('No Morphe patch bundle found in the selected release.');
-    newSourceInspection = { repo, tag, prerelease: pre, packages: pkgList, selectedPkg: pkgList[0] || '' };
+    newSourceInspection = {
+      repo, tag, prerelease: pre,
+      packages: pkgList,
+      selectedPkg: pkgList[0] || '',
+      releaseName: rel.name || tag,
+      patchCount: patchEntries.length || null,
+      bundleAsset: mppAsset ? mppAsset.name : ''
+    };
 
     resDiv.innerHTML = `
-      <div style="font-size:0.8rem;color:var(--sec);margin-bottom:6px">Release: <b>${esc(tag)}</b> · Detected ${pkgList.length} compatible app(s):</div>
+      <div class="card" style="background:var(--card-high);margin:8px 0">
+        <b>${esc(repo)}</b>
+        <div class="d" style="margin-top:4px">
+          Release <b>${esc(tag)}</b>
+          · ${patchEntries.length || 'Unknown'} patch(es)
+          · ${pkgList.length} compatible app(s)
+          ${mppAsset ? ' · .mpp bundle detected' : ''}
+        </div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--sec);margin-bottom:6px">Select an app to add this source to:</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${pkgList.map((pkg, idx) => {
           const meta = getAppMeta(pkg);
@@ -1272,9 +1291,13 @@ async function inspectEnteredSource() {
           `;
         }).join('')}
       </div>
-      <div class="lbl" style="margin-top:10px">Other / Custom package name</div>
+      <div class="lbl" style="margin-top:10px">Custom package name (if it was not detected)</div>
       <input type="text" id="custom_inspected_pkg" placeholder="com.example.app" value="${esc(pkgList[0] || '')}">
+      <div class="d" style="margin-top:8px">
+        The repository will be saved as a reusable patch source. If the selected app already exists, this source will be added to its source priority instead of replacing the current source.
+      </div>
     `;
+    addBtn.textContent = 'Add Source + App';
     addBtn.disabled = false;
   } catch(e) {
     resDiv.innerHTML = `<div class="warnb" style="margin:8px 0">Could not inspect automatically (${esc(e.message)}). Specify package manually:</div>
@@ -1333,17 +1356,42 @@ Object.assign(A, {
     const id = (parts[parts.length - 1] || 'app').toLowerCase();
     const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
 
+    S.config.sources = Array.isArray(S.config.sources) ? S.config.sources : [];
+    const existingSource = S.config.sources.find(x => x.repo === newSourceInspection.repo);
+    const sourceRecord = {
+      repo: newSourceInspection.repo,
+      enabled: existingSource ? existingSource.enabled !== false : true,
+      prerelease: newSourceInspection.prerelease,
+      tag: newSourceInspection.tag,
+      release_name: newSourceInspection.releaseName || newSourceInspection.tag,
+      patch_count: newSourceInspection.patchCount,
+      apps: newSourceInspection.packages.map(p => ({ package: p, name: getAppMeta(p).name })),
+      last_inspected: new Date().toISOString()
+    };
+    if (existingSource) Object.assign(existingSource, sourceRecord);
+    else S.config.sources.push(sourceRecord);
+
     S.config.apps = S.config.apps || [];
-    if (!S.config.apps.some(a => a.id === id)) {
-      S.config.apps.push({
-        id, package: pkg, patches_repo: newSourceInspection.repo, prerelease: newSourceInspection.prerelease,
-        arch: defArch, version: '', force: false, auto_patch: true, enable: [], disable: [], options: {}
-      });
-      dirty();
+    let a = S.config.apps.find(x => x.id === id);
+    if (!a) {
+      a = {
+        id, package: pkg, patches_repo: newSourceInspection.repo,
+        patch_sources: [newSourceInspection.repo],
+        prerelease: newSourceInspection.prerelease,
+        arch: defArch, apk_arch: 'auto', version: '', force: false,
+        auto_patch: true, enable: [], disable: [], options: {}
+      };
+      S.config.apps.push(a);
+    } else {
+      a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : [];
+      if (!a.patch_sources.includes(newSourceInspection.repo)) a.patch_sources.push(newSourceInspection.repo);
+      if (!a.patches_repo) a.patches_repo = newSourceInspection.repo;
     }
+
+    dirty();
     closeDlg();
     loadLocalCatalogs().then(render);
-    toast(`Added ${id} (${pkg}) ✔ Click "Save changes"`);
+    toast(`Source added. ${ttl(a)} now uses ${a.patch_sources.length} source(s) ✔ Save changes`);
   },
   conn: dlgConnect,
   close: closeDlg,
