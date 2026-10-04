@@ -18,7 +18,9 @@
       "apk_providers": [
         "apkmirror",
         "uptodown"
-      ]
+      ],
+      "name": "YouTube",
+      "android_package": "com.google.android.youtube"
     },
     {
       "id": "duolingo",
@@ -35,7 +37,13 @@
       "auto_patch": true,
       "enable": [],
       "disable": [],
-      "options": {}
+      "options": {},
+      "name": "Duolingo",
+      "android_package": "com.duolingo",
+      "apk_providers": [
+        "apkmirror",
+        "uptodown"
+      ]
     },
     {
       "id": "adguard",
@@ -52,7 +60,13 @@
       "auto_patch": true,
       "enable": [],
       "disable": [],
-      "options": {}
+      "options": {},
+      "name": "AdGuard",
+      "android_package": "com.adguard.android.contentblocker",
+      "apk_providers": [
+        "apkmirror",
+        "uptodown"
+      ]
     },
     {
       "id": "bunpo",
@@ -69,7 +83,13 @@
       "auto_patch": true,
       "enable": [],
       "disable": [],
-      "options": {}
+      "options": {},
+      "name": "Bunpo",
+      "android_package": "com.bunpoapp",
+      "apk_providers": [
+        "apkmirror",
+        "uptodown"
+      ]
     },
     {
       "id": "cake",
@@ -86,7 +106,13 @@
       "auto_patch": true,
       "enable": [],
       "disable": [],
-      "options": {}
+      "options": {},
+      "name": "Cake",
+      "android_package": "me.mycake",
+      "apk_providers": [
+        "apkmirror",
+        "uptodown"
+      ]
     }
   ],
   "settings": {
