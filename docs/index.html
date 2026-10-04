@@ -237,6 +237,20 @@ async function gh(path, o={}, raw) {
   return r.status == 204 ? null : r.json();
 }
 
+function apkReadiness(a, info) {
+  info = info || {};
+  const acquisition = info.apk_acquisition || {};
+  const stock = info.stock_apk || null;
+  const target = acquisition.target_version || info.recommended_version || a.version || '';
+  const stockExact = !!(stock && stock.version_name && target && stock.version_name === target);
+  const stockRelease = stockRel(a.id);
+  const hasStockAsset = !!(stockRelease && (stockRelease.assets || []).some(x => EXT.test(x.name)));
+  if (acquisition.status === 'manual_required') return {state:'manual', label:'Manual APK required', detail: target ? 'Exact ' + target + ' was not acquired automatically.' : 'Automatic APK acquisition failed.', target:target};
+  if (stockExact) return {state:'ready', label:'Exact APK verified', detail: target + ' · ' + ((stock.architectures || []).join(', ') || 'architecture recorded'), target:target};
+  if (hasStockAsset && !stock) return {state:'unknown', label:'Stock APK present', detail:'Release contains an APK, but its metadata has not been recorded yet.', target:target};
+  if (acquisition.status === 'downloaded' && stock) return {state:'warning', label:'APK metadata needs refresh', detail:'Recorded ' + (stock.version_name || 'unknown') + ' · target ' + (target || 'Auto'), target:target};
+  return {state:'unknown', label:'APK not checked', detail: target ? 'Target version: ' + target : 'No target version selected.', target:target};
+}
 const app = id => (S.config.apps || []).find(a => a.id === id);
 const ttl = a => getAppMeta(a.package).name || a.id;
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
