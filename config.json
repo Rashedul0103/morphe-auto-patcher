@@ -19,6 +19,23 @@
         "apkmirror",
         "uptodown"
       ]
+    },
+    {
+      "id": "duolingo",
+      "package": "Duolingo",
+      "patches_repo": "hoo-dles/morphe-patches",
+      "patch_sources": [
+        "hoo-dles/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "",
+      "force": false,
+      "auto_patch": true,
+      "enable": [],
+      "disable": [],
+      "options": {}
     }
   ],
   "settings": {
@@ -29,6 +46,246 @@
     "check_interval_hours": 6,
     "discord_webhook": ""
   },
-  "sources": [],
+  "sources": [
+    {
+      "repo": "hoo-dles/morphe-patches",
+      "enabled": false,
+      "prerelease": false,
+      "tag": "v1.46.0",
+      "release_name": "v1.46.0",
+      "patch_count": 78,
+      "apps": [
+        {
+          "package": "GitHub",
+          "name": "GitHub"
+        },
+        {
+          "package": "SoundCloud",
+          "name": "SoundCloud"
+        },
+        {
+          "package": "Lingory",
+          "name": "Lingory"
+        },
+        {
+          "package": "SuperChinese",
+          "name": "SuperChinese"
+        },
+        {
+          "package": "Goodreads",
+          "name": "Goodreads"
+        },
+        {
+          "package": "Pandora",
+          "name": "Pandora"
+        },
+        {
+          "package": "Sofascore",
+          "name": "Sofascore"
+        },
+        {
+          "package": "Duolingo",
+          "name": "Duolingo"
+        },
+        {
+          "package": "CamScanner",
+          "name": "CamScanner"
+        },
+        {
+          "package": "NOMone Desktop",
+          "name": "NOMone Desktop"
+        },
+        {
+          "package": "FotMob",
+          "name": "FotMob"
+        },
+        {
+          "package": "Niagara Launcher",
+          "name": "Niagara Launcher"
+        },
+        {
+          "package": "AllTrails",
+          "name": "AllTrails"
+        },
+        {
+          "package": "Bunpo",
+          "name": "Bunpo"
+        },
+        {
+          "package": "Cake",
+          "name": "Cake"
+        },
+        {
+          "package": "AdGuard",
+          "name": "AdGuard"
+        },
+        {
+          "package": "ASL Bloom",
+          "name": "ASL Bloom"
+        },
+        {
+          "package": "Avocards",
+          "name": "Avocards"
+        },
+        {
+          "package": "Bend",
+          "name": "Bend"
+        },
+        {
+          "package": "Busuu",
+          "name": "Busuu"
+        },
+        {
+          "package": "Daily Pocket",
+          "name": "Daily Pocket"
+        },
+        {
+          "package": "Eggbun",
+          "name": "Eggbun"
+        },
+        {
+          "package": "HelloChinese",
+          "name": "HelloChinese"
+        },
+        {
+          "package": "RP Hypertrophy",
+          "name": "RP Hypertrophy"
+        },
+        {
+          "package": "Lyfta",
+          "name": "Lyfta"
+        },
+        {
+          "package": "Podcast Addict",
+          "name": "Podcast Addict"
+        },
+        {
+          "package": "PyDroid3",
+          "name": "PyDroid3"
+        },
+        {
+          "package": "Showly",
+          "name": "Showly"
+        },
+        {
+          "package": "Sleep as Android",
+          "name": "Sleep as Android"
+        },
+        {
+          "package": "SnoreLab",
+          "name": "SnoreLab"
+        },
+        {
+          "package": "TTMIK Stories",
+          "name": "TTMIK Stories"
+        },
+        {
+          "package": "Ventusky",
+          "name": "Ventusky"
+        },
+        {
+          "package": "Wallcraft",
+          "name": "Wallcraft"
+        },
+        {
+          "package": "Merriam-Webster",
+          "name": "Merriam-Webster"
+        },
+        {
+          "package": "Windy",
+          "name": "Windy"
+        },
+        {
+          "package": "World Map Quiz",
+          "name": "World Map Quiz"
+        },
+        {
+          "package": "Lingodeer",
+          "name": "Lingodeer"
+        },
+        {
+          "package": "MacroFactor",
+          "name": "MacroFactor"
+        },
+        {
+          "package": "MacroFactor Workouts",
+          "name": "MacroFactor Workouts"
+        },
+        {
+          "package": "MyFitnessPal",
+          "name": "MyFitnessPal"
+        },
+        {
+          "package": "Nova Launcher",
+          "name": "Nova Launcher"
+        },
+        {
+          "package": "IbisPaint X",
+          "name": "IbisPaint X"
+        },
+        {
+          "package": "Ling",
+          "name": "Ling"
+        },
+        {
+          "package": "Meme Generator",
+          "name": "Meme Generator"
+        },
+        {
+          "package": "Mimo",
+          "name": "Mimo"
+        },
+        {
+          "package": "Mirinae",
+          "name": "Mirinae"
+        },
+        {
+          "package": "MyExpenses",
+          "name": "MyExpenses"
+        },
+        {
+          "package": "Smart Launcher",
+          "name": "Smart Launcher"
+        },
+        {
+          "package": "Solid Explorer",
+          "name": "Solid Explorer"
+        },
+        {
+          "package": "WPS Office",
+          "name": "WPS Office"
+        },
+        {
+          "package": "Xodo",
+          "name": "Xodo"
+        },
+        {
+          "package": "XRecorder",
+          "name": "XRecorder"
+        },
+        {
+          "package": "Google News",
+          "name": "Google News"
+        },
+        {
+          "package": "Prime Video",
+          "name": "Prime Video"
+        },
+        {
+          "package": "Proton VPN",
+          "name": "Proton VPN"
+        },
+        {
+          "package": "Icon Packer",
+          "name": "Icon Packer"
+        },
+        {
+          "package": "Lightroom Mobile",
+          "name": "Lightroom Mobile"
+        }
+      ],
+      "last_inspected": "2026-10-04T10:50:18.391Z"
+    }
+  ],
   "hidden_apps": []
 }
