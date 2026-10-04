@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791122155
+    "updated_at": 1791122294
   },
   "patch_source_attempts": [
     {
@@ -12,7 +12,7 @@
       "tag": "v1.46.0",
       "filters_tried": [
         "AdGuard",
-        "com.adguard.android.contentblocker"
+        "com.adguard.android"
       ]
     }
   ],
