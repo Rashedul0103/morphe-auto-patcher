@@ -446,27 +446,29 @@ function startPatchFlow(id) {
   const a = app(id);
   if (!a) return toast('App not found', 1);
   const cat = S.cats[id];
-  const recVer = cat && cat.info ? cat.info.recommended_version : 'Auto';
-  const ready = hasStockApk(id);
+  const recVer = cat && cat.info ? (cat.info.recommended_version || '') : '';
   const acquisition = cat && cat.info ? (cat.info.apk_acquisition || {}) : {};
+  const readiness = apkReadiness(a, cat && cat.info);
+  const ready = readiness.state === 'ready';
+  const targetVersion = readiness.target || recVer || a.version || 'Auto';
 
   if (acquisition.status === 'manual_required') return showManualApkFlow(id);
 
   dlg(`
-    <h2>${ready ? 'Stock APK Ready' : 'Get Stock APK'}</h2>
-    <p>Targeting <b>${esc(ttl(a))}</b> · version <b>${esc(recVer)}</b>.</p>
+    <h2>${ready ? 'Stock APK Verified' : 'Prepare Stock APK'}</h2>
+    <p>Targeting <b>${esc(ttl(a))}</b> · exact version <b>${esc(targetVersion)}</b>.</p>
     <div class="card" style="background:var(--card-high)">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <b>Stock APK</b>
-        <span class="chip ${ready ? 'ok' : 'bad'}">${ready ? 'Available' : 'Missing'}</span>
+        <span class="chip ${readiness.state === 'ready' ? 'ok' : readiness.state === 'manual' ? 'bad' : 'warn'}">${esc(readiness.label)}</span>
       </div>
       <div class="d" style="margin-top:6px">
-        ${ready ? 'A stock APK is already stored. The build will verify it before patching.' : 'No valid stock APK is currently available.'}
+        ${esc(readiness.detail)}
       </div>
     </div>
     ${ready
       ? `<button class="pill" data-a="dispatch_app" data-id="${esc(id)}"><i class="ms">bolt</i> Start Build</button>`
-      : `<button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Find & Download APK</button>
+      : `<button class="pill" data-a="dlg_need_apk" data-id="${esc(id)}"><i class="ms">download</i> Recover Exact APK</button>
          <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> I Already Have the APK</button>`}
     <button class="pill t" data-a="close">Cancel</button>
   `);
@@ -483,7 +485,11 @@ function showManualApkFlow(id) {
   const acquisition = info.apk_acquisition || {};
   const urls = Array.isArray(acquisition.manual_urls) ? acquisition.manual_urls : [];
   const exact = urls.find(u => /apkmirror\\.com/i.test(u)) || urls[0] || info.apkmirror_url || '';
-  const version = info.recommended_version || a.version || 'the requested version';
+  const version = acquisition.target_version || info.recommended_version || a.version || 'the requested version';
+  const attempts = Array.isArray(acquisition.attempts) ? acquisition.attempts : [];
+  const attemptText = attempts.length
+    ? attempts.slice(0, 5).map(x => (x.provider || 'provider') + ': ' + (x.status || 'failed')).join(' · ')
+    : 'APKMirror and other automatic providers did not produce a verified APK.';
 
   dlg(`
     <h2>Manual APK Required</h2>
@@ -493,6 +499,7 @@ function showManualApkFlow(id) {
       <div class="d" style="margin-top:6px">
         Download the untouched original APK for this exact version. Do not use an already-patched APK.
       </div>
+      <div class="d" style="margin-top:6px"><b>Automatic checks:</b> ${esc(attemptText)}</div>
     </div>
     ${exact ? `<a class="pill" style="text-decoration:none;justify-content:center;margin-top:14px" href="${esc(exact)}" target="_blank" rel="noopener"><i class="ms">download</i> Download Exact APK ↗</a>` : ''}
     <button class="pill o" data-a="dlg_upload_apk" data-id="${esc(id)}"><i class="ms">upload</i> Select Downloaded APK</button>
