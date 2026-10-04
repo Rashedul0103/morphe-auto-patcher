@@ -1,0 +1,39 @@
+[
+  {
+    "name": "Disable dynamic app icon",
+    "description": "Prevents Duolingo from changing the app icon. Only the default icon will be available.",
+    "enabled": false,
+    "options": []
+  },
+  {
+    "name": "Enable Premium",
+    "description": "Enables app features locked behind the subscription paywall. Some features like AI video calls may not work.",
+    "enabled": true,
+    "options": [
+      {
+        "key": "premiumVariant",
+        "title": "Type",
+        "description": "Choose which type of premium Duolingo subscription to enable.",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "SUPER",
+        "values": {
+          "Duolingo Super": "SUPER",
+          "Duolingo MAX": "MAX"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Enable debug mode",
+    "description": "Enables hidden debug menu in settings.",
+    "enabled": false,
+    "options": []
+  },
+  {
+    "name": "Unlimited RampUp time",
+    "description": "The timer for RampUp challenges will never decrease.",
+    "enabled": false,
+    "options": []
+  }
+]

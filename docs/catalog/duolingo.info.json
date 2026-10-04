@@ -1,24 +1,45 @@
 {
-  "build_status": {
-    "status": "failed",
-    "stage": "patch_source",
-    "reason": "No compatible patch source found.",
-    "updated_at": 1791122294
-  },
-  "patch_source_attempts": [
-    {
-      "repo": "hoo-dles/morphe-patches",
-      "status": "incompatible",
-      "tag": "v1.46.0",
-      "filters_tried": [
-        "Duolingo",
-        "com.duolingo"
-      ]
-    }
+  "patch_tag": "v1.46.0",
+  "recommended_version": "6.98.4",
+  "compatible_versions": [
+    "6.98.4"
   ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=duolingo%206.98.4",
+  "patch_source": "hoo-dles/morphe-patches",
+  "patch_filter": "Duolingo",
+  "android_package": "com.duolingo",
+  "patch_source_attempts": [],
   "patch_source_candidates": [
     "hoo-dles/morphe-patches"
   ],
+  "stock_signer_sha256": [],
   "icon_url": "catalog/icons/duolingo.png",
-  "icon_source": "google_play"
+  "icon_source": "cache",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791122435
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "6.98.4",
+    "package": "com.duolingo",
+    "apk_arch": "auto",
+    "manual_urls": [],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "status": "not_configured"
+      },
+      {
+        "provider": "uptodown",
+        "status": "not_configured"
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/duolingo"
+  },
+  "stock_apk": null
 }

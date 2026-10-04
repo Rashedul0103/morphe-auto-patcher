@@ -17,12 +17,12 @@
   ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/youtube.png",
-  "icon_source": "google_play",
+  "icon_source": "cache",
   "build_status": {
     "status": "success",
     "stage": "completed",
     "release_tag": "youtube-v1.45.0",
-    "updated_at": 1791122294
+    "updated_at": 1791122435
   },
   "apk_acquisition": {
     "status": "downloaded",
@@ -55,7 +55,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "043b693117953960f9a3cea1d744fe316c1445972500f51662f74f73d5972eca",
+    "sha256": "12f922d866086cd2e018175d889d1e927041085e95f3f4d306ecbcbf1cce21e5",
     "size_bytes": 103499352,
     "signer_sha256": []
   }

@@ -1,24 +1,45 @@
 {
-  "build_status": {
-    "status": "failed",
-    "stage": "patch_source",
-    "reason": "No compatible patch source found.",
-    "updated_at": 1791122294
-  },
-  "patch_source_attempts": [
-    {
-      "repo": "hoo-dles/morphe-patches",
-      "status": "incompatible",
-      "tag": "v1.46.0",
-      "filters_tried": [
-        "Cake",
-        "me.mycake"
-      ]
-    }
+  "patch_tag": "v1.46.0",
+  "recommended_version": "6.4.0",
+  "compatible_versions": [
+    "6.4.0"
   ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=cake%206.4.0",
+  "patch_source": "hoo-dles/morphe-patches",
+  "patch_filter": "Cake",
+  "android_package": "me.mycake",
+  "patch_source_attempts": [],
   "patch_source_candidates": [
     "hoo-dles/morphe-patches"
   ],
+  "stock_signer_sha256": [],
   "icon_url": "catalog/icons/cake.png",
-  "icon_source": "google_play"
+  "icon_source": "google_play",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791122435
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "6.4.0",
+    "package": "me.mycake",
+    "apk_arch": "auto",
+    "manual_urls": [],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "status": "not_configured"
+      },
+      {
+        "provider": "uptodown",
+        "status": "not_configured"
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/cake"
+  },
+  "stock_apk": null
 }

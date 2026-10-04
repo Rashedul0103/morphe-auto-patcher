@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Enable Plus",
+    "description": "Enable Plus membership (not all features are available). Requirements: strict apk version",
+    "enabled": true,
+    "options": []
+  }
+]

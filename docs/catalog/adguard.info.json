@@ -1,24 +1,72 @@
 {
-  "build_status": {
-    "status": "failed",
-    "stage": "patch_source",
-    "reason": "No compatible patch source found.",
-    "updated_at": 1791122294
-  },
-  "patch_source_attempts": [
-    {
-      "repo": "hoo-dles/morphe-patches",
-      "status": "incompatible",
-      "tag": "v1.46.0",
-      "filters_tried": [
-        "AdGuard",
-        "com.adguard.android"
-      ]
-    }
+  "patch_tag": "v1.46.0",
+  "recommended_version": "4.14.2",
+  "compatible_versions": [
+    "4.14.2"
   ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=adguard%204.14.2",
+  "patch_source": "hoo-dles/morphe-patches",
+  "patch_filter": "AdGuard",
+  "android_package": "com.adguard.android",
+  "patch_source_attempts": [],
   "patch_source_candidates": [
     "hoo-dles/morphe-patches"
   ],
+  "stock_signer_sha256": [],
   "icon_url": "catalog/icons/adguard.png",
-  "icon_source": "google_play"
+  "icon_source": "google_play",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791122435
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "4.14.2",
+    "package": "com.adguard.android",
+    "apk_arch": "auto",
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+      "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/"
+    ],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "4.14.2",
+        "status": "download_failed",
+        "candidate": {
+          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+          "architecture": "universal",
+          "dpi": "nodpi",
+          "is_bundle": false
+        },
+        "error": "APKMirror download button not found"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "4.14.2",
+        "status": "download_failed",
+        "candidate": {
+          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
+          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
+          "architecture": "universal",
+          "dpi": "nodpi",
+          "is_bundle": false
+        },
+        "error": "APKMirror download button not found"
+      },
+      {
+        "provider": "uptodown",
+        "version": "4.14.2",
+        "status": "resolve_failed",
+        "error": "HTTP 404: https://adguard.en.uptodown.com/android/versions/"
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/adguard"
+  },
+  "stock_apk": null
 }
