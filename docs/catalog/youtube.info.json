@@ -12,6 +12,9 @@
   "apk_acquisition": {
     "status": "downloaded",
     "provider": "stock_release",
+    "target_version": "21.16.256",
+    "package": "com.google.android.youtube",
+    "apk_arch": "auto",
     "manual_urls": [
       "https://github.com/Rashedul0103/morphe-auto-patcher/releases/tag/stock-youtube"
     ],
