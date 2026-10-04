@@ -275,7 +275,7 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
         try:
             _download_url(explicit_url, explicit_path)
             info = _validate_stock_file(explicit_path, package, app_version, apk_arch, expected_signer_sha256)
-            return explicit_path, info, {"status": "downloaded", "provider": "configured_url", "manual_urls": [explicit_url], "attempts": attempts}
+            return explicit_path, info, {"status": "downloaded", "provider": "configured_url", "target_version": app_version, "package": package, "apk_arch": apk_arch, "manual_urls": [explicit_url], "attempts": attempts}
         except Exception as exc:
             attempts.append({"provider": "configured_url", "status": "failed", "url": explicit_url, "error": str(exc)})
             if os.path.exists(explicit_path):
@@ -302,6 +302,9 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
                 return apk_path, info, {
                     "status": "downloaded",
                     "provider": "stock_release",
+                    "target_version": app_version,
+                    "package": package,
+                    "apk_arch": apk_arch,
                     "manual_urls": [f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}/releases/tag/{stock_release_tag}"],
                     "attempts": attempts,
                 }
@@ -324,6 +327,9 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
             return result.path, info, {
                 "status": "downloaded",
                 "provider": result.candidate.provider if result.candidate else "automatic",
+                "target_version": app_version,
+                "package": package,
+                "apk_arch": apk_arch,
                 "manual_urls": manual_urls,
                 "attempts": attempts,
             }
@@ -341,6 +347,9 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
     return None, None, {
         "status": "manual_required",
         "provider": "",
+        "target_version": app_version,
+        "package": package,
+        "apk_arch": apk_arch,
         "manual_urls": manual_urls,
         "attempts": attempts,
         "error": result.error or "No valid stock APK could be acquired.",
