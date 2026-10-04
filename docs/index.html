@@ -910,14 +910,14 @@ function vApp(r) {
           : (a.patches_repo ? [a.patches_repo] : []);
         const sourceMap = Object.fromEntries((S.config.sources || []).map(x => [x.repo, x]));
         return repos.length
-          ? repos.map((repo, idx) => \`<div class="row">
+          ? repos.map((repo, idx) => `<div class="row">
                 <div class="g">
                   <b>${idx + 1}. ${esc(repo)}</b>
                   <div class="d">${sourceMap[repo]?.tag ? 'Release ' + esc(sourceMap[repo].tag) : 'Legacy / not inspected'}${sourceMap[repo]?.enabled === false ? ' · Disabled' : ''}</div>
                 </div>
-                ${idx > 0 ? \`<button class="pill t" data-a="source_up" data-id="${esc(a.id)}" data-idx="${idx}">↑</button>\` : ''}
-                ${idx < repos.length - 1 ? \`<button class="pill t" data-a="source_down" data-id="${esc(a.id)}" data-idx="${idx}">↓</button>\` : ''}
-              </div>\`).join('')
+                ${idx > 0 ? `<button class="pill t" data-a="source_up" data-id="${esc(a.id)}" data-idx="${idx}">↑</button>` : ''}
+                ${idx < repos.length - 1 ? `<button class="pill t" data-a="source_down" data-id="${esc(a.id)}" data-idx="${idx}">↓</button>` : ''}
+              </div>`).join('')
           : '<div class="d" style="margin-top:8px">No patch source configured.</div>';
       })()}
       <div class="d" style="margin-top:8px">The builder tries these sources in this order and skips a source if it does not actually contain patches for this app.</div>
