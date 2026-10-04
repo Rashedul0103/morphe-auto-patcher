@@ -664,6 +664,16 @@ function appCard(a) {
   const hasUpdate = latestUpstream && patchedTag && (latestUpstream !== patchedTag);
   const apkAsset = latestRel ? (latestRel.assets || []).find(x => x.name.endsWith('.apk')) : null;
   const isAutoPatch = a.auto_patch !== false;
+  const acq = (cat && cat.info && cat.info.apk_acquisition) || {};
+  const stock = (cat && cat.info && cat.info.stock_apk) || null;
+  const sourceLabel = acq.provider === 'stock_release'
+    ? 'stock-' + a.id
+    : acq.provider === 'configured_url'
+      ? 'Configured APK URL'
+      : acq.provider
+        ? acq.provider
+        : 'Not recorded';
+  const sourceVersion = acq.target_version || (stock && stock.version_name) || recVer;
 
   return `
     <div class="swipe-box">
@@ -689,6 +699,10 @@ function appCard(a) {
 
             <div class="mono" style="margin-top:4px;font-family:inherit">
               ${esc(a.patches_repo)} · ${latestRel ? 'Patched ' + ago(latestRel.published_at || latestRel.created_at) : 'Not patched yet'}
+            </div>
+            <div class="d" style="margin-top:4px">
+              Source APK: <b>${esc(sourceLabel)}</b> · YouTube ${esc(sourceVersion)}
+              ${latestRel ? ' → Output: <b>' + esc(latestRel.tag_name) + '</b>' : ''}
             </div>
           </div>
 
@@ -790,6 +804,17 @@ function vApp(r) {
       <datalist id="ver-list-${esc(a.id)}">
         ${(inf.compatible_versions || []).map(v => `<option value="${esc(v)}">`).join('')}
       </datalist>
+
+      <div class="card" style="background:var(--card-high);margin:10px 0 4px">
+        <b>APK Provenance</b>
+        <div class="d" style="margin-top:5px">
+          Source: <b>${esc(((inf.apk_acquisition||{}).provider === 'stock_release' ? 'stock-' + a.id : (inf.apk_acquisition||{}).provider || 'Automatic'))}</b>
+          · Version: <b>${esc((inf.apk_acquisition||{}).target_version || inf.recommended_version || a.version || 'Auto')}</b>
+        </div>
+        <div class="d" style="margin-top:3px">
+          The source APK is copied to a temporary workspace, validated, and patched. The stock release is not modified by the patch operation.
+        </div>
+      </div>
 
       <div class="lbl">Patch Output Architecture</div>
       <select data-c="cfg" data-k="arch">
