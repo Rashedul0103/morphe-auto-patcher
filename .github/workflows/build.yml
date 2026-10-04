@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -49,6 +49,19 @@ jobs:
         run: |
           gh release download --repo MorpheApp/morphe-desktop --pattern "*-all.jar" --clobber
 
+      - name: Setup Android command-line tools
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install APK tooling
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "build-tools;35.0.0"
+
+      - name: Install Python dependencies
+        run: python3 -m pip install --disable-pip-version-check -r requirements.txt
+
       - name: Restore Keystore
         run: |
           if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
@@ -57,6 +70,20 @@ jobs:
           else
             echo "::warning::KEYSTORE_B64 secret is not set. Custom APK signing key will not be used."
           fi
+
+      - name: Validate Web UI JavaScript
+        run: |
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("docs/index.html").read_text(encoding="utf-8-sig")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", html, re.S | re.I)
+          if not scripts:
+              raise SystemExit("No script block found in docs/index.html")
+          Path("/tmp/patch-manager-ui.js").write_text(scripts[-1], encoding="utf-8")
+          PY
+          node --check /tmp/patch-manager-ui.js
 
       - name: Run Build Script
         env:
@@ -68,7 +95,7 @@ jobs:
         run: python3 build.py
 
       - name: Commit Catalog
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'

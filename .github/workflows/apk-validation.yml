@@ -1,0 +1,91 @@
+name: APK Validation Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apk_validator.py'
+      - 'requirements.txt'
+      - '.github/workflows/apk-validation.yml'
+
+jobs:
+  validate-stock-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Android command-line tools
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install build tools
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "build-tools;35.0.0"
+
+      - name: Install Python dependencies
+        run: python3 -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Download current stock YouTube asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/stock
+          gh release download stock-youtube             --repo "$GITHUB_REPOSITORY"             --pattern "*.apk"             --dir /tmp/stock             --clobber
+          test "$(find /tmp/stock -maxdepth 1 -type f -name '*.apk' | wc -l)" -eq 1
+          echo "APK=$(find /tmp/stock -maxdepth 1 -type f -name '*.apk' -print -quit)" >> "$GITHUB_ENV"
+
+      - name: Read APK metadata
+        run: |
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          BADGING="$($AAPT dump badging "$APK")"
+          PACKAGE="$(printf '%s\n' "$BADGING" | sed -n "s/^package: name='\\([^']*\\)'.*$/\\1/p")"
+          VERSION="$(printf '%s\n' "$BADGING" | sed -n "s/^package:.* versionName='\\([^']*\\)'.*$/\\1/p")"
+          test -n "$PACKAGE"
+          test -n "$VERSION"
+          echo "PACKAGE=$PACKAGE" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Detected $PACKAGE $VERSION"
+
+      - name: Validator accepts the correct version
+        run: |
+          python3 - <<'PY'
+          import os
+          from apk_validator import validate_apk
+
+          info = validate_apk(
+              os.environ["APK"],
+              expected_package=os.environ["PACKAGE"],
+              expected_version=os.environ["VERSION"],
+              expected_arch="auto",
+          )
+          assert info.package == os.environ["PACKAGE"]
+          assert info.version_name == os.environ["VERSION"]
+          assert info.sha256
+          print("PASS: exact package/version accepted")
+          PY
+
+      - name: Validator rejects a wrong version
+        run: |
+          if python3 - <<'PY'
+          import os
+          from apk_validator import validate_apk
+
+          validate_apk(
+              os.environ["APK"],
+              expected_package=os.environ["PACKAGE"],
+              expected_version="0.0.0-NOT-THE-STOCK-VERSION",
+              expected_arch="auto",
+          )
+          PY
+          then
+            echo "::error::Validator incorrectly accepted a wrong version"
+            exit 1
+          else
+            echo "PASS: wrong version rejected"
+          fi

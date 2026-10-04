@@ -10,6 +10,9 @@ import time
 import urllib.parse
 import urllib.request
 
+from apk_providers import acquire_from_providers
+from apk_validator import ApkValidationError, validate_apk
+
 CONFIG_FILE = "config.json"
 
 def find_cli_jar():
@@ -182,44 +185,176 @@ def parse_patches(output):
     push_patch()
     return patches
 
-def resolve_stock_apk(app_id, package, app_version):
-    os.makedirs("apks", exist_ok=True)
+def _clean_app_workspace(app_id):
+    root = os.path.join(".work", app_id)
+    if os.path.exists(root):
+        shutil.rmtree(root)
+    stock_dir = os.path.join(root, "stock")
+    patched_dir = os.path.join(root, "patched")
+    os.makedirs(stock_dir, exist_ok=True)
+    os.makedirs(patched_dir, exist_ok=True)
+    return root, stock_dir, patched_dir
 
-    def find_local():
-        if app_version:
-            m = glob.glob(f"apks/{app_id}-{app_version}.apk*") + glob.glob(f"apks/{app_id}-{app_version}.apkm*")
-            if m: return m[0]
-            m = glob.glob(f"apks/{package}*{app_version}*.apk*") + glob.glob(f"apks/{package}*{app_version}*.apkm*")
-            if m: return m[0]
-        m = glob.glob(f"apks/{app_id}.apk*") + glob.glob(f"apks/{app_id}.apkm*")
-        if m: return m[0]
-        m = glob.glob(f"apks/{package}*.apk*") + glob.glob(f"apks/{package}*.apkm*")
-        if m: return m[0]
-        # Fallback: find any apk/apkm in apks/ directory (handles underscored filenames)
-        all_apks = glob.glob("apks/*.apk") + glob.glob("apks/*.apkm")
-        if all_apks:
-            all_apks.sort(key=os.path.getmtime, reverse=True)
-            return all_apks[0]
-        return None
 
-    local_file = find_local()
-    if local_file: return local_file
+def _download_url(url, destination):
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "AutoPatcher-Engine/1.0", "Accept": "*/*"}
+    )
+    with urllib.request.urlopen(req, timeout=60) as response, open(destination, "wb") as fh:
+        while True:
+            chunk = response.read(1024 * 1024)
+            if not chunk:
+                break
+            fh.write(chunk)
+
+
+def _stock_candidates(stock_dir):
+    return sorted(
+        [
+            os.path.join(stock_dir, name)
+            for name in os.listdir(stock_dir)
+            if name.lower().endswith(".apk")
+        ]
+    )
+
+
+def _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256=None):
+    return validate_apk(
+        path,
+        expected_package=package,
+        expected_version=version,
+        expected_arch=apk_arch or "auto",
+        expected_signer_sha256=expected_signer_sha256,
+    )
+
+
+def _choose_valid_stock(candidates, package, version, apk_arch, expected_signer_sha256=None):
+    valid = []
+    errors = []
+    for path in candidates:
+        try:
+            info = _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256)
+            valid.append((path, info))
+        except ApkValidationError as exc:
+            errors.append({"file": os.path.basename(path), "error": str(exc)})
+
+    if not valid:
+        return None, None, errors
+
+    wanted = (apk_arch or "auto").lower()
+    def score(item):
+        arches = {a.lower() for a in item[1].architectures}
+        if wanted not in ("", "auto", "automatic") and wanted in arches:
+            return 3000
+        if wanted not in ("", "auto", "automatic") and "universal" in arches:
+            return 2500
+        if "universal" in arches:
+            return 2000
+        if "arm64-v8a" in arches:
+            return 1500
+        if "armeabi-v7a" in arches:
+            return 1000
+        return 0
+
+    valid.sort(key=score, reverse=True)
+    return valid[0][0], valid[0][1], errors
+
+
+def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_sha256=None):
+    root, stock_dir, _ = _clean_app_workspace(app_id)
+    apk_arch = app_config.get("apk_arch") or "auto"
+    attempts = []
+    manual_urls = []
+
+    explicit_url = (app_config.get("apk_url") or "").strip()
+    if explicit_url:
+        explicit_path = os.path.join(stock_dir, f"{app_id}-{app_version or 'explicit'}-url.apk")
+        print(f"Trying configured APK URL for {app_id}...")
+        try:
+            _download_url(explicit_url, explicit_path)
+            info = _validate_stock_file(explicit_path, package, app_version, apk_arch, expected_signer_sha256)
+            return explicit_path, info, {"status": "downloaded", "provider": "configured_url", "target_version": app_version, "package": package, "apk_arch": apk_arch, "manual_urls": [explicit_url], "attempts": attempts}
+        except Exception as exc:
+            attempts.append({"provider": "configured_url", "status": "failed", "url": explicit_url, "error": str(exc)})
+            if os.path.exists(explicit_path):
+                os.remove(explicit_path)
 
     stock_release_tag = f"stock-{app_id}"
     if release_exists(stock_release_tag):
-        print(f"Found remote drop-bucket release: {stock_release_tag}. Downloading...")
-        dl_cmd = ["gh", "release", "download", stock_release_tag, "--pattern", "*.apk*", "--pattern", "*.apkm*", "-D", "apks/", "--clobber"]
-        ok, _ = run_cmd(dl_cmd)
+        print(f"Found stock release: {stock_release_tag}. Downloading exact candidate(s)...")
+        ok, release_out = run_cmd([
+            "gh", "release", "download", stock_release_tag,
+            "--pattern", "*.apk",
+            "-D", stock_dir,
+            "--clobber"
+        ])
         if ok:
-            downloaded = find_local()
-            if downloaded: return downloaded
-            matching_apks = glob.glob(f"apks/{app_id}*") + glob.glob(f"apks/{package}*")
-            matching_apks = [f for f in matching_apks if f.endswith(('.apk', '.apkm'))]
-            if matching_apks:
-                matching_apks.sort(key=os.path.getmtime, reverse=True)
-                return matching_apks[0]
+            apk_path, info, validation_errors = _choose_valid_stock(
+                _stock_candidates(stock_dir), package, app_version, apk_arch, expected_signer_sha256
+            )
+            attempts.extend([{
+                "provider": "stock_release", "status": "rejected", **err
+            } for err in validation_errors])
+            if apk_path:
+                print(f"Valid stock APK found in {stock_release_tag}: {os.path.basename(apk_path)}")
+                return apk_path, info, {
+                    "status": "downloaded",
+                    "provider": "stock_release",
+                    "target_version": app_version,
+                    "package": package,
+                    "apk_arch": apk_arch,
+                    "manual_urls": [f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}/releases/tag/{stock_release_tag}"],
+                    "attempts": attempts,
+                }
+        else:
+            attempts.append({"provider": "stock_release", "status": "download_failed", "error": release_out})
 
-    return None
+    result = acquire_from_providers(
+        app_id=app_id,
+        target_version=app_version,
+        preferred_arch=apk_arch,
+        app_config=app_config,
+        destination_dir=stock_dir,
+    )
+    attempts.extend(result.attempts)
+    manual_urls.extend(result.manual_urls)
+
+    if result.path:
+        try:
+            info = _validate_stock_file(result.path, package, app_version, apk_arch, expected_signer_sha256)
+            return result.path, info, {
+                "status": "downloaded",
+                "provider": result.candidate.provider if result.candidate else "automatic",
+                "target_version": app_version,
+                "package": package,
+                "apk_arch": apk_arch,
+                "manual_urls": manual_urls,
+                "attempts": attempts,
+            }
+        except ApkValidationError as exc:
+            attempts.append({
+                "provider": result.candidate.provider if result.candidate else "automatic",
+                "status": "validation_failed",
+                "error": str(exc),
+            })
+            try:
+                os.remove(result.path)
+            except OSError:
+                pass
+
+    return None, None, {
+        "status": "manual_required",
+        "provider": "",
+        "target_version": app_version,
+        "package": package,
+        "apk_arch": apk_arch,
+        "manual_urls": manual_urls,
+        "attempts": attempts,
+        "error": result.error or "No valid stock APK could be acquired.",
+        "workspace": root,
+    }
 
 def main():
     print("Starting Auto-Patcher Build...")
@@ -294,6 +429,7 @@ def main():
         patches_repo = app['patches_repo']
         package = app['package']
         arch = app.get('arch') or repo_settings.get('default_arch', 'arm64-v8a')
+        apk_arch = app.get('apk_arch') or "auto"
         allow_prerelease = app.get('prerelease', False)
 
         if is_scheduled and trigger_policy == "periodic_rebuild":
@@ -346,34 +482,73 @@ def main():
         query = f"{app_id} {app_version}".strip()
         apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
         
-        with open(os.path.join(catalog_dir, f"{app_id}.info.json"), 'w') as f:
+        info_path = os.path.join(catalog_dir, f"{app_id}.info.json")
+        prior_signers = []
+        if os.path.exists(info_path):
+            try:
+                with open(info_path, "r") as inf:
+                    prior_info = json.load(inf)
+                prior_signers = (prior_info.get("stock_apk") or {}).get("signer_sha256") or []
+            except Exception:
+                prior_signers = []
+
+        with open(info_path, 'w') as f:
             json.dump({
                 "patch_tag": tag_name,
                 "recommended_version": app_version,
                 "compatible_versions": compatible_versions,
-                "apkmirror_url": apkmirror_url
+                "apkmirror_url": apkmirror_url,
+                "stock_signer_sha256": prior_signers
             }, f, indent=2)
 
-        apk_path = resolve_stock_apk(app_id, package, app_version)
+        apk_path, apk_info, acquisition = resolve_stock_apk(
+            app_id, package, app_version, app, expected_signer_sha256=prior_signers
+        )
+
+        try:
+            existing_info = {}
+            if os.path.exists(info_path):
+                with open(info_path, "r") as inf:
+                    existing_info = json.load(inf)
+            existing_info["apk_acquisition"] = acquisition
+            existing_info["stock_apk"] = apk_info.to_dict() if apk_info else None
+            existing_info["stock_signer_sha256"] = (apk_info.signer_sha256 if apk_info else existing_info.get("stock_signer_sha256", []))
+            with open(info_path, "w") as inf:
+                json.dump(existing_info, inf, indent=2)
+        except Exception as exc:
+            print(f"Warning: Failed to update acquisition metadata: {exc}")
+
         if not apk_path:
-            print(f"⚠️ ACTION REQUIRED: Stock APK Missing for '{app_id}'")
+            print(f"⚠️ ACTION REQUIRED: Manual stock APK required for '{app_id}'")
+            manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
+            stock_release_url = (
+                f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}"
+                f"/releases/tag/stock-{app_id}"
+            )
+            reason = acquisition.get("error") or "Automatic stock APK acquisition failed."
             if discord_webhook:
                 send_discord_webhook(
                     discord_webhook,
-                    title=f"⚠️ Stock APK Missing: {app_id.capitalize()}",
-                    description=f"Action required: A compatible stock APK is needed to patch **{app_id}**.",
+                    title=f"⚠️ Manual APK Required: {app_id.capitalize()}",
+                    description=(
+                        "Automatic download failed for the exact requested version. "
+                        "Please download the untouched original APK, upload it to "
+                        f"stock-{app_id}, then retry the build."
+                    ),
                     color=0xF59E0B,
                     fields=[
                         {"name": "Target Version", "value": app_version or "Latest", "inline": True},
-                        {"name": "Architecture", "value": arch, "inline": True},
-                        {"name": "APKMirror Link", "value": f"[Open APKMirror]({apkmirror_url})", "inline": False},
-                        {"name": "Upload Instructions", "value": f"Upload to GitHub Release `stock-{app_id}` or place in `apks/{app_id}.apk`.", "inline": False}
+                        {"name": "Architecture Preference", "value": apk_arch, "inline": True},
+                        {"name": "Download Exact APK", "value": f"[Open download page]({manual_link})", "inline": False},
+                        {"name": "Upload Stock APK", "value": f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
+                        {"name": "Reason", "value": reason[:1024], "inline": False}
                     ]
                 )
             has_errors = True
             continue
 
-        output_apk = f"{app_id}-patched.apk"
+        output_apk = os.path.join(".work", app_id, "patched", f"{app_id}-patched.apk")
+        os.makedirs(os.path.dirname(output_apk), exist_ok=True)
         if os.path.exists(output_apk): os.remove(output_apk)
 
         patch_cmd = [
