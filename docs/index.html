@@ -251,6 +251,37 @@ function apkReadiness(a, info) {
   if (acquisition.status === 'downloaded' && stock) return {state:'warning', label:'APK metadata needs refresh', detail:'Recorded ' + (stock.version_name || 'unknown') + ' · target ' + (target || 'Auto'), target:target};
   return {state:'unknown', label:'APK not checked', detail: target ? 'Target version: ' + target : 'No target version selected.', target:target};
 }
+
+function buildStatusView(a, info) {
+  const st = (info && info.build_status) || {};
+  if (!st.status) return '';
+  const failed = st.status === 'failed';
+  const success = st.status === 'success';
+  const labels = {
+    patch_source: 'Patch source',
+    apk_acquisition: 'Stock APK',
+    patching: 'Morphe patching',
+    output_validation: 'Output validation',
+    publishing: 'Publishing',
+    completed: 'Completed'
+  };
+  const label = labels[st.stage] || st.stage || 'Build';
+  const detail = st.reason || (success ? ('Release ' + (st.release_tag || '') + ' published successfully.') : (st.status === 'running' ? 'Build is in progress.' : 'Build state recorded.'));
+  const cls = success ? 'ok' : failed ? 'bad' : 'warn';
+  const icon = success ? 'verified' : failed ? 'error' : 'sync';
+  return `
+    <div class="card" style="background:var(--card-high);margin:10px 0 4px">
+      <div class="row">
+        <div class="g">
+          <b>Last Build State</b>
+          <div style="margin-top:5px"><span class="chip ${cls}"><i class="ms" style="font-size:15px">${icon}</i> ${esc(failed ? 'Failed at ' + label : success ? 'Completed' : 'Running: ' + label)}</span></div>
+          <div class="d" style="margin-top:5px">${esc(detail)}</div>
+        </div>
+        ${failed && st.stage === 'apk_acquisition' ? '<button class="pill" data-a="dlg_need_apk" data-id="' + esc(a.id) + '">Recover APK</button>' : ''}
+        ${failed && st.stage === 'publishing' ? '<button class="pill" data-a="dispatch_app" data-id="' + esc(a.id) + '">Retry Publish</button>' : ''}
+      </div>
+    </div>`;
+}
 const app = id => (S.config.apps || []).find(a => a.id === id);
 const ttl = a => getAppMeta(a.package).name || a.id;
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
@@ -909,6 +940,8 @@ function vApp(r) {
         return '<div class="card" style="background:var(--card-high);margin:10px 0 4px"><div class="row"><div class="g"><b>APK Readiness</b><div style="margin-top:5px"><span class="chip '+cls+'"><i class="ms" style="font-size:15px">'+icon+'</i> '+esc(st.label)+'</span></div><div class="d" style="margin-top:5px">'+esc(st.detail)+'</div></div>' + (st.state === "manual" ? '<button class="pill" data-a="dlg_need_apk" data-id="'+esc(a.id)+'"><i class="ms">download</i> Recover APK</button>' : "") + '</div></div>';
       })()}
 
+      ${buildStatusView(a, inf)}
+      
       <div class="card" style="background:var(--card-high);margin:10px 0 4px">
         <b>APK Provenance</b>
         <div class="d" style="margin-top:5px">
