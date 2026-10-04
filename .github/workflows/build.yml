@@ -95,7 +95,7 @@ jobs:
         run: python3 build.py
 
       - name: Commit Catalog
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
