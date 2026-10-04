@@ -220,21 +220,22 @@ def _stock_candidates(stock_dir):
     )
 
 
-def _validate_stock_file(path, package, version, apk_arch):
+def _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256=None):
     return validate_apk(
         path,
         expected_package=package,
         expected_version=version,
         expected_arch=apk_arch or "auto",
+        expected_signer_sha256=expected_signer_sha256,
     )
 
 
-def _choose_valid_stock(candidates, package, version, apk_arch):
+def _choose_valid_stock(candidates, package, version, apk_arch, expected_signer_sha256=None):
     valid = []
     errors = []
     for path in candidates:
         try:
-            info = _validate_stock_file(path, package, version, apk_arch)
+            info = _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256)
             valid.append((path, info))
         except ApkValidationError as exc:
             errors.append({"file": os.path.basename(path), "error": str(exc)})
@@ -261,7 +262,7 @@ def _choose_valid_stock(candidates, package, version, apk_arch):
     return valid[0][0], valid[0][1], errors
 
 
-def resolve_stock_apk(app_id, package, app_version, app_config):
+def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_sha256=None):
     root, stock_dir, _ = _clean_app_workspace(app_id)
     apk_arch = app_config.get("apk_arch") or "auto"
     attempts = []
@@ -273,7 +274,7 @@ def resolve_stock_apk(app_id, package, app_version, app_config):
         print(f"Trying configured APK URL for {app_id}...")
         try:
             _download_url(explicit_url, explicit_path)
-            info = _validate_stock_file(explicit_path, package, app_version, apk_arch)
+            info = _validate_stock_file(explicit_path, package, app_version, apk_arch, expected_signer_sha256)
             return explicit_path, info, {"status": "downloaded", "provider": "configured_url", "manual_urls": [explicit_url], "attempts": attempts}
         except Exception as exc:
             attempts.append({"provider": "configured_url", "status": "failed", "url": explicit_url, "error": str(exc)})
@@ -291,7 +292,7 @@ def resolve_stock_apk(app_id, package, app_version, app_config):
         ])
         if ok:
             apk_path, info, validation_errors = _choose_valid_stock(
-                _stock_candidates(stock_dir), package, app_version, apk_arch
+                _stock_candidates(stock_dir), package, app_version, apk_arch, expected_signer_sha256
             )
             attempts.extend([{
                 "provider": "stock_release", "status": "rejected", **err
@@ -319,7 +320,7 @@ def resolve_stock_apk(app_id, package, app_version, app_config):
 
     if result.path:
         try:
-            info = _validate_stock_file(result.path, package, app_version, apk_arch)
+            info = _validate_stock_file(result.path, package, app_version, apk_arch, expected_signer_sha256)
             return result.path, info, {
                 "status": "downloaded",
                 "provider": result.candidate.provider if result.candidate else "automatic",
@@ -419,7 +420,7 @@ def main():
         patches_repo = app['patches_repo']
         package = app['package']
         arch = app.get('arch') or repo_settings.get('default_arch', 'arm64-v8a')
-        apk_arch = app.get('apk_arch') or arch or "auto"
+        apk_arch = app.get('apk_arch') or "auto"
         allow_prerelease = app.get('prerelease', False)
 
         if is_scheduled and trigger_policy == "periodic_rebuild":
@@ -472,19 +473,29 @@ def main():
         query = f"{app_id} {app_version}".strip()
         apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
         
-        with open(os.path.join(catalog_dir, f"{app_id}.info.json"), 'w') as f:
+        info_path = os.path.join(catalog_dir, f"{app_id}.info.json")
+        prior_signers = []
+        if os.path.exists(info_path):
+            try:
+                with open(info_path, "r") as inf:
+                    prior_info = json.load(inf)
+                prior_signers = (prior_info.get("stock_apk") or {}).get("signer_sha256") or []
+            except Exception:
+                prior_signers = []
+
+        with open(info_path, 'w') as f:
             json.dump({
                 "patch_tag": tag_name,
                 "recommended_version": app_version,
                 "compatible_versions": compatible_versions,
-                "apkmirror_url": apkmirror_url
+                "apkmirror_url": apkmirror_url,
+                "stock_signer_sha256": prior_signers
             }, f, indent=2)
 
         apk_path, apk_info, acquisition = resolve_stock_apk(
-            app_id, package, app_version, app
+            app_id, package, app_version, app, expected_signer_sha256=prior_signers
         )
 
-        info_path = os.path.join(catalog_dir, f"{app_id}.info.json")
         try:
             existing_info = {}
             if os.path.exists(info_path):
@@ -492,6 +503,7 @@ def main():
                     existing_info = json.load(inf)
             existing_info["apk_acquisition"] = acquisition
             existing_info["stock_apk"] = apk_info.to_dict() if apk_info else None
+            existing_info["stock_signer_sha256"] = (apk_info.signer_sha256 if apk_info else existing_info.get("stock_signer_sha256", []))
             with open(info_path, "w") as inf:
                 json.dump(existing_info, inf, indent=2)
         except Exception as exc:
