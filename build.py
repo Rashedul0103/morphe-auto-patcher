@@ -331,7 +331,12 @@ def _play_detail(session, package_name, expected_query=""):
 
 def _find_play_store_icon(app_id, app):
     session = requests.Session()
-    package_value = str(app.get("play_store_package") or app.get("package") or "").strip()
+    package_value = str(
+        app.get("play_store_package")
+        or app.get("android_package")
+        or app.get("package")
+        or ""
+    ).strip()
     explicit_url = str(app.get("play_store_url") or "").strip()
 
     if explicit_url:
@@ -385,7 +390,7 @@ def _find_play_store_icon(app_id, app):
     return None
 
 
-def _cache_icon(app_id, icon_url):
+def _cache_icon(app_id, icon_url, package_name=""):
     if not icon_url or not icon_url.startswith("http"):
         return None
     os.makedirs(ICON_DIR, exist_ok=True)
@@ -414,6 +419,9 @@ def _cache_icon(app_id, icon_url):
         path = os.path.join(ICON_DIR, safe_id + ext)
         with open(path, "wb") as fh:
             fh.write(data)
+        meta_path = os.path.join(ICON_DIR, safe_id + ".icon-meta.json")
+        with open(meta_path, "w", encoding="utf-8") as fh:
+            json.dump({"package": package_name or "", "source": "google_play"}, fh, indent=2)
         return "catalog/icons/" + os.path.basename(path)
     except Exception as exc:
         print(f"Warning: Failed to cache icon for {app_id}: {exc}")
@@ -495,9 +503,18 @@ def extract_apk_icon(apk_path, app_id):
         return None
 
 
-def _existing_cached_icon(app_id):
+def _existing_cached_icon(app_id, expected_package=""):
     safe_id = _icon_safe_id(app_id)
     os.makedirs(ICON_DIR, exist_ok=True)
+    if expected_package:
+        meta_path = os.path.join(ICON_DIR, safe_id + ".icon-meta.json")
+        try:
+            with open(meta_path, "r", encoding="utf-8") as fh:
+                meta = json.load(fh)
+            if str(meta.get("package") or "").strip() != str(expected_package).strip():
+                return None
+        except Exception:
+            return None
     for ext in ICON_EXTENSIONS:
         path = os.path.join(ICON_DIR, safe_id + ext)
         if os.path.exists(path) and os.path.getsize(path) > 0:
@@ -506,14 +523,23 @@ def _existing_cached_icon(app_id):
 
 
 def ensure_app_icon(app_id, app):
-    cached = _existing_cached_icon(app_id)
+    expected_package = str(
+        app.get("android_package")
+        or app.get("play_store_package")
+        or ""
+    ).strip()
+    cached = _existing_cached_icon(app_id, expected_package)
     if cached:
         return cached, "cache"
     result = _find_play_store_icon(app_id, app)
     if not result:
         print(f"Icon lookup: no reliable Google Play icon found for {app_id}.")
         return "", ""
-    cached_path = _cache_icon(app_id, result.get("icon_url", ""))
+    cached_path = _cache_icon(
+        app_id,
+        result.get("icon_url", ""),
+        result.get("package") or expected_package,
+    )
     if not cached_path:
         return "", ""
     print(f"Icon lookup: {app_id} -> {result.get('package')} ({result.get('title', '').strip()})")

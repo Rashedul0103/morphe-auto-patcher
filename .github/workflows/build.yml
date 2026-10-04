@@ -107,6 +107,7 @@ jobs:
               echo "Rebase conflict detected. Safely resetting and re-applying catalog."
               git rebase --abort
               git reset --soft origin/${{ github.ref_name }}
+              git reset
               git add docs/catalog/
               git commit -m "Update patch catalog [skip ci]"
             fi
