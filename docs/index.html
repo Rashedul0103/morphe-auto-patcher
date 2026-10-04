@@ -1888,7 +1888,7 @@ Object.assign(A, {
   set_theme: t => { S.mode = t.dataset.v; persist(); theme(); render(); },
   sw_black: t => { S.black = !S.black; persist(); theme(); render(); },
   set_stab: t => { settingsTab = +t.dataset.v; render(); },
-  set_scale: t => { S.scale = +t.dataset.v || 100; persist(); theme(); render(); }
+  set_scale: t => { S.scale = +t.dataset.v || 100; persist(); theme(); render(); },
   unhide: t => {
     S.config.hidden_apps = (S.config.hidden_apps || []).filter(x => x !== t.dataset.id);
     dirty(); render();
