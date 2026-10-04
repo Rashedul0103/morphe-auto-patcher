@@ -1150,14 +1150,26 @@ function dlgConnect() {
 /* Dynamic Add Source Dialog */
 let newSourceInspection = null;
 
+function normalizeGithubRepo(value) {
+  let v = String(value || '').trim();
+  v = v.replace(/^https?:\/\/github\.com\//i, '');
+  v = v.replace(/^git@github\.com:/i, '');
+  v = v.replace(/^github\.com\//i, '');
+  v = v.replace(/\.git$/i, '');
+  v = v.replace(/^\/+|\/+$/g, '');
+  const parts = v.split('/').filter(Boolean);
+  if (parts.length < 2) return '';
+  return parts.slice(0, 2).join('/');
+}
+
 function dlgAddSource() {
   newSourceInspection = null;
   dlg(`
     <h2>Add Patch Source</h2>
     <p>Enter any repository publishing a Morphe patch bundle. We will inspect it to discover compatible apps.</p>
-    <div class="lbl">Repository (owner/repo)</div>
+    <div class="lbl">GitHub Repository</div>
     <div style="display:flex;gap:8px">
-      <input type="text" id="n_src" value="SysAdminDoc/Hushfacebook" placeholder="owner/repo" style="flex:1">
+      <input type="text" id="n_src" value="SysAdminDoc/Hushfacebook" placeholder="owner/repo or https://github.com/owner/repo" style="flex:1">
       <button class="pill" data-a="inspect_src"><i class="ms">search</i> Inspect</button>
     </div>
     <div class="row" style="margin-top:6px">
@@ -1176,8 +1188,10 @@ function dlgAddSource() {
 }
 
 async function inspectEnteredSource() {
-  const repo = $('#n_src').value.trim();
+  const repoInput = $('#n_src').value.trim();
+  const repo = normalizeGithubRepo(repoInput);
   const pre = $('#sw_srcpre').classList.contains('on');
+  if (!repo) return toast('Enter a valid GitHub repository, e.g. owner/repo', 1);
   const resDiv = $('#src_inspect_result');
   const addBtn = $('#btn_add_discovered');
   if (!repo) return toast('Enter owner/repo', 1);
@@ -1237,6 +1251,8 @@ async function inspectEnteredSource() {
     }
 
     const pkgList = Array.from(discoveredPkgs);
+    const mppAsset = (rel.assets || []).find(a => /\.mpp$/i.test(a.name));
+    if (!pkgList.length && !mppAsset) throw new Error('No Morphe patch bundle found in the selected release.');
     newSourceInspection = { repo, tag, prerelease: pre, packages: pkgList, selectedPkg: pkgList[0] || '' };
 
     resDiv.innerHTML = `
