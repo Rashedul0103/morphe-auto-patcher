@@ -625,7 +625,7 @@ async function uploadStockApk(id, file) {
     <h2>APK Uploaded</h2>
     <div class="card" style="background:var(--card-high)">
       <b>${esc(result.name || file.name)}</b>
-      <div class="d" style="margin-top:5px">The APK is stored. GitHub Actions will perform the authoritative package/version/architecture validation.</div>
+      <div class="d" style="margin-top:5px">The APK is stored only. Start verification to check package, exact version, architecture and signer before patching.</div>
     </div>
     <button class="pill" data-a="upload_retry_build" data-id="${esc(id)}"><i class="ms">play_arrow</i> Verify & Build</button>
     <button class="pill t" data-a="close">Done</button>
