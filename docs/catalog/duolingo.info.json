@@ -1,5 +1,5 @@
 {
-  "patch_tag": "v1.46.0",
+  "patch_tag": "v1.47.0",
   "recommended_version": "6.98.4",
   "compatible_versions": [
     "6.98.4"
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791122435
+    "updated_at": 1791146409
   },
   "apk_acquisition": {
     "status": "manual_required",
