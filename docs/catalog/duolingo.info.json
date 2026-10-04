@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791119543
+    "updated_at": 1791119645
   },
   "patch_source_attempts": [
     {
