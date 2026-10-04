@@ -14,6 +14,12 @@
     "MorpheApp/morphe-patches"
   ],
   "stock_signer_sha256": [],
+  "build_status": {
+    "status": "failed",
+    "stage": "output_validation",
+    "reason": "Wrong package: expected com.google.android.youtube, found app.morphe.android.youtube.",
+    "updated_at": 1791111174
+  },
   "apk_acquisition": {
     "status": "downloaded",
     "provider": "stock_release",
@@ -36,10 +42,5 @@
     "sha256": "724d2bf15d31dac98db00d82914db3876edf66e62fe2845001f204209ecf4c00",
     "size_bytes": 184012881,
     "signer_sha256": []
-  },
-  "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791107720
   }
 }

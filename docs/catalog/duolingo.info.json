@@ -1,0 +1,18 @@
+{
+  "build_status": {
+    "status": "failed",
+    "stage": "patch_source",
+    "reason": "No compatible patch source found.",
+    "updated_at": 1791111174
+  },
+  "patch_source_attempts": [
+    {
+      "repo": "hoo-dles/morphe-patches",
+      "status": "incompatible",
+      "tag": "v1.46.0"
+    }
+  ],
+  "patch_source_candidates": [
+    "hoo-dles/morphe-patches"
+  ]
+}
