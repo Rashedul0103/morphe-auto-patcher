@@ -922,8 +922,7 @@ async function dispatchBuild(appId, force=true) {
       method: 'POST',
       body: JSON.stringify({
         ref: S.branch,
-        inputs: { app: appId || '', force: !!force },
-        return_run_details: true
+        inputs: { app: appId || '', force: !!force }
       })
     });
 
@@ -938,8 +937,10 @@ async function dispatchBuild(appId, force=true) {
 
       // Fallback for GitHub installations that return 204 instead of run details.
       if (!runId) {
-        const rs = (await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=10`)).workflow_runs || [];
-        const candidates = rs.filter(r => r.head_branch === S.branch);
+        const rs = (await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=20`)).workflow_runs || [];
+        const candidates = rs
+          .filter(r => r.head_branch === S.branch && Date.parse(r.created_at) >= t0)
+          .sort((a, b) => b.id - a.id);
         if (candidates.length) runId = candidates[0].id;
       }
       if (!runId) continue;
@@ -970,9 +971,11 @@ async function dispatchBuild(appId, force=true) {
       const completed = phaseNames.filter(name =>
         st.some(s => s.name === name && s.status === 'completed' && s.conclusion === 'success')
       ).length;
+      const workflowCompleted = st.filter(s => s.status === 'completed').length;
+      const workflowTotal = st.length || 1;
       L.pct = run.status === 'completed'
         ? (run.conclusion === 'success' ? 100 : Math.max(10, Math.round((completed / phaseNames.length) * 100)))
-        : Math.max(5, Math.round((completed / phaseNames.length) * 100));
+        : Math.max(5, Math.round(Math.min(95, (workflowCompleted / workflowTotal) * 100)));
 
       L.stage = run.status === 'completed'
         ? (run.conclusion === 'success' ? 'Completed! 🎉' : 'Build Failed')
