@@ -3,13 +3,17 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791121647
+    "updated_at": 1791121773
   },
   "patch_source_attempts": [
     {
       "repo": "hoo-dles/morphe-patches",
       "status": "incompatible",
-      "tag": "v1.46.0"
+      "tag": "v1.46.0",
+      "filters_tried": [
+        "Duolingo",
+        "com.duolingo"
+      ]
     }
   ],
   "patch_source_candidates": [
