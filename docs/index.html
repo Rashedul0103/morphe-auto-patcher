@@ -643,8 +643,9 @@ function sourceAppId(pkg) {
 }
 
 function addDiscoveredApp(pkg, repo) {
-  const src = configuredSourceForRepo(repo);
-  if (!src) return toast('Source is not configured. Inspect and add it first.', 1);
+  const repos = Array.isArray(repo) ? repo : [repo];
+  const sources = repos.map(configuredSourceForRepo).filter(Boolean);
+  if (!sources.length) return toast('Source is not configured. Inspect and add it first.', 1);
   S.config.apps = Array.isArray(S.config.apps) ? S.config.apps : [];
   let a = appByPackage(pkg);
 
@@ -652,20 +653,22 @@ function addDiscoveredApp(pkg, repo) {
     const id = sourceAppId(pkg);
     const defArch = (S.config.settings && S.config.settings.default_arch) || 'arm64-v8a';
     a = {
-      id, package: pkg, patches_repo: repo, patch_sources: [repo],
-      prerelease: src.prerelease === true, arch: defArch, apk_arch: 'auto',
+      id, package: pkg, patches_repo: sources[0].repo,
+      patch_sources: sources.map(x => x.repo),
+      prerelease: sources.some(x => x.prerelease === true),
+      arch: defArch, apk_arch: 'auto',
       version: '', force: false, auto_patch: true, enable: [], disable: [], options: {}
     };
     S.config.apps.push(a);
   } else {
     a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
-    if (!a.patch_sources.includes(repo)) a.patch_sources.push(repo);
-    if (!a.patches_repo) a.patches_repo = repo;
+    for (const x of sources) if (!a.patch_sources.includes(x.repo)) a.patch_sources.push(x.repo);
+    if (!a.patches_repo) a.patches_repo = sources[0].repo;
   }
 
   dirty();
   render();
-  toast('App added to Apps. Save changes.');
+  toast('App added to Apps with compatible patch sources. Save changes.');
 }
 addEventListener('hashchange', () => {
   render();
@@ -1001,7 +1004,7 @@ function vSources() {
     <div class="sec-h">Discover Apps</div>
     ${appList.length ? appList.map(x => {
       const existing = appByPackage(x.package);
-      const repo = x.sources[0];
+      const repos = x.sources;
       return `
         <div class="card">
           <div class="row">
@@ -1013,7 +1016,7 @@ function vSources() {
             </div>
             ${existing
               ? '<span class="chip ok">Added</span>'
-              : `<button class="pill" data-a="source_app_add" data-repo="${esc(repo)}" data-pkg="${esc(x.package)}">Add</button>`}
+              : `<button class="pill" data-a="source_app_add" data-repo="${esc(JSON.stringify(repos))}" data-pkg="${esc(x.package)}">Add</button>`}
           </div>
         </div>
       `;
@@ -1493,7 +1496,11 @@ Object.assign(A, {
     src.enabled = src.enabled === false;
     dirty(); render();
   },
-  source_app_add: t => addDiscoveredApp(t.dataset.pkg, t.dataset.repo),
+  source_app_add: t => {
+    let repos = [];
+    try { repos = JSON.parse(t.dataset.repo || '[]'); } catch(e) {}
+    addDiscoveredApp(t.dataset.pkg, repos);
+  },
   source_down: t => {
     const a = app(t.dataset.id); if (!a) return;
     a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
