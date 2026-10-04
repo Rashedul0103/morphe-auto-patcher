@@ -53,6 +53,23 @@
       "enable": [],
       "disable": [],
       "options": {}
+    },
+    {
+      "id": "bunpo",
+      "package": "Bunpo",
+      "patches_repo": "hoo-dles/morphe-patches",
+      "patch_sources": [
+        "hoo-dles/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "",
+      "force": false,
+      "auto_patch": true,
+      "enable": [],
+      "disable": [],
+      "options": {}
     }
   ],
   "settings": {
