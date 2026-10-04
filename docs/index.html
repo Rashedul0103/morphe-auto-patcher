@@ -1228,15 +1228,20 @@ async function inspectEnteredSource() {
       }
     }
 
+    // Morphe's patches-list.json is normally an object:
+    // { version: "...", patches: [...] }
+    // Some third-party sources may expose the patch array directly, so support both.
+    const patchEntries = Array.isArray(patchesData)
+      ? patchesData
+      : (patchesData && Array.isArray(patchesData.patches) ? patchesData.patches : []);
+
     const discoveredPkgs = new Set();
-    if (Array.isArray(patchesData)) {
-      patchesData.forEach(p => {
-        (p.compatiblePackages || []).forEach(cp => {
-          const pkg = cp.name || cp.packageName;
-          if (pkg) discoveredPkgs.add(pkg);
-        });
+    patchEntries.forEach(p => {
+      (p.compatiblePackages || []).forEach(cp => {
+        const pkg = cp.name || cp.packageName;
+        if (pkg) discoveredPkgs.add(pkg);
       });
-    }
+    });
 
     if (discoveredPkgs.size === 0) {
       const rLower = repo.toLowerCase();
