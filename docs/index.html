@@ -910,45 +910,89 @@ function paintLive() {
 
 async function dispatchBuild(appId, force=true) {
   if (S.dirty) { toast('Save your changes first!', 1); return; }
+  if (S.live && !S.live.done) { toast('A build is already being tracked.', 1); return; }
+
   const L = S.live = { lines: [], pct: 5, stage: 'Dispatching', done: false, ok: false };
   location.hash = '#/builds';
+
   try {
-    const t0 = Date.now() - 6000;
-    await gh(`/actions/workflows/${S.wf}/dispatches`, {
+    // Ask GitHub to return the exact workflow_run_id created by this dispatch.
+    // This avoids accidentally attaching the UI to another recent/cancelled run.
+    const dispatch = await gh(`/actions/workflows/${S.wf}/dispatches`, {
       method: 'POST',
-      body: JSON.stringify({ ref: S.branch, inputs: { app: appId || '', force: !!force } })
+      body: JSON.stringify({
+        ref: S.branch,
+        inputs: { app: appId || '', force: !!force },
+        return_run_details: true
+      })
     });
+
     L.lines.push(['INFO', 'Workflow dispatch initiated...']);
     paintLive();
 
+    let runId = dispatch && dispatch.workflow_run_id ? dispatch.workflow_run_id : null;
     const seen = new Set();
+
     for (let k = 0; k < 250; k++) {
       await new Promise(r => setTimeout(r, 4000));
-      const rs = (await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=5`)).workflow_runs;
-      const run = rs.find(r => Date.parse(r.created_at) >= t0);
-      if (!run) continue;
 
-      L.run = run.id; L.url = run.html_url;
+      // Fallback for GitHub installations that return 204 instead of run details.
+      if (!runId) {
+        const rs = (await gh(`/actions/runs?event=workflow_dispatch&branch=${encodeURIComponent(S.branch)}&per_page=10`)).workflow_runs || [];
+        const candidates = rs.filter(r => r.head_branch === S.branch);
+        if (candidates.length) runId = candidates[0].id;
+      }
+      if (!runId) continue;
+
+      const run = await gh(`/actions/runs/${runId}`);
+      if (!run || !run.id) continue;
+
+      L.run = run.id;
+      L.url = run.html_url;
+
       const st = (await gh(`/actions/runs/${run.id}/jobs`)).jobs.flatMap(j => j.steps || []);
       st.forEach(s => {
-        const key = s.name + s.status;
+        const key = s.name + s.status + s.conclusion;
         if (s.status !== 'queued' && !seen.has(key)) {
           seen.add(key);
-          L.lines.push([s.status==='completed'?(s.conclusion==='success'?'SUCCESS':'ERROR'):'INFO', s.name]);
+          L.lines.push([
+            s.status === 'completed'
+              ? (s.conclusion === 'success' ? 'SUCCESS' : 'ERROR')
+              : 'INFO',
+            s.name
+          ]);
         }
       });
 
-      L.pct = st.length ? Math.max(10, Math.round(st.filter(s=>s.status==='completed').length / st.length * 100)) : 15;
-      L.stage = run.status === 'completed' ? (run.conclusion==='success'?'Completed! 🎉':'Build Failed') : run.status.replace('_', ' ');
+      // Progress is based on the five actual build phases, not GitHub's
+      // setup/cleanup steps, so "15%" no longer looks like a frozen build.
+      const phaseNames = ['Load Patches', 'Read APK', 'Execute Patches', 'Write Output', 'Sign APK'];
+      const completed = phaseNames.filter(name =>
+        st.some(s => s.name === name && s.status === 'completed' && s.conclusion === 'success')
+      ).length;
+      L.pct = run.status === 'completed'
+        ? (run.conclusion === 'success' ? 100 : Math.max(10, Math.round((completed / phaseNames.length) * 100)))
+        : Math.max(5, Math.round((completed / phaseNames.length) * 100));
+
+      L.stage = run.status === 'completed'
+        ? (run.conclusion === 'success' ? 'Completed! 🎉' : 'Build Failed')
+        : (run.status === 'in_progress' ? 'Build in progress' : run.status.replace('_', ' '));
       paintLive();
 
       if (run.status === 'completed') {
-        L.done = true; L.ok = run.conclusion === 'success';
+        L.done = true;
+        L.ok = run.conclusion === 'success';
         await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
         paintLive();
         return;
       }
     }
+
+    L.done = true;
+    L.ok = false;
+    L.stage = 'Build monitor timed out';
+    L.lines.push(['ERROR', 'GitHub is still running or the run could not be located after 1000 seconds.']);
+    paintLive();
   } catch(e) {
     L.done = true; L.stage = 'Dispatch Failed';
     L.lines.push(['ERROR', e.message]);
