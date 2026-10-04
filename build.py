@@ -151,6 +151,94 @@ def prune_old_releases(app_id, keep_count=3):
     except Exception as e:
         print(f"Warning: Failed to prune old releases: {e}")
 
+def load_patch_metadata_fallback(repo, tag, filter_candidates):
+    """Read the published patches-list.json when CLI listing cannot enumerate a package."""
+    candidates = [
+        f"https://raw.githubusercontent.com/{repo}/{tag}/patches-list.json",
+        f"https://raw.githubusercontent.com/{repo}/{tag}/patches-bundle.json",
+        f"https://raw.githubusercontent.com/{repo}/main/patches-list.json",
+    ]
+    data = None
+    for url in candidates:
+        try:
+            response = requests.get(url, timeout=30, headers={"User-Agent": "AutoPatcher-Engine/1.0"})
+            if response.status_code != 200:
+                continue
+            parsed = response.json()
+            if isinstance(parsed, dict) and isinstance(parsed.get("patches"), list):
+                data = parsed
+                break
+        except Exception:
+            continue
+    if not data:
+        return None
+
+    normalized_filters = {
+        str(value or "").strip().lower()
+        for value in (filter_candidates or [])
+        if str(value or "").strip()
+    }
+    for filter_value in filter_candidates or []:
+        wanted = str(filter_value or "").strip().lower()
+        if not wanted:
+            continue
+
+        matched_patches = []
+        versions = []
+        seen_versions = set()
+
+        for patch in data.get("patches", []):
+            if not isinstance(patch, dict):
+                continue
+            compatible = patch.get("compatiblePackages")
+            if isinstance(compatible, dict):
+                compatible = list(compatible.values())
+            if not isinstance(compatible, list):
+                continue
+
+            matched_packages = []
+            for package in compatible:
+                if not isinstance(package, dict):
+                    continue
+                package_name = str(package.get("packageName") or "").strip()
+                package_title = str(package.get("name") or "").strip()
+                if wanted in {package_name.lower(), package_title.lower()}:
+                    matched_packages.append(package)
+
+            if not matched_packages:
+                continue
+
+            entry = {
+                "name": str(patch.get("name") or "").strip(),
+                "description": str(patch.get("description") or "").strip(),
+                "enabled": bool(patch.get("default", False)),
+                "options": patch.get("options") if isinstance(patch.get("options"), list) else [],
+            }
+            if not entry["name"]:
+                continue
+            matched_patches.append(entry)
+
+            for package in matched_packages:
+                targets = package.get("targets")
+                if not isinstance(targets, list):
+                    continue
+                for target in targets:
+                    if not isinstance(target, dict):
+                        continue
+                    version = str(target.get("version") or "").strip()
+                    if version and version not in seen_versions:
+                        seen_versions.add(version)
+                        versions.append(version)
+
+        if matched_patches and versions:
+            return {
+                "filter": filter_value,
+                "versions": versions,
+                "patches": matched_patches,
+            }
+    return None
+
+
 def parse_versions(output, package_name):
     versions = []
     capture = False
@@ -869,6 +957,17 @@ def main():
                     patches_for_filter = candidate_patches
                     successful_filter = filter_value
                     break
+
+            if not compatible_for_filter or not patches_for_filter:
+                fallback = load_patch_metadata_fallback(candidate_repo, candidate_tag, filter_candidates)
+                if fallback:
+                    compatible_for_filter = fallback["versions"]
+                    patches_for_filter = fallback["patches"]
+                    successful_filter = fallback["filter"]
+                    print(
+                        f"CLI package listing unavailable for {app_id}; "
+                        f"using {candidate_repo} patches-list.json metadata for '{successful_filter}'."
+                    )
 
             if not compatible_for_filter or not patches_for_filter:
                 source_attempts.append({
