@@ -219,6 +219,7 @@ const ICON_DOMAINS = {
   'com.google.android.apps.youtube.music': 'music.youtube.com',
   'com.duolingo': 'duolingo.com',
   'Duolingo': 'duolingo.com',
+  'com.adguard.android': 'adguard.com',
   'com.facebook.katana': 'facebook.com',
   'com.facebook.orca': 'messenger.com',
   'com.instagram.android': 'instagram.com',
@@ -231,7 +232,7 @@ const ICON_DOMAINS = {
 };
 const APP_NAME_DOMAINS = {
   'Facebook':'facebook.com','Messenger':'messenger.com','YouTube':'youtube.com','YouTube Music':'music.youtube.com',
-  'Duolingo':'duolingo.com','Reddit':'reddit.com','Twitter / X':'x.com','Twitch':'twitch.tv','TikTok':'tiktok.com',
+  'Duolingo':'duolingo.com','AdGuard':'adguard.com','Reddit':'reddit.com','Twitter / X':'x.com','Twitch':'twitch.tv','TikTok':'tiktok.com',
   'Instagram':'instagram.com','Threads':'threads.net','GitHub':'github.com','SoundCloud':'soundcloud.com',
   'Sofascore':'sofascore.com','CamScanner':'camscanner.com','Prime Video':'primevideo.com','Proton VPN':'protonvpn.com'
 };
@@ -1786,7 +1787,7 @@ async function inspectEnteredSource() {
       if (Array.isArray(cp)) {
         cp.forEach(x => {
           if (typeof x === 'string') addCompatibility(x, []);
-          else if (x && typeof x === 'object') addCompatibility(x.name || x.packageName || x.package || '', x.versions || x.targets || []);
+          else if (x && typeof x === 'object') addCompatibility(x.packageName || x.package || x.name || '', x.versions || x.targets || []);
         });
       } else if (cp && typeof cp === 'object') {
         Object.entries(cp).forEach(([pkg, versions]) => addCompatibility(pkg, versions));
