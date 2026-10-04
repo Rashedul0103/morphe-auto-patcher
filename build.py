@@ -351,6 +351,9 @@ def _find_play_store_icon(app_id, app):
         direct = _play_detail(session, package_value, app.get("name") or app_id)
         if direct:
             return direct
+        # An explicit Android package is authoritative. Do not fall back to
+        # an unrelated search result with a similar app name.
+        return None
 
     queries = []
     for raw in (app.get("name"), str(app_id).replace("-", " "), package_value):
