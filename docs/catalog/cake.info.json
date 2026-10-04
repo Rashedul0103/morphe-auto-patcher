@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791121773
+    "updated_at": 1791122155
   },
   "patch_source_attempts": [
     {
@@ -20,5 +20,5 @@
     "hoo-dles/morphe-patches"
   ],
   "icon_url": "catalog/icons/cake.png",
-  "icon_source": "cache"
+  "icon_source": "google_play"
 }
