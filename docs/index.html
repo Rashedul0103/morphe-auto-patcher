@@ -1376,6 +1376,38 @@ async function dispatchBuild(appId, force=true) {
   }
 }
 
+
+function systemStatus() {
+  const sources = (S.config.sources || []).filter(x => x.enabled !== false);
+  const apps = (S.config.apps || []).filter(a => !(S.config.hidden_apps || []).includes(a.id));
+  const latestRun = S.runs && S.runs.length ? S.runs[0] : null;
+  const readyApps = apps.filter(a => {
+    const info = (S.cats[a.id] && S.cats[a.id].info) || {};
+    return apkReadiness(a, info).state === 'ready';
+  }).length;
+  const failedBuild = latestRun && latestRun.conclusion === 'failure';
+  const buildState = !latestRun ? 'unknown' : latestRun.status === 'in_progress' ? 'running' : latestRun.conclusion === 'success' ? 'ok' : failedBuild ? 'bad' : 'warn';
+  return {
+    repo: S.connected ? 'ok' : 'bad',
+    sources: sources.length ? 'ok' : 'warn',
+    apps: apps.length ? 'ok' : 'warn',
+    apks: apps.length && readyApps === apps.length ? 'ok' : readyApps ? 'warn' : 'bad',
+    build: buildState,
+    signing: 'unknown',
+    sourceCount: sources.length,
+    appCount: apps.length,
+    readyApps,
+    latestRun
+  };
+}
+
+function statusRow(label, state, detail) {
+  const icons = { ok:'check_circle', warn:'warning', bad:'error', running:'sync', unknown:'help' };
+  const labels = { ok:'Ready', warn:'Attention', bad:'Problem', running:'Running', unknown:'Check required' };
+  const cls = state === 'ok' ? 'ok' : state === 'bad' ? 'bad' : state === 'warn' || state === 'running' ? 'warn' : '';
+  return '<div class="row"><span class="status-icon '+cls+'" style="width:30px;height:30px"><i class="ms" style="font-size:18px">'+icons[state]+'</i></span><div class="g"><b>'+esc(label)+'</b><div class="d">'+esc(detail)+'</div></div><span class="chip '+cls+'">'+labels[state]+'</span></div>';
+}
+
 /* Settings View with Repository & Automation Controls */
 let settingsTab = 0;
 function vSet() {
@@ -1392,6 +1424,14 @@ function vSet() {
         <div class="row" style="margin-top:10px">
           <div class="g">Pure Black (OLED)</div>
           ${sw(S.black, 'data-a="sw_black"')}
+        </div>
+      </div>
+
+      <div class="card">
+        <b>Display Size</b>
+        <div class="d" style="margin:4px 0 10px">Adjust text size without changing the layout.</div>
+        <div style="display:flex;gap:6px">
+          ${[90,100,110,120].map(v => '<button class="pill '+(S.scale===v?'':'o')+'" data-a="set_scale" data-v="'+v+'">'+v+'%</button>').join('')}
         </div>
       </div>
     `;
@@ -1425,7 +1465,7 @@ function vSet() {
 
         <div class="lbl">Default Device Architecture</div>
         <select data-c="cfg_st" data-k="default_arch">
-          ${ARCH.map(x => `<option ${st.default_arch===x?'selected':''}>${x}</option>`).join('')}
+          ${ARCH.map(x => '<option '+(st.default_arch===x?'selected':'')+'>'+x+'</option>').join('')}
         </select>
 
         <div class="row" style="margin-top:10px">
@@ -1444,18 +1484,18 @@ function vSet() {
           <option value="5" ${st.keep_releases==5?'selected':''}>Keep 5 releases</option>
         </select>
 
-        <!-- Discord Webhook Input -->
         <div class="lbl" style="margin-top:14px">Discord Webhook URL (Optional Notifications)</div>
         <input type="text" data-c="cfg_st" data-k="discord_webhook" value="${esc(st.discord_webhook || '')}" placeholder="https://discord.com/api/webhooks/..." style="font-family:monospace;font-size:0.85rem">
-        <div class="d">Receive pings on Discord when an APK is patched or if a stock APK is missing.</div>
+        <div class="d">Receive notifications when builds succeed or need manual APK recovery.</div>
       </div>
 
       <div class="card">
-        <b>Signing Keystore (KEYSTORE_B64)</b>
-        <div class="d" style="margin:4px 0 10px">Ensures all your patched APKs install over previous builds without signature errors.</div>
+        <b>Signing Key</b>
+        <div class="d" style="margin:4px 0 10px">A persistent GitHub Actions signing key lets updated builds install over your previous patched APK without a signature mismatch.</div>
         <a class="pill o" style="text-decoration:none" href="https://github.com/${S.owner}/${S.repo}/settings/secrets/actions" target="_blank" rel="noopener">
-          <i class="ms">key</i> Open Repository Secrets ↗
+          <i class="ms">key</i> Open GitHub Secret Settings ↗
         </a>
+        <div class="d" style="margin-top:8px">The browser cannot read GitHub Secrets, so this page cannot honestly report whether KEYSTORE_B64 is configured. Check System Status and the workflow result after setting it.</div>
       </div>
 
       <div class="card">
@@ -1470,11 +1510,46 @@ function vSet() {
         <button class="pill o" data-a="conn" style="margin-top:6px">Edit GitHub Token</button>
       </div>
     `;
+  } else {
+    const s = systemStatus();
+    const runText = !s.latestRun ? 'No workflow runs have been loaded.' :
+      s.latestRun.status === 'in_progress' ? 'A build is currently running.' :
+      s.latestRun.conclusion === 'success' ? (s.latestRun.display_title || 'Latest build completed successfully.') :
+      'Latest workflow: ' + (s.latestRun.conclusion || s.latestRun.status || 'unknown');
+    b = `
+      <div class="card">
+        <b>System Status</b>
+        <div class="d" style="margin:4px 0 8px">Live checks based on the repository data available to the Patch Manager.</div>
+        ${statusRow('GitHub connection',s.repo,s.repo==='ok' ? S.owner+'/'+S.repo : 'Repository is not connected.')}
+        ${statusRow('Patch sources',s.sources,s.sourceCount+' active source(s) configured.')}
+        ${statusRow('Apps',s.apps,s.appCount+' active app(s).')}
+        ${statusRow('APK readiness',s.apks,s.readyApps+' of '+s.appCount+' active app(s) have a verified stock APK.')}
+        ${statusRow('Latest build',s.build,runText)}
+        ${statusRow('Custom signing key','unknown','GitHub Secrets are not readable from the browser.')}
+      </div>
+
+      <div class="card">
+        <b>APK Providers</b>
+        <div class="d" style="margin:4px 0 8px">Automatic stock APK acquisition is configured per app.</div>
+        ${s.appCount ? (S.config.apps || []).map(a => {
+          const info=(S.cats[a.id]&&S.cats[a.id].info)||{};
+          const acq=info.apk_acquisition||{};
+          const providers=Array.isArray(a.apk_providers)&&a.apk_providers.length ? a.apk_providers : ['apkmirror','uptodown'];
+          return '<div class="row"><div class="g"><b>'+esc(ttl(a))+'</b><div class="d">'+esc(providers.join(' → '))+' · '+esc(targetVersionFor(a,info))+'</div></div><span class="chip '+(acq.status==='downloaded'?'ok':'warn')+'">'+esc(acq.status || 'not checked')+'</span></div>';
+        }).join('') : '<div class="d">No apps configured.</div>'}
+      </div>
+
+      <div class="card">
+        <b>Maintenance Notes</b>
+        <div class="d" style="margin-top:6px">If a check shows Attention or Problem, open that app/build for the recovery action. Technical GitHub logs remain available from the Builds page.</div>
+      </div>
+    `;
   }
   return hdr('Settings', '', 1) + `
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto">
       <button class="pill ${settingsTab===0?'':'o'}" data-a="set_stab" data-v="0">Appearance</button>
       <button class="pill ${settingsTab===1?'':'o'}" data-a="set_stab" data-v="1">Repository & Automation</button>
+      <button class="pill ${settingsTab===2?'':'o'}" data-a="set_stab" data-v="2">System Status</button>
     </div>
     ${b}
   `;
@@ -1813,6 +1888,7 @@ Object.assign(A, {
   set_theme: t => { S.mode = t.dataset.v; persist(); theme(); render(); },
   sw_black: t => { S.black = !S.black; persist(); theme(); render(); },
   set_stab: t => { settingsTab = +t.dataset.v; render(); },
+  set_scale: t => { S.scale = +t.dataset.v || 100; persist(); theme(); render(); }
   unhide: t => {
     S.config.hidden_apps = (S.config.hidden_apps || []).filter(x => x !== t.dataset.id);
     dirty(); render();
