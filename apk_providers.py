@@ -757,7 +757,6 @@ class UptodownProvider:
             expected_package,
             str(expected_package or "").replace(".", "-"),
             str(expected_package or "").split(".")[-1] if expected_package else "",
-            str(app_id or ""),
         ]
         for value in slug_values:
             slug = _slugify(value)
