@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791187083
+    "updated_at": 1791197020
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,8 +28,9 @@
     "package": "com.adguard.android",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
-      "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/"
+      "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-21%22%7D/",
+      "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+      "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/"
     ],
     "attempts": [
       {
@@ -37,11 +38,17 @@
         "version": "4.14.2",
         "status": "download_failed",
         "candidate": {
-          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
-          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-21%22%7D/",
+          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-21%22%7D/",
+          "download_url": "",
           "architecture": "universal",
           "dpi": "nodpi",
-          "is_bundle": false
+          "is_bundle": false,
+          "artifact_type": "apk",
+          "details": {
+            "version_page": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/4-14-2/",
+            "download_page_error": "APKMirror download button not found"
+          }
         },
         "error": "APKMirror download button not found"
       },
@@ -50,11 +57,36 @@
         "version": "4.14.2",
         "status": "download_failed",
         "candidate": {
-          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
-          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard-android-tv/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
+          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-24%22%7D/",
+          "download_url": "",
           "architecture": "universal",
           "dpi": "nodpi",
-          "is_bundle": false
+          "is_bundle": false,
+          "artifact_type": "apk",
+          "details": {
+            "version_page": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/4-14-2/",
+            "download_page_error": "APKMirror download button not found"
+          }
+        },
+        "error": "APKMirror download button not found"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "4.14.2",
+        "status": "download_failed",
+        "candidate": {
+          "page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
+          "download_page_url": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/variant-%7B%22arches_slug%22%3A%5B%5D%2C%22minapi_slug%22%3A%22minapi-28%22%7D/",
+          "download_url": "",
+          "architecture": "universal",
+          "dpi": "nodpi",
+          "is_bundle": false,
+          "artifact_type": "apk",
+          "details": {
+            "version_page": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/4-14-2/",
+            "download_page_error": "APKMirror download button not found"
+          }
         },
         "error": "APKMirror download button not found"
       },
@@ -62,7 +94,8 @@
         "provider": "uptodown",
         "version": "4.14.2",
         "status": "resolve_failed",
-        "error": "HTTP 404: https://adguard.en.uptodown.com/android/versions/"
+        "base_url": "https://adguard.en.uptodown.com/android/versions",
+        "error": "HTTP 404: https://adguard.en.uptodown.com/android"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",

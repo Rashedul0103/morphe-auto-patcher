@@ -18,8 +18,8 @@
   "build_status": {
     "status": "failed",
     "stage": "apk_acquisition",
-    "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791187083
+    "reason": "No valid stock APK could be acquired.",
+    "updated_at": 1791197020
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -27,18 +27,17 @@
     "target_version": "6.98.4",
     "package": "com.duolingo",
     "apk_arch": "auto",
-    "manual_urls": [],
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-2-android-apk-download/download/?key=64a1d9f257d5d6db9ab5756dc5bf2910cabb074d"
+    ],
     "attempts": [
       {
         "provider": "apkmirror",
-        "status": "not_configured"
-      },
-      {
-        "provider": "uptodown",
-        "status": "not_configured"
+        "status": "validation_failed",
+        "error": "Split module version mismatch in split_config.arm64_v8a.apk: expected 6.98.4, found ."
       }
     ],
-    "error": "All automatic APK providers failed for the exact requested version.",
+    "error": "No valid stock APK could be acquired.",
     "workspace": ".work/duolingo"
   },
   "stock_apk": null

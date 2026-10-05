@@ -19,9 +19,10 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791187083
+    "status": "success",
+    "stage": "completed",
+    "release_tag": "youtube-v1.45.0",
+    "updated_at": 1791197020
   },
   "apk_acquisition": {
     "status": "downloaded",
@@ -44,7 +45,8 @@
     ],
     "sha256": "724d2bf15d31dac98db00d82914db3876edf66e62fe2845001f204209ecf4c00",
     "size_bytes": 184012881,
-    "signer_sha256": []
+    "signer_sha256": [],
+    "artifact_type": "apk"
   },
   "patched_apk": {
     "path": ".work/youtube/patched/youtube-patched.apk",
@@ -54,8 +56,9 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "12f922d866086cd2e018175d889d1e927041085e95f3f4d306ecbcbf1cce21e5",
+    "sha256": "a88c83252e46655b0c1ca27c402041bc518599d2d1d78251e2698a6dc81b6696",
     "size_bytes": 103499352,
-    "signer_sha256": []
+    "signer_sha256": [],
+    "artifact_type": "apk"
   }
 }
