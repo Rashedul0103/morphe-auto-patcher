@@ -367,7 +367,7 @@ class APKMirrorProvider:
                 for result_url in _search_result_urls(
                     search_query, ("apkmirror.com",), limit=10
                 ):
-                    if not _primary_version_matches(probe.text or "", exact):
+                    if not _version_appears_exact(result_url, exact):
                         try:
                             probe = self._get(result_url)
                             if not _primary_version_matches(probe.text or "", exact):
