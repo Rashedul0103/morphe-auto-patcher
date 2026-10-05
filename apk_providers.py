@@ -94,6 +94,26 @@ def _version_appears_exact(text: str, target_version: str) -> bool:
     return bool(re.search(rf"(?<!\d){re.escape(wanted)}(?!\d)", text or ""))
 
 
+def _primary_version(html: str) -> str:
+    """Extract the page's primary artifact version, not historical versions."""
+    soup = BeautifulSoup(html or "", "html.parser")
+    for node in (soup.find("h1"), soup.select_one('meta[property="og:title"]')):
+        if not node:
+            continue
+        value = node.get("content") if getattr(node, "name", "") == "meta" else node.get_text(" ", strip=True)
+        match = re.search(r"(?<!\d)(\d+(?:\.\d+)+)(?!\d)", value or "")
+        if match:
+            return match.group(1)
+    text = soup.get_text(" ", strip=True)
+    match = re.search(r"\bVersion\s*:\s*(\d+(?:\.\d+)+)\b", text, re.I)
+    return match.group(1) if match else ""
+
+
+def _primary_version_matches(html: str, target_version: str) -> bool:
+    primary = _primary_version(html)
+    return bool(primary and _clean_version(primary) == _clean_version(target_version))
+
+
 def _slugify(value: str) -> str:
     value = (value or "").strip().lower()
     value = value.replace("&", " and ")
@@ -347,10 +367,10 @@ class APKMirrorProvider:
                 for result_url in _search_result_urls(
                     search_query, ("apkmirror.com",), limit=10
                 ):
-                    if not _version_appears_exact(result_url, exact):
+                    if not _primary_version_matches(probe.text or "", exact):
                         try:
                             probe = self._get(result_url)
-                            if not _version_appears_exact(probe.text or "", exact):
+                            if not _primary_version_matches(probe.text or "", exact):
                                 continue
                             result_url = probe.url or result_url
                         except Exception:
@@ -358,7 +378,7 @@ class APKMirrorProvider:
                     try:
                         probe = self._get(result_url)
                         body = probe.text or ""
-                        if not _version_appears_exact(body, exact):
+                        if not _primary_version_matches(body, exact):
                             continue
                         if expected_package:
                             found_package = _extract_package(body)
@@ -392,7 +412,7 @@ class APKMirrorProvider:
                     try:
                         candidate_response = self._get(candidate_url)
                         body = candidate_response.text or ""
-                        if not _version_appears_exact(body, exact):
+                        if not _primary_version_matches(body, exact):
                             continue
                         if expected_package:
                             found_package = _extract_package(body)
@@ -413,7 +433,7 @@ class APKMirrorProvider:
                 candidate_url = _normalize_url(base_url, href)
                 try:
                     candidate_response = self._get(candidate_url)
-                    if not _version_appears_exact(candidate_response.text or "", exact):
+                    if not _primary_version_matches(candidate_response.text or "", exact):
                         continue
                     if expected_package:
                         found_package = _extract_package(candidate_response.text or "")
@@ -450,7 +470,7 @@ class APKMirrorProvider:
         ):
             try:
                 test = self._get(url)
-                if _version_appears_exact(test.text or "", exact):
+                if _primary_version_matches(test.text or "", exact):
                     if expected_package:
                         found_package = _extract_package(test.text or "")
                         if found_package and found_package.lower() != expected_package.lower():
@@ -587,7 +607,7 @@ class APKMirrorProvider:
                 try:
                     response = self._get(result_url)
                     body = response.text or ""
-                    if not _version_appears_exact(body, exact):
+                    if not _primary_version_matches(body, exact):
                         continue
                     if expected_package:
                         found_package = _extract_package(body)
@@ -712,7 +732,10 @@ class UptodownProvider:
             search_url = "https://en.uptodown.com/android/search/" + quote(
                 _slugify(search_query)
             )
-            response = self._get(search_url)
+            try:
+                response = self._get(search_url)
+            except ProviderError:
+                continue
             soup = BeautifulSoup(response.text, "html.parser")
             for anchor in soup.find_all("a", href=True):
                 href = anchor["href"]
