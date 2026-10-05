@@ -298,31 +298,46 @@ class APKMirrorProvider:
         normalized_package = str(expected_package or "").strip().lower()
         normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
 
-        for url, anchor_title in list(candidates.items())[:16]:
-            score = 0
-            package = ""
-            title = anchor_title
-            try:
-                page = self._get(url)
-                page_soup = BeautifulSoup(page.text, "html.parser")
-                heading = page_soup.find("h1")
-                if heading:
-                    title = heading.get_text(" ", strip=True)
-                package = _extract_package(page.text).lower()
-                if normalized_package:
-                    if package == normalized_package:
-                        score += 20000
-                    elif package:
-                        score -= 10000
-                title_normalized = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
-                if normalized_query and title_normalized == normalized_query:
-                    score += 6000
-                for token in normalized_query.split():
-                    if len(token) >= 2 and token in title_normalized:
-                        score += 600
-            except Exception:
-                continue
-            scored.append((score, url, title, package))
+        def score_candidates(items):
+            scored_local = []
+            for url, anchor_title in list(items.items())[:24]:
+                score = 0
+                package = ""
+                title = anchor_title
+                try:
+                    page = self._get(url)
+                    page_soup = BeautifulSoup(page.text, "html.parser")
+                    heading = page_soup.find("h1")
+                    if heading:
+                        title = heading.get_text(" ", strip=True)
+                    package = _extract_package(page.text).lower()
+                    if normalized_package:
+                        if package == normalized_package:
+                            score += 20000
+                        elif package:
+                            score -= 10000
+                    title_normalized = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
+                    if normalized_query and title_normalized == normalized_query:
+                        score += 6000
+                    for token in normalized_query.split():
+                        if len(token) >= 2 and token in title_normalized:
+                            score += 600
+                except Exception:
+                    continue
+                scored_local.append((score, url, title, package))
+            return scored_local
+
+        scored = score_candidates(candidates)
+        if normalized_package and not any(item[3] == normalized_package for item in scored):
+            web_queries = [
+                f'site:apkmirror.com/apk/ "{normalized_package}"',
+                f'site:apkmirror.com/apk/ "{query}"',
+            ]
+            for web_query in web_queries:
+                for result_url in _search_result_urls(web_query, ("apkmirror.com",), limit=12):
+                    if "/apk/" in result_url:
+                        candidates.setdefault(result_url, "")
+            scored = score_candidates(candidates)
 
         if not scored:
             raise ProviderError(f"APKMirror app discovery failed for {query}")
@@ -343,7 +358,12 @@ class APKMirrorProvider:
         expected_package: str = "",
     ) -> str:
         base_url = self.base_url or self._discover_app_page(app_query, expected_package)
-        response = self._get(base_url)
+        try:
+            response = self._get(base_url)
+        except ProviderError:
+            self.base_url = ""
+            base_url = self._discover_app_page(app_query, expected_package)
+            response = self._get(base_url)
         soup = BeautifulSoup(response.text, "html.parser")
 
         if expected_package:
@@ -810,6 +830,43 @@ class UptodownProvider:
                 continue
             scored.append((score, url, title, package))
 
+        if not scored:
+            web_queries = []
+            if expected_package:
+                web_queries.append(f'site:uptodown.com/android "{expected_package}"')
+            if query:
+                web_queries.append(f'site:uptodown.com/android "{query}"')
+            for web_query in web_queries:
+                for result_url in _search_result_urls(web_query, ("uptodown.com",), limit=12):
+                    if "/android" in result_url:
+                        candidates.setdefault(result_url.rstrip("/"), "")
+            if candidates:
+                scored = []
+                for url, anchor_title in list(candidates.items())[:30]:
+                    score = 0
+                    package = ""
+                    title = anchor_title
+                    try:
+                        page = self._get(url)
+                        page_soup = BeautifulSoup(page.text, "html.parser")
+                        heading = page_soup.find("h1")
+                        if heading:
+                            title = heading.get_text(" ", strip=True)
+                        package = _extract_package(page.text).lower()
+                        if normalized_package:
+                            if package == normalized_package:
+                                score += 20000
+                            elif package:
+                                score -= 10000
+                        title_normalized = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
+                        if normalized_query and title_normalized == normalized_query:
+                            score += 6000
+                        for token in normalized_query.split():
+                            if len(token) >= 2 and token in title_normalized:
+                                score += 600
+                    except Exception:
+                        continue
+                    scored.append((score, url, title, package))
         if not scored:
             raise ProviderError(f"Uptodown app discovery failed for {query}")
 
