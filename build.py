@@ -12,7 +12,7 @@ import urllib.request
 import zipfile
 
 from apk_providers import acquire_from_providers
-from apk_validator import ApkValidationError, validate_apk
+from apk_validator import ApkValidationError, validate_apk, validate_artifact
 from bs4 import BeautifulSoup
 import requests
 
@@ -656,13 +656,13 @@ def _stock_candidates(stock_dir):
         [
             os.path.join(stock_dir, name)
             for name in os.listdir(stock_dir)
-            if name.lower().endswith(".apk")
+            if name.lower().endswith((".apk", ".apkm", ".apks", ".xapk"))
         ]
     )
 
 
 def _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256=None):
-    return validate_apk(
+    return validate_artifact(
         path,
         expected_package=package,
         expected_version=version,
@@ -711,8 +711,13 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
 
     explicit_url = (app_config.get("apk_url") or "").strip()
     if explicit_url:
-        explicit_path = os.path.join(stock_dir, f"{app_id}-{app_version or 'explicit'}-url.apk")
-        print(f"Trying configured APK URL for {app_id}...")
+        explicit_suffix = os.path.splitext(urllib.parse.urlparse(explicit_url).path)[1].lower()
+        if explicit_suffix not in (".apk", ".apkm", ".apks", ".xapk"):
+            explicit_suffix = ".apk"
+        explicit_path = os.path.join(
+            stock_dir, f"{app_id}-{app_version or 'explicit'}-url{explicit_suffix}"
+        )
+        print(f"Trying configured Android artifact URL for {app_id}...")
         try:
             _download_url(explicit_url, explicit_path)
             info = _validate_stock_file(explicit_path, package, app_version, apk_arch, expected_signer_sha256)
@@ -728,6 +733,9 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
         ok, release_out = run_cmd([
             "gh", "release", "download", stock_release_tag,
             "--pattern", "*.apk",
+            "--pattern", "*.apkm",
+            "--pattern", "*.apks",
+            "--pattern", "*.xapk",
             "-D", stock_dir,
             "--clobber"
         ])
@@ -1082,7 +1090,7 @@ def main():
                     "updated_at": now,
                 },
             )
-            print(f"⚠️ ACTION REQUIRED: Manual stock APK required for '{app_id}'")
+            print(f"⚠️ ACTION REQUIRED: Manual stock Android artifact required for '{app_id}'")
             manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
             stock_release_url = (
                 f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}"
@@ -1095,7 +1103,7 @@ def main():
                     title=f"⚠️ Manual APK Required: {app_id.capitalize()}",
                     description=(
                         "Automatic download failed for the exact requested version. "
-                        "Please download the untouched original APK, upload it to "
+                        "Please download the untouched original APK/APKM/APKS/XAPK, upload it to "
                         f"stock-{app_id}, then retry the build."
                     ),
                     color=0xF59E0B,
@@ -1103,7 +1111,7 @@ def main():
                         {"name": "Target Version", "value": app_version or "Latest", "inline": True},
                         {"name": "Architecture Preference", "value": apk_arch, "inline": True},
                         {"name": "Download Exact APK", "value": f"[Open download page]({manual_link})", "inline": False},
-                        {"name": "Upload Stock APK", "value": f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
+                        {"name": "Upload Stock Android Artifact", "value": f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
                         {"name": "Reason", "value": reason[:1024], "inline": False}
                     ]
                 )

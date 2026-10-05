@@ -9,7 +9,7 @@ import re
 import time
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 try:
     import cloudscraper
@@ -33,6 +33,8 @@ DEFAULT_PROVIDER_URLS = {
     },
 }
 
+SUPPORTED_ARTIFACT_TYPES = {"apk", "apkm", "apks", "xapk"}
+
 
 class ProviderError(RuntimeError):
     pass
@@ -48,6 +50,7 @@ class ApkCandidate:
     architecture: str = ""
     dpi: str = ""
     is_bundle: bool = False
+    artifact_type: str = "apk"
     filename_hint: str = ""
     details: dict = field(default_factory=dict)
 
@@ -83,11 +86,55 @@ def _clean_version(text: str) -> str:
     return (text or "").strip().lstrip("vV")
 
 
+def _version_appears_exact(text: str, target_version: str) -> bool:
+    wanted = _clean_version(target_version)
+    if not wanted:
+        return False
+    return bool(re.search(rf"(?<!\d){re.escape(wanted)}(?!\d)", text or ""))
+
+
+def _slugify(value: str) -> str:
+    value = (value or "").strip().lower()
+    value = value.replace("&", " and ")
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+
+def _looks_like_package(value: str) -> bool:
+    return bool(re.match(r"^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$", str(value or "").strip()))
+
+
+def _extract_package(html: str) -> str:
+    text = BeautifulSoup(html or "", "html.parser").get_text(" ", strip=True)
+    patterns = (
+        r"\bPackage(?:\s+Name)?\s*:\s*([A-Za-z0-9_.$]+)",
+        r"\bPackage(?:\s+Name)?\s+([A-Za-z0-9_.$]+)",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.I)
+        if match and _looks_like_package(match.group(1)):
+            return match.group(1)
+    return ""
+
+
+def _artifact_type_from_text(text: str, fallback: str = "apk") -> str:
+    haystack = (text or "").lower()
+    for kind in ("apkm", "apks", "xapk"):
+        if kind in haystack:
+            return kind
+    return fallback if fallback in SUPPORTED_ARTIFACT_TYPES else "apk"
+
+
+def _looks_like_html_bytes(chunk: bytes) -> bool:
+    sample = (chunk or b"")[:2048].lstrip().lower()
+    return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
+
+
 class APKMirrorProvider:
     name = "apkmirror"
 
-    def __init__(self, base_url: str):
-        self.base_url = base_url.rstrip("/") + "/"
+    def __init__(self, base_url: str = ""):
+        self.base_url = base_url.rstrip("/") + "/" if base_url else ""
         self.session = _scraper()
 
     def _get(self, url: str):
@@ -107,63 +154,140 @@ class APKMirrorProvider:
             raise ProviderError("Cloudflare challenge page detected")
         return response
 
-    def _discover_app_page(self, query: str) -> str:
-        if not query:
-            raise ProviderError("APKMirror app page is not configured")
-        search_url = (
-            "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
-            + quote(str(query))
-        )
-        response = self._get(search_url)
-        soup = BeautifulSoup(response.text, "html.parser")
-        candidates = []
-        for anchor in soup.find_all("a", href=True):
-            href = anchor["href"]
-            if "/apk/" not in href:
-                continue
-            title = anchor.get_text(" ", strip=True)
-            candidates.append((_normalize_url(search_url, href), title))
+    def _discover_app_page(self, query: str, expected_package: str = "") -> str:
+        if self.base_url:
+            return self.base_url
+
+        queries = []
+        for value in (expected_package, query):
+            value = str(value or "").strip()
+            if value and value not in queries:
+                queries.append(value)
+        if not queries:
+            raise ProviderError("APKMirror app identity is not available for discovery")
+
+        candidates = {}
+        for search_query in queries:
+            search_url = (
+                "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
+                + quote(search_query)
+            )
+            response = self._get(search_url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = anchor["href"]
+                if "/apk/" not in href:
+                    continue
+                url = _normalize_url(search_url, href)
+                if url not in candidates:
+                    candidates[url] = anchor.get_text(" ", strip=True)
+
         if not candidates:
             raise ProviderError(f"APKMirror app search returned no app page for {query}")
-        normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
-        def score(item):
-            title = re.sub(r"[^a-z0-9]+", " ", item[1].lower()).strip()
-            return sum(1 for token in normalized_query.split() if len(token) >= 2 and token in title)
-        candidates.sort(key=score, reverse=True)
-        return candidates[0][0]
 
-    def get_version_page(self, target_version: str, app_query: str = "") -> str:
-        if not self.base_url:
-            self.base_url = self._discover_app_page(app_query).rstrip("/") + "/"
-        response = self._get(self.base_url)
+        scored = []
+        normalized_package = str(expected_package or "").strip().lower()
+        normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
+
+        for url, anchor_title in list(candidates.items())[:16]:
+            score = 0
+            package = ""
+            title = anchor_title
+            try:
+                page = self._get(url)
+                page_soup = BeautifulSoup(page.text, "html.parser")
+                heading = page_soup.find("h1")
+                if heading:
+                    title = heading.get_text(" ", strip=True)
+                package = _extract_package(page.text).lower()
+                if normalized_package:
+                    if package == normalized_package:
+                        score += 20000
+                    elif package:
+                        score -= 10000
+                title_normalized = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
+                if normalized_query and title_normalized == normalized_query:
+                    score += 6000
+                for token in normalized_query.split():
+                    if len(token) >= 2 and token in title_normalized:
+                        score += 600
+            except Exception:
+                continue
+            scored.append((score, url, title, package))
+
+        if not scored:
+            raise ProviderError(f"APKMirror app discovery failed for {query}")
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        best = scored[0]
+        if normalized_package and best[3] and best[3] != normalized_package:
+            raise ProviderError(
+                f"APKMirror app discovery found package {best[3]}, expected {expected_package}"
+            )
+        self.base_url = best[1].rstrip("/") + "/"
+        return self.base_url
+
+    def get_version_page(
+        self,
+        target_version: str,
+        app_query: str = "",
+        expected_package: str = "",
+    ) -> str:
+        base_url = self.base_url or self._discover_app_page(app_query, expected_package)
+        response = self._get(base_url)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # Prefer an actual exact version row from APKMirror's version list.
-        exact = _clean_version(target_version)
-        for row in soup.select("div.listWidget div"):
-            text = _clean_version(row.get_text(" ", strip=True))
-            if exact and re.search(rf"(?<!\d){re.escape(exact)}(?!\d)", text):
-                anchor = row.find("a", href=True)
-                if anchor:
-                    return _normalize_url(self.base_url, anchor["href"])
+        if expected_package:
+            found_package = _extract_package(response.text)
+            if found_package and found_package.lower() != expected_package.lower():
+                raise ProviderError(
+                    f"APKMirror app page package mismatch: found {found_package}, expected {expected_package}"
+                )
 
-        # Fallback used by the reference Morphe builder and Morphe Manager-style
-        # exact-version navigation.
+        exact = _clean_version(target_version)
+        for anchor in soup.find_all("a", href=True):
+            href = anchor["href"]
+            text = anchor.get_text(" ", strip=True)
+            if not _version_appears_exact(f"{text} {href}", exact):
+                continue
+            if "/release/" in href or "apk-download" in href or "/uploads/" in href:
+                return _normalize_url(base_url, href)
+
+        version_listing_urls = []
+        for anchor in soup.find_all("a", href=True):
+            label = anchor.get_text(" ", strip=True).lower()
+            href = anchor["href"]
+            if "all versions" in label or "previous apks" in label:
+                version_listing_urls.append(_normalize_url(base_url, href))
+
+        for listing_url in version_listing_urls:
+            try:
+                listing = self._get(listing_url)
+                listing_soup = BeautifulSoup(listing.text, "html.parser")
+                for anchor in listing_soup.find_all("a", href=True):
+                    href = anchor["href"]
+                    text = anchor.get_text(" ", strip=True)
+                    if _version_appears_exact(f"{text} {href}", exact):
+                        if "/release/" in href or "apk-download" in href:
+                            return _normalize_url(listing_url, href)
+            except Exception:
+                continue
+
         slug = exact.replace(".", "-")
         for url in (
-            f"{self.base_url}{slug}-release/",
-            f"{self.base_url}{slug}/",
+            f"{base_url}{slug}-release/",
+            f"{base_url}{slug}/",
         ):
             try:
                 test = self._get(url)
-                if "table" in (test.text or "") or exact in (test.text or ""):
+                if exact in (test.text or ""):
                     return url
             except Exception:
                 continue
 
         raise ProviderError(f"Exact APKMirror version page not found for {target_version}")
 
-    def get_variants(self, version_url: str) -> list[ApkCandidate]:
+    def get_variants(self, version_url: str, target_version: str) -> list[ApkCandidate]:
         response = self._get(version_url)
         soup = BeautifulSoup(response.text, "html.parser")
         table = soup.find("div", class_="table")
@@ -181,18 +305,24 @@ class APKMirrorProvider:
             if not link:
                 continue
 
+            row_text = row.get_text(" ", strip=True)
             bundle_tag = row.find("span", class_="apkm-badge")
-            is_bundle = bool(bundle_tag and "BUNDLE" in bundle_tag.get_text(" ", strip=True).upper())
+            artifact_type = _artifact_type_from_text(
+                f"{row_text} {link.get_text(' ', strip=True)} {link.get('href', '')}",
+                "apkm" if bundle_tag else "apk",
+            )
+            is_bundle = artifact_type != "apk"
             architecture = cells[1].get_text(strip=True) if len(cells) > 1 else ""
             dpi = cells[3].get_text(strip=True) if len(cells) > 3 else ""
 
             out.append(ApkCandidate(
                 provider=self.name,
-                version="",
+                version=target_version,
                 page_url=_normalize_url("https://www.apkmirror.com/", link["href"]),
                 architecture=architecture,
                 dpi=dpi,
                 is_bundle=is_bundle,
+                artifact_type=artifact_type,
                 details={"version_page": version_url},
             ))
 
@@ -203,6 +333,8 @@ class APKMirrorProvider:
         soup = BeautifulSoup(response.text, "html.parser")
         button = soup.find("a", class_="downloadButton", href=True)
         if not button:
+            button = soup.find("a", attrs={"class": re.compile(r"downloadButton", re.I)}, href=True)
+        if not button:
             raise ProviderError("APKMirror download button not found")
         return _normalize_url(variant_url, button["href"])
 
@@ -210,7 +342,6 @@ class APKMirrorProvider:
         response = self._get(download_page_url)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # APKMirror currently exposes the final file link with rel=nofollow.
         direct = soup.find("a", attrs={"rel": "nofollow"}, href=True)
         if not direct:
             direct = soup.find("a", href=True, string=re.compile(r"download", re.I))
@@ -222,7 +353,7 @@ class APKMirrorProvider:
         arch = candidate.architecture.lower()
         pref = (preferred_arch or "auto").lower()
 
-        if "x86" in arch:
+        if "x86_64" in arch or arch.strip() == "x86":
             return -10000
 
         if pref not in ("", "auto", "automatic"):
@@ -255,19 +386,26 @@ class APKMirrorProvider:
         bundle_penalty = -100 if candidate.is_bundle else 0
         return arch_score + dpi_score + bundle_penalty
 
-    def resolve(self, target_version: str, preferred_arch: str = "auto", app_query: str = "") -> list[ApkCandidate]:
-        version_url = self.get_version_page(target_version, app_query=app_query)
-        variants = self.get_variants(version_url)
+    def resolve(
+        self,
+        target_version: str,
+        preferred_arch: str = "auto",
+        app_query: str = "",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        version_url = self.get_version_page(
+            target_version,
+            app_query=app_query,
+            expected_package=expected_package,
+        )
+        variants = self.get_variants(version_url, target_version)
         exact_variants = []
 
         for candidate in variants:
-            candidate.version = target_version
             try:
                 candidate.download_page_url = self._resolve_download_page(candidate.page_url)
             except Exception as exc:
                 candidate.details["download_page_error"] = str(exc)
-                # Keep the variant page as the useful manual fallback if the
-                # download button itself is unavailable.
                 candidate.download_page_url = candidate.page_url
             exact_variants.append(candidate)
 
@@ -283,24 +421,35 @@ class APKMirrorProvider:
 
         response = self.session.get(
             candidate.download_url,
-            headers={"Referer": candidate.download_page_url},
-            timeout=60,
+            headers={"Referer": candidate.download_page_url, "User-Agent": USER_AGENT},
+            timeout=90,
             stream=True,
         )
         if response.status_code != 200:
-            raise ProviderError(f"HTTP {response.status_code} while downloading APK")
+            raise ProviderError(f"HTTP {response.status_code} while downloading APKMirror artifact")
 
         with open(destination, "wb") as fh:
+            first = True
             for chunk in response.iter_content(chunk_size=1024 * 1024):
-                if chunk:
-                    fh.write(chunk)
+                if not chunk:
+                    continue
+                if first and _looks_like_html_bytes(chunk):
+                    raise ProviderError("APKMirror returned HTML instead of an APK artifact")
+                first = False
+                fh.write(chunk)
 
 
 class UptodownProvider:
     name = "uptodown"
 
-    def __init__(self, versions_url: str):
-        self.versions_url = versions_url.rstrip("/") + "/"
+    def __init__(self, base_url: str = ""):
+        self.base_url = base_url.rstrip("/") + "/" if base_url else ""
+        self.app_url = ""
+        if self.base_url:
+            if self.base_url.rstrip("/").endswith("/versions"):
+                self.app_url = self.base_url.rstrip("/")[:-len("/versions")]
+            else:
+                self.app_url = self.base_url.rstrip("/")
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": USER_AGENT,
@@ -313,64 +462,351 @@ class UptodownProvider:
             raise ProviderError(f"HTTP {response.status_code}: {url}")
         return response
 
-    def _find_version_page(self, target_version: str) -> str:
-        response = self._get(self.versions_url)
-        soup = BeautifulSoup(response.text, "html.parser")
-        wanted = _clean_version(target_version)
+    def _discover_app_page(self, query: str, expected_package: str = "") -> str:
+        if self.app_url:
+            return self.app_url
 
-        for anchor in soup.find_all("a", href=True):
-            text = _clean_version(anchor.get_text(" ", strip=True))
-            if text == wanted or re.search(rf"(?<!\d){re.escape(wanted)}(?!\d)", text):
+        queries = []
+        for value in (expected_package, query):
+            value = str(value or "").strip()
+            if value and value not in queries:
+                queries.append(value)
+        if not queries:
+            raise ProviderError("Uptodown app identity is not available for discovery")
+
+        candidates = {}
+        for search_query in queries:
+            search_url = "https://en.uptodown.com/android/search/" + quote(
+                _slugify(search_query)
+            )
+            response = self._get(search_url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            for anchor in soup.find_all("a", href=True):
                 href = anchor["href"]
-                if "uptodown.com" in href or href.startswith("/"):
-                    return _normalize_url(self.versions_url, href)
+                if not re.search(r"https?://[^/]+\.uptodown\.com/android(?:/|$)", href):
+                    continue
+                if "/search/" in href:
+                    continue
+                candidates[_normalize_url(search_url, href).rstrip("/")] = anchor.get_text(
+                    " ", strip=True
+                )
 
-        raise ProviderError(f"Exact Uptodown version page not found for {target_version}")
-
-    def resolve(self, target_version: str, preferred_arch: str = "auto") -> list[ApkCandidate]:
-        version_page = self._find_version_page(target_version)
-        response = self._get(version_page)
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        candidates: list[ApkCandidate] = []
-        for anchor in soup.find_all("a", href=True):
-            href = anchor["href"]
-            label = anchor.get_text(" ", strip=True).lower()
-            if "/android/download/" in href or "download" in label:
-                candidates.append(ApkCandidate(
-                    provider=self.name,
-                    version=target_version,
-                    page_url=version_page,
-                    download_page_url=_normalize_url(version_page, href),
-                    architecture="",
-                    is_bundle="xapk" in label.lower(),
-                ))
+        for value in (query, expected_package):
+            slug = _slugify(value)
+            if slug:
+                candidates.setdefault(
+                    f"https://{slug}.en.uptodown.com/android", str(value)
+                )
 
         if not candidates:
-            # The version page itself remains a valid manual starting point.
+            raise ProviderError(f"Uptodown app search returned no candidate for {query}")
+
+        normalized_package = str(expected_package or "").strip().lower()
+        normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
+        scored = []
+
+        for url, anchor_title in list(candidates.items())[:18]:
+            score = 0
+            package = ""
+            title = anchor_title
+            try:
+                page = self._get(url)
+                page_soup = BeautifulSoup(page.text, "html.parser")
+                heading = page_soup.find("h1")
+                if heading:
+                    title = heading.get_text(" ", strip=True)
+                package = _extract_package(page.text).lower()
+                if normalized_package:
+                    if package == normalized_package:
+                        score += 20000
+                    elif package:
+                        score -= 10000
+                title_normalized = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
+                if normalized_query and title_normalized == normalized_query:
+                    score += 6000
+                for token in normalized_query.split():
+                    if len(token) >= 2 and token in title_normalized:
+                        score += 600
+            except Exception:
+                continue
+            scored.append((score, url, title, package))
+
+        if not scored:
+            raise ProviderError(f"Uptodown app discovery failed for {query}")
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        best = scored[0]
+        if normalized_package and best[3] and best[3] != normalized_package:
+            raise ProviderError(
+                f"Uptodown app discovery found package {best[3]}, expected {expected_package}"
+            )
+        self.app_url = best[1].rstrip("/")
+        self.base_url = self.app_url + "/versions"
+        return self.app_url
+
+    def _data_code(self) -> str:
+        response = self._get(self.app_url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        node = soup.select_one("#detail-app-name")
+        data_code = node.get("data-code", "") if node else ""
+        if not data_code:
+            raise ProviderError("Uptodown app data-code was not found")
+        return str(data_code).strip()
+
+    def _version_record(self, data_code: str, target_version: str) -> list[dict]:
+        wanted = _clean_version(target_version)
+        records = []
+        for page_number in range(1, 21):
+            url = f"{self.app_url}/apps/{data_code}/versions/{page_number}"
+            try:
+                response = self._get(url)
+            except ProviderError:
+                if page_number == 1:
+                    raise
+                break
+            try:
+                payload = response.json()
+            except Exception as exc:
+                raise ProviderError(f"Uptodown version API returned invalid JSON: {exc}")
+            data = payload.get("data") or []
+            if not isinstance(data, list) or not data:
+                break
+            for item in data:
+                if isinstance(item, dict) and _clean_version(str(item.get("version", ""))) == wanted:
+                    records.append(item)
+            if records:
+                return records
+        if not records:
+            raise ProviderError(f"Exact Uptodown version page not found for {target_version}")
+        return records
+
+    def _version_page(self, record: dict) -> str:
+        version_url = record.get("versionURL") or {}
+        if not isinstance(version_url, dict):
+            raise ProviderError("Uptodown version metadata is malformed")
+        base = str(version_url.get("url") or "").rstrip("/")
+        extra = str(version_url.get("extraURL") or "").strip("/")
+        version_id = version_url.get("versionID")
+        if not base or version_id is None:
+            raise ProviderError("Uptodown version metadata lacks a usable URL")
+        parts = [base]
+        if extra:
+            parts.append(extra)
+        parts.append(str(version_id))
+        return "/".join(parts)
+
+    def _direct_from_download_page(self, url: str) -> str:
+        response = self._get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        button = soup.select_one("#detail-download-button")
+        if button:
+            data_url = str(button.get("data-url") or "").strip()
+            if data_url:
+                return f"https://dw.uptodown.com/dwn/{data_url}"
+        for anchor in soup.find_all("a", href=True):
+            href = anchor["href"]
+            if "dw.uptodown.com" in href:
+                return href
+        raise ProviderError("Uptodown direct download URL not found")
+
+    def _variant_candidates(
+        self,
+        version_page: str,
+        data_code: str,
+        target_version: str,
+        fallback_type: str,
+    ) -> list[ApkCandidate]:
+        response = self._get(version_page)
+        soup = BeautifulSoup(response.text, "html.parser")
+        variants_button = soup.select_one(".button.variants")
+        data_version = str(variants_button.get("data-version") or "").strip() if variants_button else ""
+        if not data_version:
+            artifact_type = fallback_type if fallback_type in SUPPORTED_ARTIFACT_TYPES else "apk"
+            download_url = self._direct_from_download_page(version_page)
+            return [ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=version_page,
+                download_page_url=version_page,
+                download_url=download_url,
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={"version_page": version_page, "data_code": data_code},
+            )]
+
+        origin = self.app_url.rsplit("/android", 1)[0]
+        files_url = f"{origin}/app/{data_code}/version/{data_version}/files"
+        files_response = self._get(files_url)
+        try:
+            payload = files_response.json()
+            content = payload.get("content") or ""
+        except Exception:
+            content = files_response.text or ""
+
+        files_soup = BeautifulSoup(content, "html.parser")
+        container = files_soup.select_one(".content") or files_soup
+        children = list(container.find_all(recursive=False))
+        current_arch = ""
+        candidates = []
+
+        for child in children:
+            classes = {str(x).lower() for x in (child.get("class") or [])}
+            if child.name == "p":
+                current_arch = child.get_text(" ", strip=True)
+                continue
+            if "variant" not in classes:
+                continue
+
+            file_type_node = child.select_one(".v-file")
+            file_type = _artifact_type_from_text(
+                file_type_node.get_text(" ", strip=True) if file_type_node else "",
+                fallback_type,
+            )
+            report = child.select_one(".v-report")
+            file_id = str(report.get("data-file-id") or "").strip() if report else ""
+            if not file_id:
+                continue
+
+            download_page = f"{self.app_url}/download/{file_id}-x"
+            try:
+                direct_url = self._direct_from_download_page(download_page)
+            except Exception as exc:
+                direct_url = ""
+                detail_error = str(exc)
+            else:
+                detail_error = ""
+
+            candidates.append(ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=version_page,
+                download_page_url=download_page,
+                download_url=direct_url,
+                architecture=current_arch,
+                is_bundle=file_type != "apk",
+                artifact_type=file_type,
+                details={
+                    "version_page": version_page,
+                    "data_code": data_code,
+                    "data_version": data_version,
+                    "file_id": file_id,
+                    "download_page_error": detail_error,
+                },
+            ))
+
+        if not candidates:
+            artifact_type = fallback_type if fallback_type in SUPPORTED_ARTIFACT_TYPES else "apk"
+            direct_url = self._direct_from_download_page(version_page)
             candidates.append(ApkCandidate(
                 provider=self.name,
                 version=target_version,
                 page_url=version_page,
                 download_page_url=version_page,
+                download_url=direct_url,
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={"version_page": version_page, "data_code": data_code},
             ))
         return candidates
 
-    def download(self, candidate: ApkCandidate, destination: str) -> None:
-        url = candidate.download_page_url or candidate.page_url
-        response = self.session.get(url, timeout=60, allow_redirects=True, stream=True)
-        if response.status_code != 200:
-            raise ProviderError(f"HTTP {response.status_code} while downloading APK")
+    @staticmethod
+    def _arch_score(candidate: ApkCandidate, preferred_arch: str) -> int:
+        arch = candidate.architecture.lower().replace("_", "-")
+        pref = (preferred_arch or "auto").lower().replace("_", "-")
+        if "x86_64" in arch or "x86-64" in arch or arch == "x86":
+            if pref not in ("x86", "x86-64", "x86_64"):
+                return -10000
+        if pref not in ("", "auto", "automatic"):
+            if pref in arch or (pref == "arm64-v8a" and "arm64" in arch):
+                return 5000
+            if "universal" in arch:
+                return 4500
+            return -1000
+        if "universal" in arch:
+            return 5000
+        if "arm64" in arch:
+            return 4000
+        if "armeabi" in arch or "arm-v7" in arch:
+            return 3000
+        return 0
 
-        content_type = (response.headers.get("Content-Type") or "").lower()
-        if "text/html" in content_type:
-            raise ProviderError("Uptodown returned an HTML page instead of an APK file")
+    def resolve(
+        self,
+        target_version: str,
+        preferred_arch: str = "auto",
+        app_query: str = "",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        self._discover_app_page(app_query, expected_package)
+        data_code = self._data_code()
+        records = self._version_record(data_code, target_version)
+
+        all_candidates: list[ApkCandidate] = []
+        for record in records:
+            version_page = self._version_page(record)
+            fallback_type = _artifact_type_from_text(
+                str(record.get("kindFile") or ""), "apk"
+            )
+            try:
+                candidates = self._variant_candidates(
+                    version_page,
+                    data_code,
+                    target_version,
+                    fallback_type,
+                )
+            except Exception as exc:
+                candidates = [ApkCandidate(
+                    provider=self.name,
+                    version=target_version,
+                    page_url=version_page,
+                    download_page_url=version_page,
+                    is_bundle=fallback_type != "apk",
+                    artifact_type=fallback_type,
+                    details={"version_page_error": str(exc)},
+                )]
+            all_candidates.extend(candidates)
+
+        for candidate in all_candidates:
+            candidate.details.setdefault("package", expected_package)
+        all_candidates.sort(
+            key=lambda c: (
+                self._arch_score(c, preferred_arch),
+                100 if c.artifact_type == "apk" else 0,
+            ),
+            reverse=True,
+        )
+        return [c for c in all_candidates if self._arch_score(c, preferred_arch) > -1000]
+
+    def download(self, candidate: ApkCandidate, destination: str) -> None:
+        direct_url = candidate.download_url
+        if not direct_url:
+            direct_url = self._direct_from_download_page(
+                candidate.download_page_url or candidate.page_url
+            )
+            candidate.download_url = direct_url
 
         Path(destination).parent.mkdir(parents=True, exist_ok=True)
+        response = self.session.get(
+            direct_url,
+            headers={"Referer": candidate.download_page_url or candidate.page_url},
+            timeout=120,
+            allow_redirects=True,
+            stream=True,
+        )
+        if response.status_code != 200:
+            raise ProviderError(
+                f"HTTP {response.status_code} while downloading Uptodown artifact"
+            )
+
         with open(destination, "wb") as fh:
+            first = True
             for chunk in response.iter_content(chunk_size=1024 * 1024):
-                if chunk:
-                    fh.write(chunk)
+                if not chunk:
+                    continue
+                if first and _looks_like_html_bytes(chunk):
+                    raise ProviderError("Uptodown returned HTML instead of an APK artifact")
+                first = False
+                fh.write(chunk)
 
 
 def get_provider_urls(app_id: str, app_config: dict) -> dict:
@@ -390,6 +826,17 @@ def provider_order(app_config: dict) -> list[str]:
     return ["apkmirror", "uptodown"]
 
 
+def _candidate_extension(candidate: ApkCandidate) -> str:
+    artifact_type = (candidate.artifact_type or "").lower().lstrip(".")
+    if artifact_type in SUPPORTED_ARTIFACT_TYPES:
+        return "." + artifact_type
+    hint = str(candidate.filename_hint or "").lower()
+    for artifact_type in SUPPORTED_ARTIFACT_TYPES:
+        if hint.endswith("." + artifact_type):
+            return "." + artifact_type
+    return ".apk"
+
+
 def acquire_from_providers(
     app_id: str,
     target_version: str,
@@ -401,31 +848,44 @@ def acquire_from_providers(
     attempts: list[dict] = []
     manual_urls: list[str] = []
 
+    app_query = (
+        str(app_config.get("name") or "").strip()
+        or str(app_config.get("android_package") or "").strip()
+        or str(app_config.get("package") or "").strip()
+        or app_id
+    )
+    expected_package = str(
+        app_config.get("android_package")
+        or app_config.get("play_store_package")
+        or ""
+    ).strip()
+    if not expected_package and _looks_like_package(app_config.get("package", "")):
+        expected_package = str(app_config.get("package")).strip()
+
     for provider_name in provider_order(app_config):
-        base_url = urls.get(provider_name)
-        if not base_url:
-            attempts.append({"provider": provider_name, "status": "not_configured"})
-            continue
+        base_url = urls.get(provider_name, "")
 
         try:
             if provider_name == "apkmirror":
-                provider = APKMirrorProvider(base_url or "")
+                provider = APKMirrorProvider(base_url)
+                candidates = provider.resolve(
+                    target_version,
+                    preferred_arch,
+                    app_query=app_query,
+                    expected_package=expected_package,
+                )
             elif provider_name == "uptodown":
                 provider = UptodownProvider(base_url)
+                candidates = provider.resolve(
+                    target_version,
+                    preferred_arch,
+                    app_query=app_query,
+                    expected_package=expected_package,
+                )
             else:
                 attempts.append({"provider": provider_name, "status": "unsupported"})
                 continue
 
-            if provider_name == "apkmirror":
-                app_query = (
-                    app_config.get("name")
-                    or app_config.get("android_package")
-                    or app_config.get("package")
-                    or app_id
-                )
-                candidates = provider.resolve(target_version, preferred_arch, app_query=app_query)
-            else:
-                candidates = provider.resolve(target_version, preferred_arch)
             if not candidates:
                 raise ProviderError("No compatible candidate found")
 
@@ -434,7 +894,7 @@ def acquire_from_providers(
                 if manual_url and manual_url not in manual_urls:
                     manual_urls.append(manual_url)
 
-                extension = ".apkm" if candidate.is_bundle else ".apk"
+                extension = _candidate_extension(candidate)
                 destination = os.path.join(
                     destination_dir,
                     f"{app_id}-{target_version}-{provider_name}-{index}{extension}",
@@ -450,6 +910,7 @@ def acquire_from_providers(
                             attempts=attempts,
                             manual_urls=manual_urls,
                         )
+                    raise ProviderError("Provider returned an empty or incomplete artifact")
                 except Exception as exc:
                     attempts.append({
                         "provider": provider_name,
@@ -458,9 +919,12 @@ def acquire_from_providers(
                         "candidate": {
                             "page_url": candidate.page_url,
                             "download_page_url": candidate.download_page_url,
+                            "download_url": candidate.download_url,
                             "architecture": candidate.architecture,
                             "dpi": candidate.dpi,
                             "is_bundle": candidate.is_bundle,
+                            "artifact_type": candidate.artifact_type,
+                            "details": candidate.details,
                         },
                         "error": str(exc),
                     })
@@ -476,6 +940,7 @@ def acquire_from_providers(
                 "provider": provider_name,
                 "version": target_version,
                 "status": "resolve_failed",
+                "base_url": base_url or None,
                 "error": str(exc),
             })
 
