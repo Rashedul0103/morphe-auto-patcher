@@ -10,6 +10,7 @@ import time
 
 import requests
 from bs4 import BeautifulSoup
+from apk_validator import ApkValidationError, validate_artifact
 
 try:
     import cloudscraper
@@ -122,12 +123,22 @@ def _artifact_type_from_text(text: str, fallback: str = "apk") -> str:
     for kind in ("apkm", "apks", "xapk"):
         if kind in haystack:
             return kind
+    if "apk bundle" in haystack or ("base apk" in haystack and "splits" in haystack):
+        return "apkm"
     return fallback if fallback in SUPPORTED_ARTIFACT_TYPES else "apk"
 
 
 def _looks_like_html_bytes(chunk: bytes) -> bool:
     sample = (chunk or b"")[:2048].lstrip().lower()
     return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
+
+
+def _extract_architecture(text: str) -> str:
+    values = []
+    for value in ("arm64-v8a", "armeabi-v7a", "x86_64", "x86", "universal"):
+        if re.search(rf"\b{re.escape(value)}\b", text or "", re.I):
+            values.append(value)
+    return " + ".join(values)
 
 
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
@@ -235,7 +246,10 @@ class APKMirrorProvider:
                 "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
                 + quote(search_query)
             )
-            response = self._get(search_url)
+            try:
+                response = self._get(search_url)
+            except ProviderError:
+                continue
             soup = BeautifulSoup(response.text, "html.parser")
             for anchor in soup.find_all("a", href=True):
                 href = anchor["href"]
@@ -553,6 +567,54 @@ class APKMirrorProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> list[ApkCandidate]:
+        # Prefer search-engine results that already point at an exact
+        # APKMirror download page. This bypasses fragile variant-filter URLs.
+        direct_candidates: list[ApkCandidate] = []
+        exact = _clean_version(target_version)
+        search_terms = []
+        if expected_package:
+            search_terms.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
+        if app_query:
+            search_terms.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
+        seen_direct = set()
+        for search_query in search_terms:
+            for result_url in _search_result_urls(
+                search_query, ("apkmirror.com",), limit=12
+            ):
+                if "android-apk-download" not in result_url or result_url in seen_direct:
+                    continue
+                seen_direct.add(result_url)
+                try:
+                    response = self._get(result_url)
+                    body = response.text or ""
+                    if not _version_appears_exact(body, exact):
+                        continue
+                    if expected_package:
+                        found_package = _extract_package(body)
+                        if found_package and found_package.lower() != expected_package.lower():
+                            continue
+                    artifact_type = _artifact_type_from_text(body, "apk")
+                    direct_candidates.append(
+                        ApkCandidate(
+                            provider=self.name,
+                            version=target_version,
+                            page_url=result_url,
+                            download_page_url=result_url,
+                            architecture=_extract_architecture(body),
+                            is_bundle=artifact_type != "apk",
+                            artifact_type=artifact_type,
+                            details={"search_engine": True},
+                        )
+                    )
+                except Exception:
+                    continue
+        if direct_candidates:
+            direct_candidates.sort(
+                key=lambda c: self._score(c, preferred_arch),
+                reverse=True,
+            )
+            return [c for c in direct_candidates if self._score(c, preferred_arch) > -1000]
+
         try:
             version_url = self.get_version_page(
                 target_version,
@@ -1136,15 +1198,28 @@ def acquire_from_providers(
 
                 try:
                     provider.download(candidate, destination)
-                    if os.path.exists(destination) and os.path.getsize(destination) > 1024:
-                        return AcquisitionResult(
-                            status="downloaded",
-                            path=destination,
-                            candidate=candidate,
-                            attempts=attempts,
-                            manual_urls=manual_urls,
+                    if not os.path.exists(destination) or os.path.getsize(destination) <= 1024:
+                        raise ProviderError("Provider returned an empty or incomplete artifact")
+
+                    try:
+                        validate_artifact(
+                            destination,
+                            expected_package=expected_package,
+                            expected_version=target_version,
+                            expected_arch=preferred_arch or "auto",
                         )
-                    raise ProviderError("Provider returned an empty or incomplete artifact")
+                    except ApkValidationError as exc:
+                        raise ProviderError(
+                            f"Downloaded artifact failed identity validation: {exc}"
+                        ) from exc
+
+                    return AcquisitionResult(
+                        status="downloaded",
+                        path=destination,
+                        candidate=candidate,
+                        attempts=attempts,
+                        manual_urls=manual_urls,
+                    )
                 except Exception as exc:
                     attempts.append({
                         "provider": provider_name,
