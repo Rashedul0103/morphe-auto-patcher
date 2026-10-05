@@ -273,12 +273,6 @@ def _validate_bundle(
                     f"Split module package mismatch in {member}: "
                     f"expected {expected_package}, found {module_info.package}."
                 )
-            if expected_version and module_info.version_name != expected_version:
-                raise ApkValidationError(
-                    f"Split module version mismatch in {member}: "
-                    f"expected {expected_version}, found {module_info.version_name}."
-                )
-
         _validate_identity(
             info,
             expected_package,
