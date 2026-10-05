@@ -18,8 +18,8 @@
   "build_status": {
     "status": "failed",
     "stage": "apk_acquisition",
-    "reason": "No valid stock APK could be acquired.",
-    "updated_at": 1791197674
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791198057
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,16 +28,55 @@
     "package": "com.duolingo",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-2-android-apk-download/download/?key=64a1d9f257d5d6db9ab5756dc5bf2910cabb074d"
+      "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-2-android-apk-download/download/?key=64a1d9f257d5d6db9ab5756dc5bf2910cabb074d",
+      "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-android-apk-download/download/?key=d0120e3925192ac483ca6201f8f694c8d663278f"
     ],
     "attempts": [
       {
         "provider": "apkmirror",
-        "status": "validation_failed",
-        "error": "Wrong version: expected 6.98.4, found 6.99.5."
+        "version": "6.98.4",
+        "status": "download_failed",
+        "candidate": {
+          "page_url": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-2-android-apk-download/",
+          "download_page_url": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-2-android-apk-download/download/?key=64a1d9f257d5d6db9ab5756dc5bf2910cabb074d",
+          "download_url": "https://www.apkmirror.com/wp-content/themes/APKMirror/download.php?id=16361001&key=9782d9e6f5ff429f3c6e5dad46d6786559a6f6ff",
+          "architecture": "universal",
+          "dpi": "120-480dpi",
+          "is_bundle": true,
+          "artifact_type": "apkm",
+          "details": {
+            "version_page": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/#disqus_thread/6-98-4-release/"
+          }
+        },
+        "error": "Downloaded artifact failed identity validation: Wrong version: expected 6.98.4, found 6.99.5."
+      },
+      {
+        "provider": "apkmirror",
+        "version": "6.98.4",
+        "status": "download_failed",
+        "candidate": {
+          "page_url": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-android-apk-download/",
+          "download_page_url": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/duolingo-language-lessons-6-99-5-android-apk-download/download/?key=d0120e3925192ac483ca6201f8f694c8d663278f",
+          "download_url": "https://www.apkmirror.com/wp-content/themes/APKMirror/download.php?id=16361000&key=2ca241240f7336df59c98e407488d5304326f8a7",
+          "architecture": "arm64-v8a",
+          "dpi": "480-640dpi",
+          "is_bundle": true,
+          "artifact_type": "apkm",
+          "details": {
+            "version_page": "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-99-5-release/#disqus_thread/6-98-4-release/"
+          }
+        },
+        "error": "Downloaded artifact failed identity validation: Wrong version: expected 6.98.4, found 6.99.5."
+      },
+      {
+        "provider": "uptodown",
+        "version": "6.98.4",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "HTTP 404: https://en.uptodown.com/android/search/duolingo"
       }
     ],
-    "error": "No valid stock APK could be acquired.",
+    "error": "All automatic APK providers failed for the exact requested version.",
     "workspace": ".work/duolingo"
   },
   "stock_apk": null

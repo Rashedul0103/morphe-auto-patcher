@@ -22,7 +22,7 @@
     "status": "success",
     "stage": "completed",
     "release_tag": "youtube-v1.45.0",
-    "updated_at": 1791197674
+    "updated_at": 1791198057
   },
   "apk_acquisition": {
     "status": "downloaded",
@@ -56,7 +56,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "513f5aef475910bce2cc5ba99221d12da2f311b3947d09ad8f23d0622485ed66",
+    "sha256": "6d7ef86767fedbd106d6a849468c9da3aab4891fd07892141248c0e3de669db1",
     "size_bytes": 103499352,
     "signer_sha256": [],
     "artifact_type": "apk"
