@@ -948,7 +948,7 @@ class UptodownProvider:
                 nodes.append(node)
 
         for node in nodes:
-            for attr in ("data-url", "data-download-url", "data-download-version", "data-file-url"):
+            for attr in ("data-url", "data-download-url", "data-file-url"):
                 value = str(node.get(attr) or "").strip()
                 if value:
                     if value.startswith("http"):
