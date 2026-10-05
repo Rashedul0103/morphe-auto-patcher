@@ -7,6 +7,10 @@ on:
     paths:
       - 'config.json'
       - 'build.py'
+      - 'apk_providers.py'
+      - 'apk_validator.py'
+      - 'requirements.txt'
+      - 'tests/**'
       - '.github/workflows/**'
   workflow_dispatch:
     inputs:
@@ -84,6 +88,9 @@ jobs:
           Path("/tmp/patch-manager-ui.js").write_text(scripts[-1], encoding="utf-8")
           PY
           node --check /tmp/patch-manager-ui.js
+
+      - name: Validate Python sources
+        run: python3 -m py_compile apk_providers.py apk_validator.py build.py
 
       - name: Run Build Script
         env:
