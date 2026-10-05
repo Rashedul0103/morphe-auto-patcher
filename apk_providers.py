@@ -359,9 +359,12 @@ class APKMirrorProvider:
         # search endpoint is rate-limited or incomplete.
         if exact:
             search_terms = []
+            version_slug = exact.replace(".", "-")
             if expected_package:
+                search_terms.append(f'site:apkmirror.com/apk/ inurl:{version_slug} "{expected_package}" "{exact}"')
                 search_terms.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
             if app_query:
+                search_terms.append(f'site:apkmirror.com/apk/ inurl:{version_slug} "{app_query}" "{exact}"')
                 search_terms.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
             for search_query in search_terms:
                 for result_url in _search_result_urls(
@@ -384,6 +387,8 @@ class APKMirrorProvider:
                             found_package = _extract_package(body)
                             if found_package and found_package.lower() != expected_package.lower():
                                 continue
+                        if "/android-apk-download/" in (probe.url or result_url):
+                            return probe.url or result_url
                         return _apk_mirror_release_parent(probe.url or result_url)
                     except Exception:
                         continue
@@ -747,7 +752,14 @@ class UptodownProvider:
                     " ", strip=True
                 )
 
-        for value in (query, expected_package):
+        slug_values = [
+            query,
+            expected_package,
+            str(expected_package or "").replace(".", "-"),
+            str(expected_package or "").split(".")[-1] if expected_package else "",
+            str(app_id or ""),
+        ]
+        for value in slug_values:
             slug = _slugify(value)
             if slug:
                 candidates.setdefault(
@@ -865,16 +877,67 @@ class UptodownProvider:
 
     def _direct_from_download_page(self, url: str) -> str:
         response = self._get(url)
-        soup = BeautifulSoup(response.text, "html.parser")
-        button = soup.select_one("#detail-download-button")
-        if button:
-            data_url = str(button.get("data-url") or "").strip()
-            if data_url:
-                return f"https://dw.uptodown.com/dwn/{data_url}"
+        body = response.text or ""
+        soup = BeautifulSoup(body, "html.parser")
+
+        selectors = [
+            "#detail-download-button",
+            "[data-button-id='detail-download-button']",
+            "[data-download-button]",
+        ]
+        nodes = []
+        for selector in selectors:
+            node = soup.select_one(selector)
+            if node and node not in nodes:
+                nodes.append(node)
+
+        for node in nodes:
+            for attr in ("data-url", "data-download-url", "data-download-version", "data-file-url"):
+                value = str(node.get(attr) or "").strip()
+                if value:
+                    if value.startswith("http"):
+                        return value
+                    if "dw.uptodown.com" in value:
+                        return "https://" + value.lstrip("/")
+                    return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+
+        for node in soup.find_all(attrs={"data-url": True}):
+            value = str(node.get("data-url") or "").strip()
+            if len(value) >= 12:
+                if value.startswith("http"):
+                    return value
+                if "dw.uptodown.com" in value:
+                    return "https://" + value.lstrip("/")
+                return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+
         for anchor in soup.find_all("a", href=True):
-            href = anchor["href"]
+            href = str(anchor["href"]).strip()
             if "dw.uptodown.com" in href:
                 return href
+
+        # Some Uptodown versions expose the download token only through the
+        # post-download endpoint. Try the generic file-id form as a fallback.
+        match = re.search(r"/download/(\d+)(?:-x)?", url)
+        if match:
+            file_id = match.group(1)
+            origin = urlparse(url).scheme + "://" + urlparse(url).netloc
+            for suffix in (f"/android/post-download/{file_id}", f"/post-download/{file_id}"):
+                try:
+                    probe_url = origin + suffix
+                    probe = self._get(probe_url)
+                    probe_soup = BeautifulSoup(probe.text or "", "html.parser")
+                    node = probe_soup.select_one(".post-download[data-url], [data-url]")
+                    if node:
+                        value = str(node.get("data-url") or "").strip()
+                        if value:
+                            if value.startswith("http"):
+                                return value
+                            if "dw.uptodown.com" in value:
+                                return "https://" + value.lstrip("/")
+                            return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+                except Exception:
+                    continue
+
         raise ProviderError("Uptodown direct download URL not found")
 
     def _variant_candidates(
