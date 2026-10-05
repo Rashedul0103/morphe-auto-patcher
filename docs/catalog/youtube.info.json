@@ -19,10 +19,10 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "failed",
-    "stage": "publishing",
-    "reason": "a release with the same tag name already exists: youtube-v1.45.0",
-    "updated_at": 1791197343
+    "status": "success",
+    "stage": "completed",
+    "release_tag": "youtube-v1.45.0",
+    "updated_at": 1791197674
   },
   "apk_acquisition": {
     "status": "downloaded",
@@ -56,7 +56,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "18fc557719a30fe0b1f64d687fc935e6e93ac2a0ad718ac1f9cf87c861d0a5c1",
+    "sha256": "513f5aef475910bce2cc5ba99221d12da2f311b3947d09ad8f23d0622485ed66",
     "size_bytes": 103499352,
     "signer_sha256": [],
     "artifact_type": "apk"
