@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlparse, unquote, parse_qs
 import os
 import re
 import time
@@ -130,6 +130,69 @@ def _looks_like_html_bytes(chunk: bytes) -> bool:
     return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
 
 
+def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
+    """Discover provider pages through public search engines when the provider
+    search endpoint is unavailable/rate-limited. This is a fallback only."""
+    engines = (
+        f"https://www.google.com/search?udm=14&q={quote(query)}",
+        f"https://www.bing.com/search?q={quote(query)}",
+        f"https://html.duckduckgo.com/html/?q={quote(query)}",
+    )
+    found: list[str] = []
+    session = _scraper()
+
+    for engine_url in engines:
+        try:
+            response = session.get(engine_url, timeout=20)
+            if response.status_code != 200:
+                continue
+            soup = BeautifulSoup(response.text or "", "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                if not href:
+                    continue
+                # DuckDuckGo wraps external links as uddg=... and Google/Bing
+                # may expose an encoded target in the URL.
+                parsed = urlparse(href)
+                if "uddg" in parsed.query:
+                    values = parse_qs(parsed.query).get("uddg") or []
+                    if values:
+                        href = unquote(values[0])
+                for prefix in ("https://www.google.com/url?q=", "https://www.google.com/url?url="):
+                    if href.startswith(prefix):
+                        href = unquote(href.split("=", 1)[1])
+                parsed = urlparse(href)
+                host = (parsed.netloc or "").lower()
+                if not any(allowed in host for allowed in allowed_hosts):
+                    continue
+                if parsed.scheme not in ("http", "https"):
+                    continue
+                cleaned = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+                if parsed.query:
+                    cleaned += "?" + parsed.query
+                if cleaned not in found:
+                    found.append(cleaned)
+                    if len(found) >= limit:
+                        return found
+        except Exception:
+            continue
+    return found
+
+
+def _apk_mirror_release_parent(url: str) -> str:
+    """Turn a variant/download URL into its release landing page."""
+    clean = url.rstrip("/") + "/"
+    marker = "/release/"
+    if marker in clean:
+        prefix, suffix = clean.split(marker, 1)
+        release_slug = suffix.split("/", 1)[0]
+        return f"{prefix}/release/{release_slug}/"
+    parts = [x for x in clean.split("/") if x]
+    if parts and parts[-1].endswith("android-apk-download"):
+        return "/".join(clean.split("/")[:-2]) + "/"
+    return clean
+
+
 class APKMirrorProvider:
     name = "apkmirror"
 
@@ -183,7 +246,19 @@ class APKMirrorProvider:
                     candidates[url] = anchor.get_text(" ", strip=True)
 
         if not candidates:
-            raise ProviderError(f"APKMirror app search returned no app page for {query}")
+            web_queries = []
+            if expected_package:
+                web_queries.append(f'site:apkmirror.com/apk/ "{expected_package}"')
+            if query:
+                web_queries.append(f'site:apkmirror.com/apk/ "{query}"')
+            for web_query in web_queries:
+                for result_url in _search_result_urls(
+                    web_query, ("apkmirror.com",), limit=12
+                ):
+                    if "/apk/" in result_url:
+                        candidates.setdefault(result_url, "")
+            if not candidates:
+                raise ProviderError(f"APKMirror app search returned no app page for {query}")
 
         scored = []
         normalized_package = str(expected_package or "").strip().lower()
@@ -246,6 +321,38 @@ class APKMirrorProvider:
 
         exact = _clean_version(target_version)
 
+        # Search engines are a provider-agnostic fallback when APKMirror's own
+        # search endpoint is rate-limited or incomplete.
+        if exact:
+            search_terms = []
+            if expected_package:
+                search_terms.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
+            if app_query:
+                search_terms.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
+            for search_query in search_terms:
+                for result_url in _search_result_urls(
+                    search_query, ("apkmirror.com",), limit=10
+                ):
+                    if not _version_appears_exact(result_url, exact):
+                        try:
+                            probe = self._get(result_url)
+                            if not _version_appears_exact(probe.text or "", exact):
+                                continue
+                            result_url = probe.url or result_url
+                        except Exception:
+                            continue
+                    try:
+                        probe = self._get(result_url)
+                        body = probe.text or ""
+                        if not _version_appears_exact(body, exact):
+                            continue
+                        if expected_package:
+                            found_package = _extract_package(body)
+                            if found_package and found_package.lower() != expected_package.lower():
+                                continue
+                        return _apk_mirror_release_parent(probe.url or result_url)
+                    except Exception:
+                        continue
         # Search with app name + exact version first. Search results may expose
         # the real release URL; this avoids selecting a similarly named app.
         if app_query and exact:
@@ -563,7 +670,19 @@ class UptodownProvider:
                 )
 
         if not candidates:
-            raise ProviderError(f"Uptodown app search returned no candidate for {query}")
+            web_queries = []
+            if expected_package:
+                web_queries.append(f'site:uptodown.com/android "{expected_package}"')
+            if query:
+                web_queries.append(f'site:uptodown.com/android "{query}"')
+            for web_query in web_queries:
+                for result_url in _search_result_urls(
+                    web_query, ("uptodown.com",), limit=12
+                ):
+                    if "/android" in result_url:
+                        candidates.setdefault(result_url.rstrip("/"), "")
+            if not candidates:
+                raise ProviderError(f"Uptodown app search returned no candidate for {query}")
 
         normalized_package = str(expected_package or "").strip().lower()
         normalized_query = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
@@ -802,8 +921,49 @@ class UptodownProvider:
         expected_package: str = "",
     ) -> list[ApkCandidate]:
         try:
-            self._discover_app_page(app_query, expected_package)
-            data_code = self._data_code()
+            if target_version:
+                search_terms = []
+                if expected_package:
+                    search_terms.append(
+                        f'site:uptodown.com/android "{expected_package}" "{target_version}"'
+                    )
+                if app_query:
+                    search_terms.append(
+                        f'site:uptodown.com/android "{app_query}" "{target_version}"'
+                    )
+                for search_query in search_terms:
+                    results = _search_result_urls(
+                        search_query, ("uptodown.com",), limit=8
+                    )
+                    for result_url in results:
+                        try:
+                            probe = self._get(result_url)
+                            body = probe.text or ""
+                            if not _version_appears_exact(body, target_version):
+                                continue
+                            if expected_package:
+                                found_package = _extract_package(body)
+                                if found_package and found_package.lower() != expected_package.lower():
+                                    continue
+                            # A version/download page can be used directly; the
+                            # normal version API is attempted below when it is
+                            # an app landing page.
+                            if "/download" in result_url or "/versions" in result_url:
+                                self.app_url = result_url.split("/versions", 1)[0].rstrip("/")
+                                self.base_url = self.app_url + "/versions"
+                                data_code = self._data_code()
+                                break
+                        except Exception:
+                            continue
+                    else:
+                        continue
+                    break
+                else:
+                    self._discover_app_page(app_query, expected_package)
+                    data_code = self._data_code()
+            else:
+                self._discover_app_page(app_query, expected_package)
+                data_code = self._data_code()
         except ProviderError:
             if not self.app_url:
                 raise
