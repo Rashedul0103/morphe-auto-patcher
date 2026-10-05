@@ -159,7 +159,7 @@ class APKMirrorProvider:
             return self.base_url
 
         queries = []
-        for value in (expected_package, query):
+        for value in (query, expected_package):
             value = str(value or "").strip()
             if value and value not in queries:
                 queries.append(value)
@@ -245,13 +245,62 @@ class APKMirrorProvider:
                 )
 
         exact = _clean_version(target_version)
+
+        # Search with app name + exact version first. Search results may expose
+        # the real release URL; this avoids selecting a similarly named app.
+        if app_query and exact:
+            search_url = (
+                "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
+                + quote(f"{app_query} {exact}")
+            )
+            try:
+                search_response = self._get(search_url)
+                search_soup = BeautifulSoup(search_response.text, "html.parser")
+                release_links = []
+                for anchor in search_soup.find_all("a", href=True):
+                    href = anchor["href"]
+                    text = anchor.get_text(" ", strip=True)
+                    if "/release/" not in href:
+                        continue
+                    if not _version_appears_exact(f"{text} {href}", exact):
+                        continue
+                    candidate_url = _normalize_url(search_url, href)
+                    if candidate_url not in release_links:
+                        release_links.append(candidate_url)
+                for candidate_url in release_links[:8]:
+                    try:
+                        candidate_response = self._get(candidate_url)
+                        body = candidate_response.text or ""
+                        if not _version_appears_exact(body, exact):
+                            continue
+                        if expected_package:
+                            found_package = _extract_package(body)
+                            if found_package and found_package.lower() != expected_package.lower():
+                                continue
+                        return candidate_url
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
         for anchor in soup.find_all("a", href=True):
             href = anchor["href"]
             text = anchor.get_text(" ", strip=True)
             if not _version_appears_exact(f"{text} {href}", exact):
                 continue
             if "/release/" in href or "apk-download" in href or "/uploads/" in href:
-                return _normalize_url(base_url, href)
+                candidate_url = _normalize_url(base_url, href)
+                try:
+                    candidate_response = self._get(candidate_url)
+                    if not _version_appears_exact(candidate_response.text or "", exact):
+                        continue
+                    if expected_package:
+                        found_package = _extract_package(candidate_response.text or "")
+                        if found_package and found_package.lower() != expected_package.lower():
+                            continue
+                except Exception:
+                    continue
+                return candidate_url
 
         version_listing_urls = []
         for anchor in soup.find_all("a", href=True):
@@ -280,8 +329,12 @@ class APKMirrorProvider:
         ):
             try:
                 test = self._get(url)
-                if exact in (test.text or ""):
-                    return url
+                if _version_appears_exact(test.text or "", exact):
+                    if expected_package:
+                        found_package = _extract_package(test.text or "")
+                        if found_package and found_package.lower() != expected_package.lower():
+                            continue
+                    return test.url or url
             except Exception:
                 continue
 
@@ -393,11 +446,21 @@ class APKMirrorProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> list[ApkCandidate]:
-        version_url = self.get_version_page(
-            target_version,
-            app_query=app_query,
-            expected_package=expected_package,
-        )
+        try:
+            version_url = self.get_version_page(
+                target_version,
+                app_query=app_query,
+                expected_package=expected_package,
+            )
+        except ProviderError:
+            if not self.base_url:
+                raise
+            self.base_url = ""
+            version_url = self.get_version_page(
+                target_version,
+                app_query=app_query,
+                expected_package=expected_package,
+            )
         variants = self.get_variants(version_url, target_version)
         exact_variants = []
 
@@ -410,7 +473,8 @@ class APKMirrorProvider:
             exact_variants.append(candidate)
 
         exact_variants.sort(key=lambda c: self._score(c, preferred_arch), reverse=True)
-        return [c for c in exact_variants if self._score(c, preferred_arch) > 0]
+        # Unknown architecture is still a candidate; final APK validation is authoritative.
+        return [c for c in exact_variants if self._score(c, preferred_arch) > -1000]
 
     def download(self, candidate: ApkCandidate, destination: str) -> None:
         if not candidate.download_page_url or candidate.download_page_url == candidate.page_url:
@@ -467,7 +531,7 @@ class UptodownProvider:
             return self.app_url
 
         queries = []
-        for value in (expected_package, query):
+        for value in (query, expected_package):
             value = str(value or "").strip()
             if value and value not in queries:
                 queries.append(value)
@@ -737,8 +801,18 @@ class UptodownProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> list[ApkCandidate]:
-        self._discover_app_page(app_query, expected_package)
-        data_code = self._data_code()
+        try:
+            self._discover_app_page(app_query, expected_package)
+            data_code = self._data_code()
+        except ProviderError:
+            if not self.app_url:
+                raise
+            # A cached/configured provider URL can go stale; rediscover rather
+            # than turning that stale mapping into a permanent failure.
+            self.base_url = ""
+            self.app_url = ""
+            self._discover_app_page(app_query, expected_package)
+            data_code = self._data_code()
         records = self._version_record(data_code, target_version)
 
         all_candidates: list[ApkCandidate] = []

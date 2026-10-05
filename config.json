@@ -66,11 +66,7 @@
       "apk_providers": [
         "apkmirror",
         "uptodown"
-      ],
-      "apk_sources": {
-        "apkmirror": "https://www.apkmirror.com/apk/adguard-software-limited/adguard/",
-        "uptodown": "https://adguard.en.uptodown.com/android/versions"
-      }
+      ]
     },
     {
       "id": "bunpo",
