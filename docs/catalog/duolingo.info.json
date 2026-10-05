@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "No valid stock APK could be acquired.",
-    "updated_at": 1791197020
+    "updated_at": 1791197343
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -34,7 +34,7 @@
       {
         "provider": "apkmirror",
         "status": "validation_failed",
-        "error": "Split module version mismatch in split_config.arm64_v8a.apk: expected 6.98.4, found ."
+        "error": "Wrong version: expected 6.98.4, found 6.99.5."
       }
     ],
     "error": "No valid stock APK could be acquired.",
