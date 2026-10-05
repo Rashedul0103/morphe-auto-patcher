@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791204549
+    "updated_at": 1791204750
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -34,14 +34,14 @@
         "version": "3.23.1",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "Exact APKMirror version page not found for 3.23.1"
+        "error": "APKMirror app search returned no app page for Bunpo"
       },
       {
         "provider": "uptodown",
         "version": "3.23.1",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "name 'app_id' is not defined"
+        "error": "Uptodown app discovery failed for Bunpo"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
