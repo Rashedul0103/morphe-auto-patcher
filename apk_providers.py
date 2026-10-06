@@ -1115,6 +1115,30 @@ class UptodownProvider:
             raise ProviderError("Uptodown download API returned no usable downloadURL")
         return direct
 
+    def _direct_from_post_download(self, token: str) -> str:
+        token = str(token or "").strip()
+        if not token:
+            raise ProviderError("Uptodown post-download token is empty")
+
+        parsed_app = urlparse(self.app_url)
+        origin = f"{parsed_app.scheme}://{parsed_app.netloc}"
+        candidates = [
+            f"{origin}/android/post-download/{token.lstrip('/')}",
+            f"{self.app_url}/post-download/{token.lstrip('/')}",
+            f"{self.app_url}/download/post-download/{token.lstrip('/')}",
+        ]
+
+        for url in dict.fromkeys(candidates):
+            try:
+                response = self._get(url)
+            except Exception:
+                continue
+            direct = self._extract_direct_from_body(response.text or "")
+            if direct:
+                return direct
+
+        raise ProviderError("Uptodown post-download resolver returned no direct URL")
+
     def _direct_from_download_page(self, url: str) -> str:
         response = self._get(url)
         direct = self._extract_direct_from_body(response.text or "")
@@ -1203,6 +1227,14 @@ class UptodownProvider:
                 continue
 
             download_page = f"{self.app_url}/download/{file_id}-x"
+            variant_html = str(child)
+            token_match = re.search(
+                r"(?:android/)?post-download/([^"'<>\\s'"]+)",
+                variant_html,
+                re.I,
+            )
+            post_download_token = token_match.group(1) if token_match else ""
+
             try:
                 direct_url = self._direct_from_download_page(download_page)
             except Exception as exc:
@@ -1226,6 +1258,7 @@ class UptodownProvider:
                     "data_version": data_version,
                     "file_id": file_id,
                     "download_page_error": detail_error,
+                    "post_download_token": post_download_token,
                 },
             ))
 
@@ -1375,6 +1408,14 @@ class UptodownProvider:
                 direct_url = self._api_download_url(data_code, file_id)
             except Exception as exc:
                 candidate.details["api_download_error"] = str(exc)
+
+        if not direct_url:
+            post_token = str(candidate.details.get("post_download_token") or "").strip()
+            if post_token:
+                try:
+                    direct_url = self._direct_from_post_download(post_token)
+                except Exception as exc:
+                    candidate.details["post_download_error"] = str(exc)
 
         if not direct_url:
             direct_url = self._direct_from_download_page(
