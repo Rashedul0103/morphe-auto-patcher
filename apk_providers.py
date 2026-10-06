@@ -178,7 +178,12 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         f"https://html.duckduckgo.com/html/?q={quote(query)}",
     )
     found: list[str] = []
-    session = _scraper()
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.8",
+    })
     diagnostics = []
 
     def accept(value: str) -> None:
@@ -240,7 +245,19 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
                 except Exception:
                     pass
 
-            soup = BeautifulSoup(body, "html.parser")
+            if "format=rss" in engine_url or body.lstrip().startswith("<?xml"):
+                soup = BeautifulSoup("", "html.parser")
+            else:
+                soup = BeautifulSoup(body, "html.parser")
+            for anchor in soup.select("#b_results li.b_algo h2 a[href], li.b_algo h2 a[href]"):
+                href = str(anchor.get("href") or "").strip()
+                if href:
+                    parsed_href = urlparse(href)
+                    if parsed_href.path == "/ck/a":
+                        decode_bing_or_follow(href)
+                    else:
+                        accept(href)
+
             for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
                 if not href:
