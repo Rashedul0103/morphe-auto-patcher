@@ -305,22 +305,25 @@ class APKMirrorProvider:
 
         candidates = {}
         for search_query in queries:
-            search_url = (
-                "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
-                + quote(search_query)
-            )
-            try:
-                response = self._get(search_url)
-            except ProviderError:
-                continue
-            soup = BeautifulSoup(response.text, "html.parser")
-            for anchor in soup.find_all("a", href=True):
-                href = anchor["href"]
-                if "/apk/" not in href:
+            for search_type in ("app", "apk"):
+                search_url = (
+                    "https://www.apkmirror.com/?post_type=app_release&searchtype="
+                    + search_type
+                    + "&s="
+                    + quote(search_query)
+                )
+                try:
+                    response = self._get(search_url)
+                except ProviderError:
                     continue
-                url = _normalize_url(search_url, href)
-                if url not in candidates:
-                    candidates[url] = anchor.get_text(" ", strip=True)
+                soup = BeautifulSoup(response.text, "html.parser")
+                for anchor in soup.find_all("a", href=True):
+                    href = anchor["href"]
+                    if "/apk/" not in href:
+                        continue
+                    url = _normalize_url(search_url, href)
+                    if url not in candidates:
+                        candidates[url] = anchor.get_text(" ", strip=True)
 
         if not candidates:
             web_queries = []
@@ -387,11 +390,13 @@ class APKMirrorProvider:
 
         if normalized_package:
             exact_package = [item for item in scored if item[3] == normalized_package]
-            if not exact_package:
+            mismatched_package = [item for item in scored if item[3] and item[3] != normalized_package]
+            if exact_package:
+                scored = exact_package
+            elif mismatched_package and len(mismatched_package) == len(scored):
                 raise ProviderError(
-                    f"APKMirror app discovery could not verify package {expected_package}"
+                    f"APKMirror app discovery found only mismatched packages; expected {expected_package}"
                 )
-            scored = exact_package
 
         scored.sort(key=lambda item: item[0], reverse=True)
         best = scored[0]
@@ -421,6 +426,37 @@ class APKMirrorProvider:
                 )
 
         exact = _clean_version(target_version)
+
+        # APKMirror release slugs are derived from the app's displayed title,
+        # not merely from the numeric version. Try that canonical form first.
+        heading = soup.find("h1")
+        app_title = heading.get_text(" ", strip=True) if heading else ""
+        if not app_title:
+            meta_title = soup.select_one('meta[property="og:title"]')
+            if meta_title:
+                app_title = str(meta_title.get("content") or "").strip()
+        title_slug = _slugify(app_title)
+        release_slugs = []
+        for prefix in (title_slug, _slugify(app_query)):
+            if prefix and prefix not in release_slugs:
+                release_slugs.append(prefix)
+        for prefix in release_slugs:
+            for suffix in (f"{prefix}-{exact.replace('.', '-')}-release/", f"{prefix}-{exact.replace('.', '-')}/"):
+                candidate_url = _normalize_url(base_url, suffix)
+                try:
+                    candidate_response = self._get(candidate_url)
+                    body = candidate_response.text or ""
+                    if not _primary_version_matches(body, exact):
+                        continue
+                    if expected_package:
+                        found_package = _extract_package(body)
+                        if found_package and found_package.lower() != expected_package.lower():
+                            continue
+                    if expected_package and not _extract_package(body):
+                        continue
+                    return candidate_response.url or candidate_url
+                except Exception:
+                    continue
 
         # Search engines are a provider-agnostic fallback when APKMirror's own
         # search endpoint is rate-limited or incomplete.
