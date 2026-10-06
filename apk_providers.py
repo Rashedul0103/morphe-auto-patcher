@@ -775,11 +775,7 @@ class UptodownProvider:
                 self.app_url = self.base_url.rstrip("/")[:-len("/versions")]
             else:
                 self.app_url = self.base_url.rstrip("/")
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": USER_AGENT,
-            "Accept-Language": "en-US,en;q=0.8",
-        })
+        self.session = _scraper()
 
     def _get(self, url: str):
         response = self.session.get(url, timeout=30)
@@ -982,68 +978,85 @@ class UptodownProvider:
         parts.append(str(version_id))
         return "/".join(parts)
 
-    def _direct_from_download_page(self, url: str) -> str:
-        response = self._get(url)
-        body = response.text or ""
-        soup = BeautifulSoup(body, "html.parser")
+    @staticmethod
+    def _coerce_download_value(value: str) -> str:
+        value = str(value or "").strip()
+        if not value:
+            return ""
+        parsed = urlparse(value)
+        if parsed.scheme in ("http", "https"):
+            host = (parsed.netloc or "").lower()
+            if host == "dw.uptodown.com" and parsed.path.startswith("/dwn/"):
+                return value
+            return ""
+        if value.startswith("/dwn/"):
+            return "https://dw.uptodown.com" + value
+        # Uptodown's data-url is normally a long opaque CDN token.
+        if len(value) >= 20 and re.fullmatch(r"[A-Za-z0-9_./+=-]+", value):
+            return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+        return ""
 
-        selectors = [
+    def _extract_direct_from_body(self, body: str) -> str:
+        soup = BeautifulSoup(body or "", "html.parser")
+        nodes = []
+        for selector in (
             "#detail-download-button",
             "[data-button-id='detail-download-button']",
             "[data-download-button]",
-        ]
-        nodes = []
-        for selector in selectors:
+        ):
             node = soup.select_one(selector)
             if node and node not in nodes:
                 nodes.append(node)
 
         for node in nodes:
             for attr in ("data-url", "data-download-url", "data-file-url"):
-                value = str(node.get(attr) or "").strip()
-                if value:
-                    if value.startswith("http"):
-                        return value
-                    if "dw.uptodown.com" in value:
-                        return "https://" + value.lstrip("/")
-                    return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+                direct = self._coerce_download_value(node.get(attr))
+                if direct:
+                    return direct
 
         for node in soup.find_all(attrs={"data-url": True}):
-            value = str(node.get("data-url") or "").strip()
-            if len(value) >= 12:
-                if value.startswith("http"):
-                    return value
-                if "dw.uptodown.com" in value:
-                    return "https://" + value.lstrip("/")
-                return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+            direct = self._coerce_download_value(node.get("data-url"))
+            if direct:
+                return direct
+
+        for match in re.findall(r"""data-url\s*=\s*["']([^"']+)["']""", body or "", re.I):
+            direct = self._coerce_download_value(match)
+            if direct:
+                return direct
 
         for anchor in soup.find_all("a", href=True):
-            href = str(anchor["href"]).strip()
-            if "dw.uptodown.com" in href:
-                return href
+            direct = self._coerce_download_value(anchor.get("href"))
+            if direct:
+                return direct
 
-        # Some Uptodown versions expose the download token only through the
-        # post-download endpoint. Try the generic file-id form as a fallback.
-        match = re.search(r"/download/(\d+)(?:-x)?", url)
-        if match:
-            file_id = match.group(1)
-            origin = urlparse(url).scheme + "://" + urlparse(url).netloc
-            for suffix in (f"/android/post-download/{file_id}", f"/post-download/{file_id}"):
-                try:
-                    probe_url = origin + suffix
-                    probe = self._get(probe_url)
-                    probe_soup = BeautifulSoup(probe.text or "", "html.parser")
-                    node = probe_soup.select_one(".post-download[data-url], [data-url]")
-                    if node:
-                        value = str(node.get("data-url") or "").strip()
-                        if value:
-                            if value.startswith("http"):
-                                return value
-                            if "dw.uptodown.com" in value:
-                                return "https://" + value.lstrip("/")
-                            return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
-                except Exception:
-                    continue
+        return ""
+
+    def _direct_from_download_page(self, url: str) -> str:
+        response = self._get(url)
+        direct = self._extract_direct_from_body(response.text or "")
+        if direct:
+            return direct
+
+        # Some Uptodown download pages expose the token only on the non-"-x"
+        # form. Retry that alternate page before giving up.
+        alternates = []
+        if url.endswith("-x"):
+            alternates.append(url[:-2])
+        parsed = urlparse(url)
+        if "/download/" in parsed.path:
+            app_root = parsed.path.split("/download/", 1)[0]
+            alternates.append(f"{parsed.scheme}://{parsed.netloc}{app_root}/download")
+
+        for alternate in dict.fromkeys(alternates):
+            if not alternate or alternate == url:
+                continue
+            try:
+                probe = self._get(alternate)
+                direct = self._extract_direct_from_body(probe.text or "")
+                if direct:
+                    return direct
+            except Exception:
+                continue
 
         raise ProviderError("Uptodown direct download URL not found")
 
@@ -1275,6 +1288,8 @@ class UptodownProvider:
             candidate.download_url = direct_url
 
         Path(destination).parent.mkdir(parents=True, exist_ok=True)
+        if not direct_url.startswith("https://dw.uptodown.com/dwn/"):
+            raise ProviderError("Uptodown resolver did not produce a CDN artifact URL")
         response = self.session.get(
             direct_url,
             headers={"Referer": candidate.download_page_url or candidate.page_url},
