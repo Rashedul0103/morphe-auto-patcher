@@ -2,7 +2,7 @@
   {
     "options": [],
     "name": "Clone app",
-    "description": "Update provider names declared by the app. Enabling this can fix installation conflicts, but this can also break features in certain apps",
+    "description": "Update provider names declared by the app. Fixes installation conflicts, but can break features in certain apps",
     "enabled": false
   },
   {
@@ -160,6 +160,12 @@
     "options": [],
     "name": "Captions",
     "description": "Adds an option to disable captions from being automatically enabled or to set caption cookies",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "DeArrow",
+    "description": "Adds options to replace video thumbnails and titles using the DeArrow API, or replace video thumbnails with image captures from the video",
     "enabled": true
   },
   {
@@ -428,12 +434,6 @@
   },
   {
     "options": [],
-    "name": "Alternative thumbnails",
-    "description": "Adds options to replace video thumbnails using the DeArrow API or image captures from the video",
-    "enabled": true
-  },
-  {
-    "options": [],
     "name": "Bypass image region restrictions",
     "description": "Adds an option to use a different host for user avatar and channel images and can fix missing images that are blocked in some countries",
     "enabled": true
@@ -536,6 +536,12 @@
   },
   {
     "options": [],
+    "name": "Channel whitelist",
+    "description": "Adds options to allow whitelisting specific channels to show ads or override playback speeds",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Disable DRC audio",
     "description": "Adds an option to disable DRC (Dynamic Range Compression) audio",
     "enabled": true
@@ -544,6 +550,12 @@
     "options": [],
     "name": "Force original audio",
     "description": "Adds an option to always use the original audio track",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Skip silence",
+    "description": "Adds an option to automatically skip silent pauses in audio playback",
     "enabled": true
   },
   {
