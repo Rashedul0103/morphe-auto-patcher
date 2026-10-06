@@ -13,6 +13,10 @@ import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 
 import requests
+try:
+    from curl_cffi import requests as curl_requests
+except ImportError:  # pragma: no cover - optional CI transport
+    curl_requests = None
 from bs4 import BeautifulSoup
 from apk_validator import ApkValidationError, validate_artifact
 
@@ -79,10 +83,20 @@ class AcquisitionResult:
 
 
 def _scraper():
-    if cloudscraper is not None:
-        s = cloudscraper.create_scraper()
+    # APKMirror increasingly enforces browser TLS fingerprints from CI IPs.
+    # Prefer curl_cffi's Chrome impersonation, then fall back to cloudscraper.
+    if curl_requests is not None:
+        try:
+            s = curl_requests.Session(impersonate="chrome")
+        except Exception:
+            s = None
     else:
-        s = requests.Session()
+        s = None
+    if s is None:
+        if cloudscraper is not None:
+            s = cloudscraper.create_scraper()
+        else:
+            s = requests.Session()
     s.headers.update({"User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.8"})
     return s
 
@@ -843,6 +857,153 @@ class UptodownProvider:
             raise ProviderError(f"HTTP {response.status_code}: {url}")
         return response
 
+    def _api_get(self, path: str):
+        url = f"{UPTODOWN_API_BASE}{path}"
+        return self.session.get(
+            url,
+            headers={
+                "User-Agent": UPTODOWN_API_USER_AGENT,
+                "Identificador": "Uptodown_Android",
+                "Identificador-Version": "707",
+                "APIKEY": self._generate_apikey(),
+                "Accept": "application/json",
+            },
+            timeout=30,
+        )
+
+    def _resolve_app_id(self, package: str) -> str:
+        package = str(package or "").strip()
+        if not package:
+            return ""
+        try:
+            response = self._api_get(
+                f"/apps/byPackagename/{quote(package, safe='')}"
+            )
+            if response.status_code == 200:
+                payload = response.json()
+                data = payload.get("data", payload) if isinstance(payload, dict) else payload
+                if isinstance(data, dict):
+                    app_id = data.get("appID") or data.get("appId") or data.get("id")
+                    if app_id:
+                        return str(app_id)
+        except Exception:
+            pass
+
+        # API search is the second native route. Only accept an exact package.
+        try:
+            response = self._api_get(
+                f"/v2/apps/search/{quote(package, safe='')}?page[limit]=10&page[offset]=0"
+            )
+            if response.status_code == 200:
+                payload = response.json()
+                data = payload.get("data", {}) if isinstance(payload, dict) else {}
+                items = data.get("results", []) if isinstance(data, dict) else []
+                if isinstance(items, list):
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        found_package = str(
+                            item.get("packageName") or item.get("packagename") or ""
+                        ).strip()
+                        if found_package.lower() == package.lower():
+                            app_id = item.get("appID") or item.get("appId") or item.get("id")
+                            if app_id:
+                                return str(app_id)
+        except Exception:
+            pass
+        return ""
+
+    def _api_detail(self, app_id: str) -> dict:
+        response = self._api_get(
+            f"/v3/apps/{quote(str(app_id), safe='')}/device/0?countryIsoCode=US"
+        )
+        if response.status_code != 200:
+            return {}
+        payload = response.json()
+        data = payload.get("data", payload) if isinstance(payload, dict) else payload
+        return data if isinstance(data, dict) else {}
+
+    def _api_versions(self, app_id: str, limit: int = 100) -> list[dict]:
+        response = self._api_get(
+            f"/v3/app/{quote(str(app_id), safe='')}/device/1/compatible/versions"
+            f"?page[limit]={limit}&page[offset]=0"
+        )
+        if response.status_code != 200:
+            raise ProviderError(
+                f"Uptodown versions API returned HTTP {response.status_code}"
+            )
+        payload = response.json()
+        data = payload.get("data", []) if isinstance(payload, dict) else []
+        return [item for item in data if isinstance(item, dict)]
+
+    @staticmethod
+    def _api_version_matches(record: dict, target_version: str) -> bool:
+        wanted = _clean_version(target_version)
+        values = (
+            record.get("version"),
+            record.get("versionName"),
+            record.get("version_name"),
+        )
+        return any(_clean_version(str(value or "")) == wanted for value in values)
+
+    def _api_candidates(
+        self,
+        app_id: str,
+        detail: dict,
+        records: list[dict],
+        target_version: str,
+    ) -> list[ApkCandidate]:
+        page_url = ""
+        for key in ("url", "appURL", "appUrl", "webUrl"):
+            value = str(detail.get(key) or "").strip()
+            if value.startswith(("http://", "https://")):
+                page_url = value
+                break
+
+        candidates: list[ApkCandidate] = []
+        for record in records:
+            if not self._api_version_matches(record, target_version):
+                continue
+            file_id = str(
+                record.get("fileID") or record.get("fileId") or record.get("fileid") or ""
+            ).strip()
+            if not file_id:
+                continue
+            file_type = str(
+                record.get("fileType") or record.get("file_type") or record.get("filetype") or "apk"
+            ).strip().lower().lstrip(".")
+            artifact_type = file_type if file_type in SUPPORTED_ARTIFACT_TYPES else _artifact_type_from_text(file_type, "apk")
+            direct_url = ""
+            for key in ("downloadURL", "downloadUrl", "download_url", "fileURL", "fileUrl"):
+                value = str(record.get(key) or "").strip()
+                if value.startswith("https://dw.uptodown.com/dwn/"):
+                    direct_url = value
+                    break
+            architecture = ""
+            for key in ("architecture", "arch", "cpu", "abi", "abis", "cpuArchitecture"):
+                value = str(record.get(key) or "").strip()
+                if value:
+                    architecture = value
+                    break
+            candidates.append(ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=page_url or "https://en.uptodown.com/android",
+                download_page_url=page_url or "https://en.uptodown.com/android",
+                download_url=direct_url,
+                architecture=architecture,
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={
+                    "api_native": True,
+                    "app_id": app_id,
+                    "file_id": file_id,
+                    "package": str(detail.get("packagename") or detail.get("packageName") or "").strip(),
+                    "version_record": {k: record.get(k) for k in ("version", "versionCode", "fileID", "fileType", "architecture") if k in record},
+                },
+            ))
+        return candidates
+
     def _discover_app_page(self, query: str, expected_package: str = "") -> str:
         if self.app_url:
             return self.app_url
@@ -1332,6 +1493,39 @@ class UptodownProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> list[ApkCandidate]:
+        # First use Uptodown's package-native API. This avoids slug guessing and
+        # search-engine dependence entirely when the package is known.
+        if expected_package:
+            try:
+                app_id = self._resolve_app_id(expected_package)
+                if app_id:
+                    detail = self._api_detail(app_id)
+                    real_package = str(
+                        detail.get("packagename") or detail.get("packageName") or ""
+                    ).strip()
+                    if not real_package or real_package.lower() == expected_package.lower():
+                        records = self._api_versions(app_id)
+                        api_candidates = self._api_candidates(
+                            app_id, detail, records, target_version
+                        )
+                        if api_candidates:
+                            api_candidates.sort(
+                                key=lambda c: self._arch_score(c, preferred_arch),
+                                reverse=True,
+                            )
+                            return [
+                                c for c in api_candidates
+                                if self._arch_score(c, preferred_arch) > -1000
+                            ]
+                    else:
+                        raise ProviderError(
+                            f"Uptodown API returned mismatched package {real_package}; expected {expected_package}"
+                        )
+            except ProviderError:
+                raise
+            except Exception as exc:
+                print(f"Uptodown native API discovery failed: {exc}")
+
         try:
             if target_version:
                 search_terms = []
