@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote, urljoin, urlparse, unquote, parse_qs
+import base64
 import os
 import re
 import time
@@ -222,6 +223,17 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
                 for key in ("q", "url", "uddg"):
                     for value in parse_qs(parsed_href.query).get(key, []):
                         accept(value)
+                # Bing organic results commonly use /ck/a with a URL-safe
+                # base64 destination in the u=a1... parameter.
+                if parsed_href.netloc.lower().endswith("bing.com") and parsed_href.path == "/ck/a":
+                    for value in parse_qs(parsed_href.query).get("u", []):
+                        if value.startswith("a1"):
+                            try:
+                                payload = value[2:] + "=" * (-len(value[2:]) % 4)
+                                decoded = base64.urlsafe_b64decode(payload).decode("utf-8", "replace")
+                                accept(decoded)
+                            except Exception:
+                                pass
                 accept(href)
             for match in url_pattern.findall(body):
                 accept(match)
