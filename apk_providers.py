@@ -413,21 +413,16 @@ class APKMirrorProvider:
         expected_package: str = "",
     ) -> str:
         base_url = self.base_url or self._discover_app_page(app_query, expected_package)
-        try:
-            response = self._get(base_url)
-        except ProviderError:
-            self.base_url = ""
-            base_url = self._discover_app_page(app_query, expected_package)
-            response = self._get(base_url)
-        soup = BeautifulSoup(response.text, "html.parser")
+        app_urls = list(dict.fromkeys(
+            [base_url] + list(getattr(self, "app_page_candidates", []) or [])
+        ))
+        if not app_urls:
+            raise ProviderError("APKMirror app discovery returned no candidate app pages")
 
-        if expected_package:
-            found_package = _extract_package(response.text)
-            if found_package and found_package.lower() != expected_package.lower():
-                raise ProviderError(
-                    f"APKMirror app page package mismatch: found {found_package}, expected {expected_package}"
-                )
-
+        # Validate each candidate landing page lazily. Landing pages may omit
+        # package metadata; the exact release page must still prove the package.
+        response = None
+        soup = None
         exact = _clean_version(target_version)
 
         def _release_page_matches(html: str) -> bool:
