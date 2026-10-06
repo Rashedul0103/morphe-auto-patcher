@@ -449,7 +449,7 @@ class APKMirrorProvider:
             for prefix in prefixes:
                 for suffix in (
                     f"{prefix}-{exact.replace('.', '-')}-release/",
-                    f"{prefix}-{exact.replace('.', '-")}/",
+                    f"{prefix}-{exact.replace('.', '-')}/",
                 ):
                     verified = release_matches(_normalize_url(app_url, suffix))
                     if verified:
