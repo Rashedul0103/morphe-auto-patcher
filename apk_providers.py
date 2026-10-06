@@ -109,17 +109,30 @@ def _version_appears_exact(text: str, target_version: str) -> bool:
 def _primary_version(html: str) -> str:
     """Extract the page's primary artifact version, not historical versions."""
     soup = BeautifulSoup(html or "", "html.parser")
-    for node in (soup.find("h1"), soup.select_one('meta[property="og:title"]')):
+
+    for selector in (
+        'meta[itemprop="softwareVersion"]',
+        'meta[property="og:title"]',
+    ):
+        node = soup.select_one(selector)
         if not node:
             continue
-        value = node.get("content") if getattr(node, "name", "") == "meta" else node.get_text(" ", strip=True)
-        match = re.search(r"(?<!\d)(\d+(?:\.\d+)+)(?!\d)", value or "")
+        value = str(node.get("content") or "").strip()
+        match = re.search(r"(?<!\d)(\d+(?:\.\d+)+)(?!\d)", value)
         if match:
             return match.group(1)
+
+    for node in (soup.find("h1"), soup.select_one("div.version")):
+        if not node:
+            continue
+        value = node.get_text(" ", strip=True)
+        match = re.search(r"(?<!\d)(\d+(?:\.\d+)+)(?!\d)", value)
+        if match:
+            return match.group(1)
+
     text = soup.get_text(" ", strip=True)
     match = re.search(r"\bVersion\s*:\s*(\d+(?:\.\d+)+)\b", text, re.I)
     return match.group(1) if match else ""
-
 
 def _primary_version_matches(html: str, target_version: str) -> bool:
     primary = _primary_version(html)
@@ -139,7 +152,22 @@ def _looks_like_package(value: str) -> bool:
 
 def _extract_package(html: str) -> str:
     raw = html or ""
-    text = BeautifulSoup(raw, "html.parser").get_text(" ", strip=True)
+    soup = BeautifulSoup(raw, "html.parser")
+
+    # Uptodown and several other catalogs expose this as a structured row.
+    for row in soup.select("#technical-information tr"):
+        header = row.find("th")
+        if header and header.get_text(" ", strip=True).lower() in (
+            "package name",
+            "package",
+            "packagename",
+        ):
+            value = row.find("td")
+            package = value.get_text(" ", strip=True) if value else ""
+            if _looks_like_package(package):
+                return package
+
+    text = soup.get_text(" ", strip=True)
     patterns = (
         r"\bPackage(?:\s+Name)?\s*:\s*([A-Za-z0-9_.$]+)",
         r"\bPackage(?:\s+Name)?\s+([A-Za-z0-9_.$]+)",
@@ -153,7 +181,6 @@ def _extract_package(html: str) -> str:
             if match and _looks_like_package(match.group(1)):
                 return match.group(1)
     return ""
-
 
 def _artifact_type_from_text(text: str, fallback: str = "apk") -> str:
     haystack = (text or "").lower()
