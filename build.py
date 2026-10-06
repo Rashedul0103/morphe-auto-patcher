@@ -661,6 +661,151 @@ def _stock_candidates(stock_dir):
     )
 
 
+APK_BUNDLE_SUFFIXES = {".apkm", ".apks", ".xapk"}
+
+
+def _ensure_apkeditor() -> str:
+    """Download APKEditor lazily only when a split bundle needs normalization."""
+    tool_dir = os.path.join(".work", "tools")
+    os.makedirs(tool_dir, exist_ok=True)
+    cached = glob.glob(os.path.join(tool_dir, "*.jar"))
+    for candidate in cached:
+        if "apkeditor" in os.path.basename(candidate).lower():
+            return candidate
+
+    api_url = "https://api.github.com/repos/REAndroid/APKEditor/releases/latest"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "Morphe-Auto-Patcher/1.0",
+    }
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    response = requests.get(api_url, headers=headers, timeout=30)
+    if response.status_code != 200:
+        raise RuntimeError(f"Unable to discover APKEditor release: HTTP {response.status_code}")
+    release = response.json()
+    assets = release.get("assets") or []
+    jar_asset = next(
+        (
+            asset for asset in assets
+            if str(asset.get("name") or "").lower().endswith(".jar")
+            and "sources" not in str(asset.get("name") or "").lower()
+        ),
+        None,
+    )
+    if not jar_asset or not jar_asset.get("browser_download_url"):
+        raise RuntimeError("Latest APKEditor release does not expose a usable JAR asset")
+
+    destination = os.path.join(tool_dir, "apkeditor.jar")
+    _download_url(jar_asset["browser_download_url"], destination)
+    if not os.path.isfile(destination) or os.path.getsize(destination) < 1024:
+        raise RuntimeError("Downloaded APKEditor JAR is empty or incomplete")
+    return destination
+
+
+def _normalize_stock_artifact(
+    app_id: str,
+    apk_path: str,
+    apk_info,
+    package: str,
+    version: str,
+    apk_arch: str,
+):
+    """Turn APKM/APKS/XAPK into a single patchable APK without weakening validation."""
+    suffix = Path(apk_path).suffix.lower()
+    if suffix not in APK_BUNDLE_SUFFIXES:
+        return apk_path, apk_info, {}
+
+    source_hash = apk_info.sha256 if apk_info else ""
+    editor = _ensure_apkeditor()
+    normalized_unsigned = os.path.join(
+        os.path.dirname(apk_path),
+        f"{app_id}-normalized-unsigned.apk",
+    )
+    normalized = os.path.join(
+        os.path.dirname(apk_path),
+        f"{app_id}-normalized.apk",
+    )
+    for candidate in (normalized_unsigned, normalized):
+        if os.path.exists(candidate):
+            os.remove(candidate)
+
+    ok, output = run_cmd([
+        "java", "-jar", editor, "merge",
+        "-i", apk_path,
+        "-o", normalized_unsigned,
+        "-clean-meta",
+        "-f",
+    ])
+    if not ok or not os.path.isfile(normalized_unsigned):
+        raise RuntimeError(
+            f"APKEditor failed to merge {suffix} bundle: {(output or '')[-2000:]}"
+        )
+
+    # APKEditor produces the merged package without a usable signature. Sign it
+    # with a temporary local key; Morphe will sign the final patched APK later.
+    temp_keystore = os.path.join(".work", "tools", "bundle-merge.p12")
+    alias = "morphe-merge"
+    storepass = "morphe-auto-patcher"
+    if not os.path.exists(temp_keystore):
+        ok_key, key_out = run_cmd([
+            "keytool", "-genkeypair",
+            "-storetype", "PKCS12",
+            "-keystore", temp_keystore,
+            "-storepass", storepass,
+            "-keypass", storepass,
+            "-alias", alias,
+            "-keyalg", "RSA",
+            "-keysize", "2048",
+            "-validity", "3650",
+            "-dname", "CN=Morphe Auto Patcher",
+        ])
+        if not ok_key:
+            raise RuntimeError(f"Unable to create temporary bundle-signing key: {(key_out or '')[-2000:]}")
+
+    apksigner = shutil.which("apksigner") or _android_tool("apksigner")
+    if not apksigner:
+        raise RuntimeError("apksigner is required to sign the normalized APK")
+
+    ok_sign, sign_out = run_cmd([
+        apksigner, "sign",
+        "--ks", temp_keystore,
+        "--ks-pass", f"pass:{storepass}",
+        "--key-pass", f"pass:{storepass}",
+        "--ks-key-alias", alias,
+        "--out", normalized,
+        normalized_unsigned,
+    ])
+    if not ok_sign or not os.path.isfile(normalized):
+        raise RuntimeError(f"Unable to sign normalized APK: {(sign_out or '')[-2000:]}")
+
+    try:
+        os.remove(normalized_unsigned)
+    except OSError:
+        pass
+    try:
+        os.remove(normalized + ".idsig")
+    except OSError:
+        pass
+
+    normalized_info = validate_artifact(
+        normalized,
+        expected_package=package,
+        expected_version=version,
+        expected_arch=apk_arch or "auto",
+    )
+    return normalized, normalized_info, {
+        "normalized": True,
+        "source_artifact": os.path.basename(apk_path),
+        "source_artifact_type": suffix.lstrip("."),
+        "source_sha256": source_hash,
+        "normalizer": "APKEditor",
+        "normalized_sha256": normalized_info.sha256,
+    }
+
+
 def _validate_stock_file(path, package, version, apk_arch, expected_signer_sha256=None):
     return validate_artifact(
         path,
@@ -1060,6 +1205,38 @@ def main():
         apk_path, apk_info, acquisition = resolve_stock_apk(
             app_id, android_package or package, app_version, app, expected_signer_sha256=prior_signers
         )
+
+        if apk_path and apk_info:
+            try:
+                apk_path, apk_info, normalization = _normalize_stock_artifact(
+                    app_id,
+                    apk_path,
+                    apk_info,
+                    android_package or package,
+                    app_version,
+                    apk_arch,
+                )
+                if normalization:
+                    acquisition["normalization"] = normalization
+                    acquisition["status"] = "downloaded_and_normalized"
+                    print(
+                        f"Normalized {normalization['source_artifact_type'].upper()} "
+                        f"stock artifact for {app_id} with APKEditor."
+                    )
+            except Exception as exc:
+                acquisition.setdefault("attempts", []).append({
+                    "provider": "normalizer",
+                    "status": "normalization_failed",
+                    "error": str(exc),
+                })
+                print(f"Error: Stock bundle normalization failed for {app_id}: {exc}")
+                try:
+                    if apk_path and os.path.exists(apk_path):
+                        os.remove(apk_path)
+                except OSError:
+                    pass
+                apk_path = None
+                apk_info = None
 
         if apk_path and apk_info and not icon_path:
             apk_icon_path = extract_apk_icon(apk_path, app_id)
