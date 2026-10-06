@@ -169,10 +169,7 @@ def _extract_architecture(text: str) -> str:
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
     """Discover provider URLs through CI-safe search transports."""
     engines = (
-        f"https://r.jina.ai/http://www.google.com/search?hl=en&num=20&q={quote(query)}",
-        f"https://r.jina.ai/http://www.bing.com/search?setlang=en&q={quote(query)}",
-        f"https://r.jina.ai/http://search.yahoo.com/search?p={quote(query)}",
-        f"https://r.jina.ai/http://html.duckduckgo.com/html/?q={quote(query)}",
+        f"https://www.bing.com/search?format=rss&q={quote(query)}",
         f"https://www.google.com/search?hl=en&num=20&q={quote(query)}",
         f"https://www.bing.com/search?setlang=en&q={quote(query)}",
         f"https://search.yahoo.com/search?p={quote(query)}",
@@ -199,7 +196,7 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         if cleaned not in found:
             found.append(cleaned)
 
-    url_pattern = re.compile(r"https?://[^\s<>\"']+", re.I)
+    url_pattern = re.compile(r"https?://[^\s<>\\"\']+", re.I)
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=30)
@@ -207,6 +204,15 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
             if response.status_code != 200:
                 continue
             body = response.text or ""
+            content_type = (response.headers.get("Content-Type") or "").lower()
+            if "rss" in content_type or body.lstrip().startswith("<?xml"):
+                xml_soup = BeautifulSoup(body, "xml")
+                for link in xml_soup.find_all("link"):
+                    accept(link.get_text(" ", strip=True))
+                for item in xml_soup.find_all("item"):
+                    link = item.find("link")
+                    if link:
+                        accept(link.get_text(" ", strip=True))
             soup = BeautifulSoup(body, "html.parser")
             for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
@@ -275,7 +281,12 @@ class APKMirrorProvider:
             return self.base_url
 
         queries = []
-        for value in (query, expected_package):
+        for value in (
+            query,
+            expected_package,
+            f"{query} Android" if query else "",
+            f"{query} for Android" if query else "",
+        ):
             value = str(value or "").strip()
             if value and value not in queries:
                 queries.append(value)
@@ -731,7 +742,12 @@ class UptodownProvider:
             return self.app_url
 
         queries = []
-        for value in (query, expected_package):
+        for value in (
+            query,
+            expected_package,
+            f"{query} Android" if query else "",
+            f"{query} for Android" if query else "",
+        ):
             value = str(value or "").strip()
             if value and value not in queries:
                 queries.append(value)
