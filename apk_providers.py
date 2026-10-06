@@ -1343,6 +1343,218 @@ class UptodownProvider:
                 fh.write(chunk)
 
 
+class APKPureProvider:
+    name = "apkpure"
+
+    def __init__(self, base_url: str = ""):
+        self.session = _scraper()
+        self.app_url = ""
+        if base_url:
+            clean = base_url.rstrip("/")
+            self.app_url = clean.split("/download/", 1)[0].split("/versions", 1)[0]
+
+    def _get(self, url: str):
+        response = self.session.get(url, timeout=30, allow_redirects=True)
+        if response.status_code != 200:
+            raise ProviderError(f"HTTP {response.status_code}: {url}")
+        return response
+
+    def _discover_app_page(self, query: str, expected_package: str = "") -> str:
+        if self.app_url:
+            return self.app_url
+
+        candidates = {}
+        values = []
+        for value in (
+            expected_package,
+            query,
+            f"{query} Android" if query else "",
+            f"{query} for Android" if query else "",
+        ):
+            value = str(value or "").strip()
+            if value and value not in values:
+                values.append(value)
+
+        for value in values:
+            url = "https://apkpure.net/search?q=" + quote(value)
+            try:
+                response = self._get(url)
+            except Exception:
+                continue
+            soup = BeautifulSoup(response.text or "", "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                href = _normalize_url(url, str(anchor.get("href") or ""))
+                if "/app/" not in href:
+                    continue
+                if urlparse(href).netloc.lower() not in ("apkpure.net", "www.apkpure.net"):
+                    continue
+                candidates[href.rstrip("/")] = anchor.get_text(" ", strip=True)
+
+        if expected_package:
+            for slug_value in (
+                query,
+                f"{query} Android" if query else "",
+                f"{query} for Android" if query else "",
+            ):
+                slug = _slugify(slug_value)
+                if slug:
+                    candidates.setdefault(
+                        f"https://apkpure.net/{slug}/{expected_package}",
+                        slug_value,
+                    )
+
+        wanted = re.sub(r"[^a-z0-9]+", " ", str(query).lower()).strip()
+        scored = []
+        for url, title in list(candidates.items())[:40]:
+            try:
+                response = self._get(url)
+            except Exception:
+                continue
+            body = response.text or ""
+            found_package = _extract_package(body).lower()
+            if expected_package and found_package and found_package != expected_package.lower():
+                continue
+            heading = BeautifulSoup(body, "html.parser").find("h1")
+            page_title = heading.get_text(" ", strip=True) if heading else title
+            normalized = re.sub(r"[^a-z0-9]+", " ", page_title.lower()).strip()
+            score = 0
+            if expected_package and found_package == expected_package.lower():
+                score += 20000
+            if wanted and normalized == wanted:
+                score += 5000
+            for token in wanted.split():
+                if len(token) >= 2 and token in normalized:
+                    score += 500
+            scored.append((score, url, found_package))
+
+        if expected_package:
+            exact = [item for item in scored if item[2] == expected_package.lower()]
+            if exact:
+                scored = exact
+        if not scored:
+            raise ProviderError(f"APKPure app discovery failed for {query}")
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        self.app_url = scored[0][1].rstrip("/")
+        return self.app_url
+
+    def _verify_page(self, url: str, target_version: str, expected_package: str) -> str:
+        try:
+            response = self._get(url)
+        except Exception:
+            return ""
+        body = response.text or ""
+        if not _primary_version_matches(body, target_version):
+            return ""
+        if expected_package:
+            found = _extract_package(body)
+            if not found or found.lower() != expected_package.lower():
+                return ""
+        return response.url or url
+
+    def _version_page(self, target_version: str, app_query: str, expected_package: str) -> str:
+        app_url = self._discover_app_page(app_query, expected_package)
+        wanted = _clean_version(target_version)
+
+        for candidate in (
+            f"{app_url}/download/{wanted}",
+            f"{app_url}/versions/{wanted}",
+            f"{app_url}/versions",
+        ):
+            verified = self._verify_page(candidate, wanted, expected_package)
+            if verified:
+                return verified
+
+        versions_url = f"{app_url}/versions"
+        response = self._get(versions_url)
+        soup = BeautifulSoup(response.text or "", "html.parser")
+        links = []
+        for anchor in soup.find_all("a", href=True):
+            href = _normalize_url(versions_url, str(anchor.get("href") or ""))
+            label = anchor.get_text(" ", strip=True)
+            if not _version_appears_exact(f"{label} {href}", wanted):
+                continue
+            if "/download/" in href or "/versions/" in href:
+                links.append(href)
+
+        for href in dict.fromkeys(links):
+            verified = self._verify_page(href, wanted, expected_package)
+            if verified:
+                return verified
+
+        raise ProviderError(f"Exact APKPure version page not found for {target_version}")
+
+    def _direct_download(self, page_url: str) -> str:
+        response = self._get(page_url)
+        body = response.text or ""
+        soup = BeautifulSoup(body, "html.parser")
+
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            parsed = urlparse(href)
+            host = (parsed.netloc or "").lower()
+            if parsed.scheme in ("http", "https") and (
+                "download.apkpure.com" in host
+                or href.lower().endswith((".apk", ".xapk", ".apkm", ".apks"))
+            ):
+                return href
+
+        for attr in ("data-download-url", "data-url", "download_url", "downloadUrl"):
+            pattern = rf"""["']{re.escape(attr)}["']\s*[:=]\s*["']([^"']+)["']"""
+            match = re.search(pattern, body, re.I)
+            if match and match.group(1).startswith(("http://", "https://")):
+                return match.group(1)
+
+        raise ProviderError("APKPure direct download link not found")
+
+    def resolve(
+        self,
+        target_version: str,
+        preferred_arch: str = "auto",
+        app_query: str = "",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        version_page = self._version_page(target_version, app_query, expected_package)
+        response = self._get(version_page)
+        body = response.text or ""
+        artifact_type = _artifact_type_from_text(body, "apk")
+        return [ApkCandidate(
+            provider=self.name,
+            version=target_version,
+            page_url=version_page,
+            download_page_url=version_page,
+            architecture=_extract_architecture(body),
+            is_bundle=artifact_type != "apk",
+            artifact_type=artifact_type,
+            details={"version_page": version_page},
+        )]
+
+    def download(self, candidate: ApkCandidate, destination: str) -> None:
+        page_url = candidate.download_page_url or candidate.page_url
+        direct = candidate.download_url or self._direct_download(page_url)
+        candidate.download_url = direct
+        Path(destination).parent.mkdir(parents=True, exist_ok=True)
+        response = self.session.get(
+            direct,
+            headers={"Referer": page_url, "User-Agent": USER_AGENT},
+            timeout=120,
+            allow_redirects=True,
+            stream=True,
+        )
+        if response.status_code != 200:
+            raise ProviderError(f"HTTP {response.status_code} while downloading APKPure artifact")
+
+        with open(destination, "wb") as fh:
+            first = True
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if not chunk:
+                    continue
+                if first and _looks_like_html_bytes(chunk):
+                    raise ProviderError("APKPure returned HTML instead of an APK artifact")
+                first = False
+                fh.write(chunk)
+
+
 def get_provider_urls(app_id: str, app_config: dict) -> dict:
     configured = app_config.get("apk_sources") or {}
     defaults = DEFAULT_PROVIDER_URLS.get(app_id, {})
@@ -1355,9 +1567,11 @@ def get_provider_urls(app_id: str, app_config: dict) -> dict:
 
 def provider_order(app_config: dict) -> list[str]:
     configured = app_config.get("apk_providers")
-    if isinstance(configured, list) and configured:
-        return [str(x).lower() for x in configured]
-    return ["apkmirror", "uptodown"]
+    order = [str(x).lower() for x in configured] if isinstance(configured, list) and configured else []
+    for provider_name in ("apkmirror", "uptodown", "apkpure"):
+        if provider_name not in order:
+            order.append(provider_name)
+    return order
 
 
 def _candidate_extension(candidate: ApkCandidate) -> str:
@@ -1410,6 +1624,14 @@ def acquire_from_providers(
                 )
             elif provider_name == "uptodown":
                 provider = UptodownProvider(base_url)
+                candidates = provider.resolve(
+                    target_version,
+                    preferred_arch,
+                    app_query=app_query,
+                    expected_package=expected_package,
+                )
+            elif provider_name == "apkpure":
+                provider = APKPureProvider(base_url)
                 candidates = provider.resolve(
                     target_version,
                     preferred_arch,
