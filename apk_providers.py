@@ -8,6 +8,7 @@ import base64
 import os
 import re
 import time
+import xml.etree.ElementTree as ET
 
 import requests
 from bs4 import BeautifulSoup
@@ -197,7 +198,28 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         if cleaned not in found:
             found.append(cleaned)
 
-    url_pattern = re.compile(r'https?://\S+', re.I)
+    def decode_bing_or_follow(href: str) -> None:
+        parsed = urlparse(href)
+        if not parsed.netloc.lower().endswith("bing.com") or parsed.path != "/ck/a":
+            return
+        values = parse_qs(parsed.query).get("u", [])
+        for value in values:
+            if value.startswith("a1"):
+                payload = value[2:]
+                try:
+                    decoded = base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)).decode("utf-8", "replace")
+                    accept(decoded)
+                    if found:
+                        return
+                except Exception:
+                    pass
+        try:
+            redirected = session.get(href, timeout=20, allow_redirects=True)
+            accept(redirected.url or "")
+        except Exception:
+            pass
+
+    url_pattern = re.compile(r'https?://[^\s<>"\']+', re.I)
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=30)
@@ -205,15 +227,19 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
             if response.status_code != 200:
                 continue
             body = response.text or ""
-            content_type = (response.headers.get("Content-Type") or "").lower()
-            if "rss" in content_type or body.lstrip().startswith("<?xml"):
-                xml_soup = BeautifulSoup(body, "xml")
-                for link in xml_soup.find_all("link"):
-                    accept(link.get_text(" ", strip=True))
-                for item in xml_soup.find_all("item"):
-                    link = item.find("link")
-                    if link:
-                        accept(link.get_text(" ", strip=True))
+
+            # Bing RSS is plain XML. Parse it directly so lxml is not required.
+            if "format=rss" in engine_url or body.lstrip().startswith("<?xml"):
+                try:
+                    root = ET.fromstring(body)
+                    for item in root.findall(".//item"):
+                        link = item.findtext("link", default="")
+                        accept(link)
+                    if len(found) >= limit:
+                        break
+                except Exception:
+                    pass
+
             soup = BeautifulSoup(body, "html.parser")
             for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
@@ -223,17 +249,7 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
                 for key in ("q", "url", "uddg"):
                     for value in parse_qs(parsed_href.query).get(key, []):
                         accept(value)
-                # Bing organic results commonly use /ck/a with a URL-safe
-                # base64 destination in the u=a1... parameter.
-                if parsed_href.netloc.lower().endswith("bing.com") and parsed_href.path == "/ck/a":
-                    for value in parse_qs(parsed_href.query).get("u", []):
-                        if value.startswith("a1"):
-                            try:
-                                payload = value[2:] + "=" * (-len(value[2:]) % 4)
-                                decoded = base64.urlsafe_b64decode(payload).decode("utf-8", "replace")
-                                accept(decoded)
-                            except Exception:
-                                pass
+                decode_bing_or_follow(href)
                 accept(href)
             for match in url_pattern.findall(body):
                 accept(match)
@@ -632,8 +648,10 @@ class APKMirrorProvider:
         search_terms = []
         if expected_package:
             search_terms.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
+            search_terms.append(f"site:apkmirror.com/apk/ {expected_package} {exact}")
         if app_query:
             search_terms.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
+            search_terms.append(f"site:apkmirror.com/apk/ {app_query} {exact}")
         seen_direct = set()
         for search_query in search_terms:
             for result_url in _search_result_urls(
