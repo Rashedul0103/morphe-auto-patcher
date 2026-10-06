@@ -390,10 +390,13 @@ class APKMirrorProvider:
 
         if normalized_package:
             exact_package = [item for item in scored if item[3] == normalized_package]
+            unknown_package = [item for item in scored if not item[3]]
             mismatched_package = [item for item in scored if item[3] and item[3] != normalized_package]
             if exact_package:
                 scored = exact_package
-            elif mismatched_package and len(mismatched_package) == len(scored):
+            elif unknown_package:
+                scored = unknown_package
+            elif mismatched_package:
                 raise ProviderError(
                     f"APKMirror app discovery found only mismatched packages; expected {expected_package}"
                 )
@@ -435,9 +438,13 @@ class APKMirrorProvider:
             meta_title = soup.select_one('meta[property="og:title"]')
             if meta_title:
                 app_title = str(meta_title.get("content") or "").strip()
-        title_slug = _slugify(app_title)
+        title_slug = _slugify(re.sub(r"\b\d+(?:\.\d+)+\b", " ", app_title))
+        path_slug = ""
+        base_parts = [part for part in urlparse(base_url).path.split("/") if part]
+        if base_parts:
+            path_slug = _slugify(base_parts[-1])
         release_slugs = []
-        for prefix in (title_slug, _slugify(app_query)):
+        for prefix in (title_slug, path_slug, _slugify(app_query)):
             if prefix and prefix not in release_slugs:
                 release_slugs.append(prefix)
         for prefix in release_slugs:
@@ -1495,6 +1502,8 @@ def acquire_from_providers(
                 "status": "resolve_failed",
                 "base_url": base_url or None,
                 "error": str(exc),
+                "app_query": app_query,
+                "expected_package": expected_package,
             })
 
     return AcquisitionResult(
