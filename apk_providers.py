@@ -196,7 +196,7 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         if cleaned not in found:
             found.append(cleaned)
 
-    url_pattern = re.compile(r"https?://[^\s<>\\"\']+", re.I)
+    url_pattern = re.compile(r"https?://[^\s<>"]+", re.I)
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=30)
