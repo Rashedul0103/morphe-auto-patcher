@@ -129,11 +129,11 @@ def _extract_package(html: str) -> str:
     raw = html or ""
     text = BeautifulSoup(raw, "html.parser").get_text(" ", strip=True)
     patterns = (
-        r"\\bPackage(?:\\s+Name)?\\s*:\\s*([A-Za-z0-9_.$]+)",
-        r"\\bPackage(?:\\s+Name)?\\s+([A-Za-z0-9_.$]+)",
-        r"[\\"']packageName[\\"']\\s*:\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
-        r"[\\"']package[\\"']\\s*:\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
-        r"data-package(?:name)?\\s*=\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
+        r"\bPackage(?:\s+Name)?\s*:\s*([A-Za-z0-9_.$]+)",
+        r"\bPackage(?:\s+Name)?\s+([A-Za-z0-9_.$]+)",
+        r"""["']packageName["']\s*:\s*["']([A-Za-z0-9_.$]+)["']""",
+        r"""["']package["']\s*:\s*["']([A-Za-z0-9_.$]+)["']""",
+        r"""data-package(?:name)?\s*=\s*["']([A-Za-z0-9_.$]+)["']""",
     )
     for source in (text, raw):
         for pattern in patterns:
