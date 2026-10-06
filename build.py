@@ -720,6 +720,7 @@ def _normalize_stock_artifact(
         return apk_path, apk_info, {}
 
     source_hash = apk_info.sha256 if apk_info else ""
+    source_signers = list(getattr(apk_info, "signer_sha256", []) or [])
     editor = _ensure_apkeditor()
     normalized_unsigned = os.path.join(
         os.path.dirname(apk_path),
@@ -802,6 +803,7 @@ def _normalize_stock_artifact(
         "source_artifact": os.path.basename(apk_path),
         "source_artifact_type": suffix.lstrip("."),
         "source_sha256": source_hash,
+        "source_signer_sha256": source_signers,
         "normalizer": "APKEditor",
         "normalized_sha256": normalized_info.sha256,
     }
@@ -1252,7 +1254,10 @@ def main():
                     existing_info = json.load(inf)
             existing_info["apk_acquisition"] = acquisition
             existing_info["stock_apk"] = apk_info.to_dict() if apk_info else None
-            existing_info["stock_signer_sha256"] = (apk_info.signer_sha256 if apk_info else existing_info.get("stock_signer_sha256", []))
+            existing_info["stock_signer_sha256"] = (
+                (acquisition.get("normalization") or {}).get("source_signer_sha256")
+                or (apk_info.signer_sha256 if apk_info else existing_info.get("stock_signer_sha256", []))
+            )
             with open(info_path, "w") as inf:
                 json.dump(existing_info, inf, indent=2)
         except Exception as exc:
