@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791293300
+    "updated_at": 1791294554
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -58,7 +58,8 @@
             "data_version": "14092334",
             "file_id": "1219152866",
             "download_page_error": "Uptodown direct download URL not found",
-            "package": "com.bunpoapp"
+            "package": "com.bunpoapp",
+            "api_download_error": "Uptodown download API returned HTTP 526"
           }
         },
         "error": "Uptodown direct download URL not found"
