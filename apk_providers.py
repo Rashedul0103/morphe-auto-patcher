@@ -430,40 +430,80 @@ class APKMirrorProvider:
 
         exact = _clean_version(target_version)
 
-        # APKMirror release slugs are derived from the app's displayed title,
-        # not merely from the numeric version. Try that canonical form first.
-        heading = soup.find("h1")
-        app_title = heading.get_text(" ", strip=True) if heading else ""
-        if not app_title:
-            meta_title = soup.select_one('meta[property="og:title"]')
-            if meta_title:
-                app_title = str(meta_title.get("content") or "").strip()
-        title_slug = _slugify(re.sub(r"\b\d+(?:\.\d+)+\b", " ", app_title))
-        path_slug = ""
-        base_parts = [part for part in urlparse(base_url).path.split("/") if part]
-        if base_parts:
-            path_slug = _slugify(base_parts[-1])
-        release_slugs = []
-        for prefix in (title_slug, path_slug, _slugify(app_query)):
-            if prefix and prefix not in release_slugs:
-                release_slugs.append(prefix)
-        for prefix in release_slugs:
-            for suffix in (f"{prefix}-{exact.replace('.', '-')}-release/", f"{prefix}-{exact.replace('.', '-')}/"):
-                candidate_url = _normalize_url(base_url, suffix)
+        def _release_page_matches(html: str) -> bool:
+            if not _primary_version_matches(html or "", exact):
+                return False
+            if expected_package:
+                found_package = _extract_package(html or "")
+                if not found_package or found_package.lower() != expected_package.lower():
+                    return False
+            return True
+
+        def try_app_page(app_page_url: str) -> str:
+            try:
+                app_response = self._get(app_page_url)
+            except Exception:
+                return ""
+            app_soup = BeautifulSoup(app_response.text or "", "html.parser")
+            landing_package = _extract_package(app_response.text or "")
+            if expected_package and landing_package and landing_package.lower() != expected_package.lower():
+                return ""
+
+            heading = app_soup.find("h1")
+            app_title = heading.get_text(" ", strip=True) if heading else ""
+            if not app_title:
+                meta_title = app_soup.select_one('meta[property="og:title"]')
+                if meta_title:
+                    app_title = str(meta_title.get("content") or "").strip()
+
+            title_slug = _slugify(re.sub(r"\b\d+(?:\.\d+)+\b", " ", app_title))
+            path_slug = ""
+            base_parts = [part for part in urlparse(app_page_url).path.split("/") if part]
+            if base_parts:
+                path_slug = _slugify(base_parts[-1])
+
+            release_slugs = []
+            for prefix in (title_slug, path_slug, _slugify(app_query)):
+                if prefix and prefix not in release_slugs:
+                    release_slugs.append(prefix)
+
+            for prefix in release_slugs:
+                for suffix in (
+                    f"{prefix}-{exact.replace('.', '-')}-release/",
+                    f"{prefix}-{exact.replace('.', '-')}/",
+                ):
+                    candidate_url = _normalize_url(app_page_url, suffix)
+                    try:
+                        candidate_response = self._get(candidate_url)
+                        if _release_page_matches(candidate_response.text or ""):
+                            return candidate_response.url or candidate_url
+                    except Exception:
+                        continue
+
+            for anchor in app_soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "")
+                if not href or href.startswith("#"):
+                    continue
+                text_value = anchor.get_text(" ", strip=True)
+                if not _version_appears_exact(f"{text_value} {href}", exact):
+                    continue
+                if "/release/" not in href and "android-apk-download" not in href:
+                    continue
+                candidate_url = _normalize_url(app_page_url, href)
                 try:
                     candidate_response = self._get(candidate_url)
-                    body = candidate_response.text or ""
-                    if not _primary_version_matches(body, exact):
-                        continue
-                    if expected_package:
-                        found_package = _extract_package(body)
-                        if found_package and found_package.lower() != expected_package.lower():
-                            continue
-                    if expected_package and not _extract_package(body):
-                        continue
-                    return candidate_response.url or candidate_url
+                    if _release_page_matches(candidate_response.text or ""):
+                        return candidate_response.url or candidate_url
                 except Exception:
                     continue
+            return ""
+
+        # Try every discovered app page until the exact package/version agrees.
+        for app_page_url in app_urls:
+            verified = try_app_page(app_page_url)
+            if verified:
+                self.base_url = app_page_url
+                return verified
 
         # Search engines are a provider-agnostic fallback when APKMirror's own
         # search endpoint is rate-limited or incomplete.
@@ -574,7 +614,13 @@ class APKMirrorProvider:
                     text = anchor.get_text(" ", strip=True)
                     if _version_appears_exact(f"{text} {href}", exact):
                         if "/release/" in href or "apk-download" in href:
-                            return _normalize_url(listing_url, href)
+                            candidate_url = _normalize_url(listing_url, href)
+                            try:
+                                candidate_response = self._get(candidate_url)
+                                if _release_page_matches(candidate_response.text or ""):
+                                    return candidate_response.url or candidate_url
+                            except Exception:
+                                continue
             except Exception:
                 continue
 
