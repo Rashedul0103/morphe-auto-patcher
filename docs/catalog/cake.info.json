@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791266253
+    "updated_at": 1791266749
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -34,14 +34,18 @@
         "version": "6.4.0",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "APKMirror app search returned no app page for Cake"
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-9-1-release/cake-learn-english-korean-6-9-1-3-android-apk-download/",
+        "app_query": "Cake",
+        "expected_package": "me.mycake"
       },
       {
         "provider": "uptodown",
         "version": "6.4.0",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "Uptodown app discovery failed for Cake"
+        "error": "Uptodown app discovery failed for Cake",
+        "app_query": "Cake",
+        "expected_package": "me.mycake"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
