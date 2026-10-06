@@ -776,6 +776,8 @@ class UptodownProvider:
 
         slug_values = [
             query,
+            f"{query} Android" if query else "",
+            f"{query} for Android" if query else "",
             expected_package,
             str(expected_package or "").replace(".", "-"),
             str(expected_package or "").split(".")[-1] if expected_package else "",
