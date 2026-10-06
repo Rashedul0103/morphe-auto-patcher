@@ -171,6 +171,8 @@ def _extract_architecture(text: str) -> str:
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
     """Discover provider URLs through CI-safe search transports."""
     engines = (
+        f"https://search.brave.com/search?q={quote(query)}&source=web",
+        f"https://www.mojeek.com/search?q={quote(query)}",
         f"https://www.bing.com/search?format=rss&q={quote(query)}",
         f"https://www.google.com/search?hl=en&num=20&q={quote(query)}",
         f"https://www.bing.com/search?setlang=en&q={quote(query)}",
