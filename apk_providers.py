@@ -162,52 +162,78 @@ def _extract_architecture(text: str) -> str:
 
 
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
-    """Discover provider pages through public search engines when the provider
-    search endpoint is unavailable/rate-limited. This is a fallback only."""
+    """Discover provider URLs through several public search-engine surfaces.
+    Search-engine HTML changes frequently, so extract both normal href targets
+    and embedded provider URLs rather than relying on one selector shape."""
     engines = (
-        f"https://www.google.com/search?udm=14&q={quote(query)}",
-        f"https://www.bing.com/search?q={quote(query)}",
+        f"https://www.google.com/search?hl=en&num=20&q={quote(query)}",
+        f"https://www.bing.com/search?setlang=en&q={quote(query)}",
+        f"https://search.yahoo.com/search?p={quote(query)}",
         f"https://html.duckduckgo.com/html/?q={quote(query)}",
+        f"https://lite.duckduckgo.com/lite/?q={quote(query)}",
     )
     found: list[str] = []
     session = _scraper()
+
+    def accept(value: str) -> None:
+        value = unquote((value or "").strip())
+        if not value:
+            return
+        value = value.replace("&amp;", "&")
+        parsed = urlparse(value)
+        host = (parsed.netloc or "").lower()
+        if parsed.scheme not in ("http", "https"):
+            return
+        if not any(allowed.lower() in host for allowed in allowed_hosts):
+            return
+        cleaned = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        if parsed.query:
+            cleaned += "?" + parsed.query
+        cleaned = cleaned.rstrip("/")
+        if cleaned not in found:
+            found.append(cleaned)
 
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=20)
             if response.status_code != 200:
                 continue
-            soup = BeautifulSoup(response.text or "", "html.parser")
+            body = response.text or ""
+            soup = BeautifulSoup(body, "html.parser")
+
             for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
                 if not href:
                     continue
-                # DuckDuckGo wraps external links as uddg=... and Google/Bing
-                # may expose an encoded target in the URL.
                 parsed = urlparse(href)
                 if "uddg" in parsed.query:
                     values = parse_qs(parsed.query).get("uddg") or []
                     if values:
-                        href = unquote(values[0])
-                for prefix in ("https://www.google.com/url?q=", "https://www.google.com/url?url="):
-                    if href.startswith(prefix):
-                        href = unquote(href.split("=", 1)[1])
-                parsed = urlparse(href)
-                host = (parsed.netloc or "").lower()
-                if not any(allowed in host for allowed in allowed_hosts):
-                    continue
-                if parsed.scheme not in ("http", "https"):
-                    continue
-                cleaned = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-                if parsed.query:
-                    cleaned += "?" + parsed.query
-                if cleaned not in found:
-                    found.append(cleaned)
-                    if len(found) >= limit:
-                        return found
+                        href = values[0]
+                for key in ("q", "url"):
+                    values = parse_qs(urlparse(href).query).get(key) or []
+                    for value in values:
+                        p = urlparse(unquote(value))
+                        if p.netloc:
+                            accept(unquote(value))
+                accept(href)
+
+            # Search engines sometimes serialize result URLs in scripts/data
+            # rather than ordinary anchor hrefs.
+            decoded = body.replace("\\/", "/").replace("\\u0026", "&")
+            host_pattern = "|".join(re.escape(h) for h in allowed_hosts)
+            for match in re.findall(
+                rf"https?://(?:[^\s\"'<>]|&amp;)+(?:{host_pattern})(?:[^\s\"'<>]*)",
+                decoded,
+                re.I,
+            ):
+                accept(match)
+
+            if len(found) >= limit:
+                return found[:limit]
         except Exception:
             continue
-    return found
+    return found[:limit]
 
 
 def _apk_mirror_release_parent(url: str) -> str:
@@ -342,12 +368,16 @@ class APKMirrorProvider:
         if not scored:
             raise ProviderError(f"APKMirror app discovery failed for {query}")
 
+        if normalized_package:
+            exact_package = [item for item in scored if item[3] == normalized_package]
+            if not exact_package:
+                raise ProviderError(
+                    f"APKMirror app discovery could not verify package {expected_package}"
+                )
+            scored = exact_package
+
         scored.sort(key=lambda item: item[0], reverse=True)
         best = scored[0]
-        if normalized_package and best[3] and best[3] != normalized_package:
-            raise ProviderError(
-                f"APKMirror app discovery found package {best[3]}, expected {expected_package}"
-            )
         self.base_url = best[1].rstrip("/") + "/"
         return self.base_url
 
@@ -870,12 +900,16 @@ class UptodownProvider:
         if not scored:
             raise ProviderError(f"Uptodown app discovery failed for {query}")
 
+        if normalized_package:
+            exact_package = [item for item in scored if item[3] == normalized_package]
+            if not exact_package:
+                raise ProviderError(
+                    f"Uptodown app discovery could not verify package {expected_package}"
+                )
+            scored = exact_package
+
         scored.sort(key=lambda item: item[0], reverse=True)
         best = scored[0]
-        if normalized_package and best[3] and best[3] != normalized_package:
-            raise ProviderError(
-                f"Uptodown app discovery found package {best[3]}, expected {expected_package}"
-            )
         self.app_url = best[1].rstrip("/")
         self.base_url = self.app_url + "/versions"
         return self.app_url
