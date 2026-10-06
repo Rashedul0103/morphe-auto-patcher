@@ -126,15 +126,20 @@ def _looks_like_package(value: str) -> bool:
 
 
 def _extract_package(html: str) -> str:
-    text = BeautifulSoup(html or "", "html.parser").get_text(" ", strip=True)
+    raw = html or ""
+    text = BeautifulSoup(raw, "html.parser").get_text(" ", strip=True)
     patterns = (
-        r"\bPackage(?:\s+Name)?\s*:\s*([A-Za-z0-9_.$]+)",
-        r"\bPackage(?:\s+Name)?\s+([A-Za-z0-9_.$]+)",
+        r"\\bPackage(?:\\s+Name)?\\s*:\\s*([A-Za-z0-9_.$]+)",
+        r"\\bPackage(?:\\s+Name)?\\s+([A-Za-z0-9_.$]+)",
+        r"[\\"']packageName[\\"']\\s*:\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
+        r"[\\"']package[\\"']\\s*:\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
+        r"data-package(?:name)?\\s*=\\s*[\\"']([A-Za-z0-9_.$]+)[\\"']",
     )
-    for pattern in patterns:
-        match = re.search(pattern, text, re.I)
-        if match and _looks_like_package(match.group(1)):
-            return match.group(1)
+    for source in (text, raw):
+        for pattern in patterns:
+            match = re.search(pattern, source, re.I)
+            if match and _looks_like_package(match.group(1)):
+                return match.group(1)
     return ""
 
 
@@ -163,10 +168,12 @@ def _extract_architecture(text: str) -> str:
 
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
     """Discover provider URLs through several public search-engine surfaces.
-    Search-engine HTML changes frequently, so extract both normal href targets
-    and embedded provider URLs rather than relying on one selector shape."""
+    Be deliberately tolerant of redirect wrappers and changing result markup."""
+    import base64
+
     engines = (
-        f"https://www.google.com/search?hl=en&num=20&q={quote(query)}",
+        f"https://www.google.com/search?gbv=1&hl=en&num=20&q={quote(query)}",
+        f"https://www.google.com/search?udm=14&hl=en&num=20&q={quote(query)}",
         f"https://www.bing.com/search?setlang=en&q={quote(query)}",
         f"https://search.yahoo.com/search?p={quote(query)}",
         f"https://html.duckduckgo.com/html/?q={quote(query)}",
@@ -174,12 +181,13 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
     )
     found: list[str] = []
     session = _scraper()
+    diagnostics = []
 
     def accept(value: str) -> None:
         value = unquote((value or "").strip())
         if not value:
             return
-        value = value.replace("&amp;", "&")
+        value = value.replace("&amp;", "&").replace("\\/", "/")
         parsed = urlparse(value)
         host = (parsed.netloc or "").lower()
         if parsed.scheme not in ("http", "https"):
@@ -193,9 +201,23 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         if cleaned not in found:
             found.append(cleaned)
 
+    def accept_encoded_bing(value: str) -> None:
+        raw = unquote((value or "").strip())
+        if not raw:
+            return
+        for candidate in (raw, raw[2:] if raw.startswith("a1") else raw):
+            try:
+                padded = candidate + "=" * (-len(candidate) % 4)
+                decoded = base64.urlsafe_b64decode(padded).decode("utf-8", "ignore")
+                if decoded.startswith(("http://", "https://")):
+                    accept(decoded)
+            except Exception:
+                continue
+
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=20)
+            diagnostics.append(f"{urlparse(engine_url).netloc}:{response.status_code}")
             if response.status_code != 200:
                 continue
             body = response.text or ""
@@ -205,34 +227,29 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
                 href = str(anchor.get("href") or "").strip()
                 if not href:
                     continue
-                parsed = urlparse(href)
-                if "uddg" in parsed.query:
-                    values = parse_qs(parsed.query).get("uddg") or []
-                    if values:
-                        href = values[0]
-                for key in ("q", "url"):
-                    values = parse_qs(urlparse(href).query).get(key) or []
-                    for value in values:
-                        p = urlparse(unquote(value))
-                        if p.netloc:
-                            accept(unquote(value))
+                parsed_href = urlparse(href)
+                query_values = parse_qs(parsed_href.query)
+                for key in ("q", "url", "uddg"):
+                    for value in query_values.get(key, []):
+                        accept(value)
+                for value in query_values.get("u", []):
+                    accept_encoded_bing(value)
                 accept(href)
 
-            # Search engines sometimes serialize result URLs in scripts/data
-            # rather than ordinary anchor hrefs.
-            decoded = body.replace("\\/", "/").replace("\\u0026", "&")
-            host_pattern = "|".join(re.escape(h) for h in allowed_hosts)
-            for match in re.findall(
-                rf"https?://(?:[^\s\"'<>]|&amp;)+(?:{host_pattern})(?:[^\s\"'<>]*)",
-                decoded,
-                re.I,
-            ):
+            # Also inspect the raw page for embedded absolute URLs. This catches
+            # search engines that put targets in JSON/scripts instead of hrefs.
+            raw_matches = re.findall(r"https?://[^\s\"'<>\\]+", body)
+            for match in raw_matches:
                 accept(match)
 
             if len(found) >= limit:
                 return found[:limit]
-        except Exception:
+        except Exception as exc:
+            diagnostics.append(f"{urlparse(engine_url).netloc}:error:{type(exc).__name__}")
             continue
+
+    if not found:
+        print(f"Provider search returned no usable URLs for query={query!r}; engines={', '.join(diagnostics)}")
     return found[:limit]
 
 
