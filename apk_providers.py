@@ -167,17 +167,16 @@ def _extract_architecture(text: str) -> str:
 
 
 def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int = 12) -> list[str]:
-    """Discover provider URLs through several public search-engine surfaces.
-    Be deliberately tolerant of redirect wrappers and changing result markup."""
-    import base64
-
+    """Discover provider URLs through CI-safe search transports."""
     engines = (
-        f"https://www.google.com/search?gbv=1&hl=en&num=20&q={quote(query)}",
-        f"https://www.google.com/search?udm=14&hl=en&num=20&q={quote(query)}",
+        f"https://r.jina.ai/http://www.google.com/search?hl=en&num=20&q={quote(query)}",
+        f"https://r.jina.ai/http://www.bing.com/search?setlang=en&q={quote(query)}",
+        f"https://r.jina.ai/http://search.yahoo.com/search?p={quote(query)}",
+        f"https://r.jina.ai/http://html.duckduckgo.com/html/?q={quote(query)}",
+        f"https://www.google.com/search?hl=en&num=20&q={quote(query)}",
         f"https://www.bing.com/search?setlang=en&q={quote(query)}",
         f"https://search.yahoo.com/search?p={quote(query)}",
         f"https://html.duckduckgo.com/html/?q={quote(query)}",
-        f"https://lite.duckduckgo.com/lite/?q={quote(query)}",
     )
     found: list[str] = []
     session = _scraper()
@@ -197,61 +196,40 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         cleaned = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
         if parsed.query:
             cleaned += "?" + parsed.query
-        cleaned = cleaned.rstrip("/")
         if cleaned not in found:
             found.append(cleaned)
 
-    def accept_encoded_bing(value: str) -> None:
-        raw = unquote((value or "").strip())
-        if not raw:
-            return
-        for candidate in (raw, raw[2:] if raw.startswith("a1") else raw):
-            try:
-                padded = candidate + "=" * (-len(candidate) % 4)
-                decoded = base64.urlsafe_b64decode(padded).decode("utf-8", "ignore")
-                if decoded.startswith(("http://", "https://")):
-                    accept(decoded)
-            except Exception:
-                continue
-
+    url_pattern = re.compile(r"https?://[^\s<>\\"\']+", re.I)
     for engine_url in engines:
         try:
-            response = session.get(engine_url, timeout=20)
+            response = session.get(engine_url, timeout=30)
             diagnostics.append(f"{urlparse(engine_url).netloc}:{response.status_code}")
             if response.status_code != 200:
                 continue
             body = response.text or ""
             soup = BeautifulSoup(body, "html.parser")
-
             for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
                 if not href:
                     continue
                 parsed_href = urlparse(href)
-                query_values = parse_qs(parsed_href.query)
                 for key in ("q", "url", "uddg"):
-                    for value in query_values.get(key, []):
+                    for value in parse_qs(parsed_href.query).get(key, []):
                         accept(value)
-                for value in query_values.get("u", []):
-                    accept_encoded_bing(value)
                 accept(href)
-
-            # Also inspect the raw page for embedded absolute URLs. This catches
-            # search engines that put targets in JSON/scripts instead of hrefs.
-            raw_matches = re.findall(r"https?://[^\s\"'<>\\]+", body)
-            for match in raw_matches:
+            for match in url_pattern.findall(body):
                 accept(match)
-
+            for match in re.findall(r"\]\((https?://[^)]+)\)", body):
+                accept(match)
             if len(found) >= limit:
-                return found[:limit]
+                break
         except Exception as exc:
             diagnostics.append(f"{urlparse(engine_url).netloc}:error:{type(exc).__name__}")
             continue
 
     if not found:
-        print(f"Provider search returned no usable URLs for query={query!r}; engines={', '.join(diagnostics)}")
+        print(f"Provider search returned no usable URLs for query={query!r}; engines={", ".join(diagnostics)}")
     return found[:limit]
-
 
 def _apk_mirror_release_parent(url: str) -> str:
     """Turn a variant/download URL into its release landing page."""
@@ -272,6 +250,7 @@ class APKMirrorProvider:
 
     def __init__(self, base_url: str = ""):
         self.base_url = base_url.rstrip("/") + "/" if base_url else ""
+        self.app_page_candidates: list[str] = [self.base_url] if self.base_url else []
         self.session = _scraper()
 
     def _get(self, url: str):
@@ -403,7 +382,8 @@ class APKMirrorProvider:
 
         scored.sort(key=lambda item: item[0], reverse=True)
         best = scored[0]
-        self.base_url = best[1].rstrip("/") + "/"
+        self.app_page_candidates = [item[1].rstrip("/") + "/" for item in scored]
+        self.base_url = self.app_page_candidates[0]
         return self.base_url
 
     def get_version_page(
@@ -412,231 +392,110 @@ class APKMirrorProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> str:
-        base_url = self.base_url or self._discover_app_page(app_query, expected_package)
-        app_urls = list(dict.fromkeys(
-            [base_url] + list(getattr(self, "app_page_candidates", []) or [])
-        ))
-        if not app_urls:
-            raise ProviderError("APKMirror app discovery returned no candidate app pages")
-
-        # Validate each candidate landing page lazily. Landing pages may omit
-        # package metadata; the exact release page must still prove the package.
-        response = None
-        soup = None
         exact = _clean_version(target_version)
+        if not exact:
+            raise ProviderError("Exact target version is required")
 
-        def _release_page_matches(html: str) -> bool:
-            if not _primary_version_matches(html or "", exact):
-                return False
-            if expected_package:
-                found_package = _extract_package(html or "")
-                if not found_package or found_package.lower() != expected_package.lower():
-                    return False
-            return True
+        try:
+            base_url = self.base_url or self._discover_app_page(app_query, expected_package)
+        except ProviderError:
+            base_url = ""
 
-        def try_app_page(app_page_url: str) -> str:
+        app_urls = []
+        if base_url:
+            app_urls.append(base_url)
+        for candidate in getattr(self, "app_page_candidates", []) or []:
+            if candidate and candidate not in app_urls:
+                app_urls.append(candidate)
+
+        def release_matches(url: str) -> str:
             try:
-                app_response = self._get(app_page_url)
+                response = self._get(url)
             except Exception:
                 return ""
-            app_soup = BeautifulSoup(app_response.text or "", "html.parser")
-            landing_package = _extract_package(app_response.text or "")
-            if expected_package and landing_package and landing_package.lower() != expected_package.lower():
+            body = response.text or ""
+            if not _primary_version_matches(body, exact):
                 return ""
+            if expected_package:
+                found_package = _extract_package(body)
+                if not found_package or found_package.lower() != expected_package.lower():
+                    return ""
+            return response.url or url
 
-            heading = app_soup.find("h1")
-            app_title = heading.get_text(" ", strip=True) if heading else ""
-            if not app_title:
-                meta_title = app_soup.select_one('meta[property="og:title"]')
-                if meta_title:
-                    app_title = str(meta_title.get("content") or "").strip()
+        # First try provider-native app pages and derive exact release slugs.
+        for app_url in app_urls:
+            try:
+                response = self._get(app_url)
+            except Exception:
+                continue
+            soup = BeautifulSoup(response.text or "", "html.parser")
+            landing_package = _extract_package(response.text or "")
+            if expected_package and landing_package and landing_package.lower() != expected_package.lower():
+                continue
 
-            title_slug = _slugify(re.sub(r"\b\d+(?:\.\d+)+\b", " ", app_title))
-            path_slug = ""
-            base_parts = [part for part in urlparse(app_page_url).path.split("/") if part]
-            if base_parts:
-                path_slug = _slugify(base_parts[-1])
+            heading = soup.find("h1")
+            title = heading.get_text(" ", strip=True) if heading else ""
+            if not title:
+                meta = soup.select_one('meta[property="og:title"]')
+                title = str(meta.get("content") or "").strip() if meta else ""
 
-            release_slugs = []
-            for prefix in (title_slug, path_slug, _slugify(app_query)):
-                if prefix and prefix not in release_slugs:
-                    release_slugs.append(prefix)
+            path_parts = [p for p in urlparse(app_url).path.split("/") if p]
+            prefixes = []
+            for value in (re.sub(r"\b\d+(?:\.\d+)+\b", " ", title), path_parts[-1] if path_parts else "", app_query):
+                slug = _slugify(value)
+                if slug and slug not in prefixes:
+                    prefixes.append(slug)
 
-            for prefix in release_slugs:
+            for prefix in prefixes:
                 for suffix in (
                     f"{prefix}-{exact.replace('.', '-')}-release/",
-                    f"{prefix}-{exact.replace('.', '-')}/",
+                    f"{prefix}-{exact.replace('.', '-")}/",
                 ):
-                    candidate_url = _normalize_url(app_page_url, suffix)
-                    try:
-                        candidate_response = self._get(candidate_url)
-                        if _release_page_matches(candidate_response.text or ""):
-                            return candidate_response.url or candidate_url
-                    except Exception:
-                        continue
+                    verified = release_matches(_normalize_url(app_url, suffix))
+                    if verified:
+                        return verified
 
-            for anchor in app_soup.find_all("a", href=True):
+            for anchor in soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "")
                 if not href or href.startswith("#"):
                     continue
-                text_value = anchor.get_text(" ", strip=True)
-                if not _version_appears_exact(f"{text_value} {href}", exact):
+                label = anchor.get_text(" ", strip=True)
+                if not _version_appears_exact(f"{label} {href}", exact):
                     continue
                 if "/release/" not in href and "android-apk-download" not in href:
                     continue
-                candidate_url = _normalize_url(app_page_url, href)
+                verified = release_matches(_normalize_url(app_url, href))
+                if verified:
+                    return verified
+
+        # Then use CI-safe search-engine discovery.
+        queries = []
+        if expected_package:
+            queries.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
+        if app_query:
+            queries.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
+        for search_query in queries:
+            for result_url in _search_result_urls(search_query, ("apkmirror.com",), limit=20):
                 try:
-                    candidate_response = self._get(candidate_url)
-                    if _release_page_matches(candidate_response.text or ""):
-                        return candidate_response.url or candidate_url
+                    response = self._get(result_url)
                 except Exception:
                     continue
-            return ""
-
-        # Try every discovered app page until the exact package/version agrees.
-        for app_page_url in app_urls:
-            verified = try_app_page(app_page_url)
-            if verified:
-                self.base_url = app_page_url
-                return verified
-
-        # Search engines are a provider-agnostic fallback when APKMirror's own
-        # search endpoint is rate-limited or incomplete.
-        if exact:
-            search_terms = []
-            version_slug = exact.replace(".", "-")
-            if expected_package:
-                search_terms.append(f'site:apkmirror.com/apk/ inurl:{version_slug} "{expected_package}" "{exact}"')
-                search_terms.append(f'site:apkmirror.com/apk/ "{expected_package}" "{exact}"')
-            if app_query:
-                search_terms.append(f'site:apkmirror.com/apk/ inurl:{version_slug} "{app_query}" "{exact}"')
-                search_terms.append(f'site:apkmirror.com/apk/ "{app_query}" "{exact}"')
-            for search_query in search_terms:
-                for result_url in _search_result_urls(
-                    search_query, ("apkmirror.com",), limit=10
-                ):
-                    if not _version_appears_exact(result_url, exact):
-                        try:
-                            probe = self._get(result_url)
-                            if not _primary_version_matches(probe.text or "", exact):
-                                continue
-                            result_url = probe.url or result_url
-                        except Exception:
-                            continue
-                    try:
-                        probe = self._get(result_url)
-                        body = probe.text or ""
-                        if not _primary_version_matches(body, exact):
-                            continue
-                        if expected_package:
-                            found_package = _extract_package(body)
-                            if found_package and found_package.lower() != expected_package.lower():
-                                continue
-                        if "/android-apk-download/" in (probe.url or result_url):
-                            return probe.url or result_url
-                        return _apk_mirror_release_parent(probe.url or result_url)
-                    except Exception:
-                        continue
-        # Search with app name + exact version first. Search results may expose
-        # the real release URL; this avoids selecting a similarly named app.
-        if app_query and exact:
-            search_url = (
-                "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s="
-                + quote(f"{app_query} {exact}")
-            )
-            try:
-                search_response = self._get(search_url)
-                search_soup = BeautifulSoup(search_response.text, "html.parser")
-                release_links = []
-                for anchor in search_soup.find_all("a", href=True):
-                    href = anchor["href"]
-                    text = anchor.get_text(" ", strip=True)
-                    if "/release/" not in href:
-                        continue
-                    if not _version_appears_exact(f"{text} {href}", exact):
-                        continue
-                    candidate_url = _normalize_url(search_url, href)
-                    if candidate_url not in release_links:
-                        release_links.append(candidate_url)
-                for candidate_url in release_links[:8]:
-                    try:
-                        candidate_response = self._get(candidate_url)
-                        body = candidate_response.text or ""
-                        if not _primary_version_matches(body, exact):
-                            continue
-                        if expected_package:
-                            found_package = _extract_package(body)
-                            if found_package and found_package.lower() != expected_package.lower():
-                                continue
-                        return candidate_url
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-
-        for anchor in soup.find_all("a", href=True):
-            href = anchor["href"]
-            text = anchor.get_text(" ", strip=True)
-            if not _version_appears_exact(f"{text} {href}", exact):
-                continue
-            if "/release/" in href or "apk-download" in href or "/uploads/" in href:
-                candidate_url = _normalize_url(base_url, href)
-                try:
-                    candidate_response = self._get(candidate_url)
-                    if not _primary_version_matches(candidate_response.text or "", exact):
-                        continue
-                    if expected_package:
-                        found_package = _extract_package(candidate_response.text or "")
-                        if found_package and found_package.lower() != expected_package.lower():
-                            continue
-                except Exception:
+                body = response.text or ""
+                if not _primary_version_matches(body, exact):
                     continue
-                return candidate_url
-
-        version_listing_urls = []
-        for anchor in soup.find_all("a", href=True):
-            label = anchor.get_text(" ", strip=True).lower()
-            href = anchor["href"]
-            if "all versions" in label or "previous apks" in label:
-                version_listing_urls.append(_normalize_url(base_url, href))
-
-        for listing_url in version_listing_urls:
-            try:
-                listing = self._get(listing_url)
-                listing_soup = BeautifulSoup(listing.text, "html.parser")
-                for anchor in listing_soup.find_all("a", href=True):
-                    href = anchor["href"]
-                    text = anchor.get_text(" ", strip=True)
-                    if _version_appears_exact(f"{text} {href}", exact):
-                        if "/release/" in href or "apk-download" in href:
-                            candidate_url = _normalize_url(listing_url, href)
-                            try:
-                                candidate_response = self._get(candidate_url)
-                                if _release_page_matches(candidate_response.text or ""):
-                                    return candidate_response.url or candidate_url
-                            except Exception:
-                                continue
-            except Exception:
-                continue
-
-        slug = exact.replace(".", "-")
-        for url in (
-            f"{base_url}{slug}-release/",
-            f"{base_url}{slug}/",
-        ):
-            try:
-                test = self._get(url)
-                if _primary_version_matches(test.text or "", exact):
-                    if expected_package:
-                        found_package = _extract_package(test.text or "")
-                        if found_package and found_package.lower() != expected_package.lower():
-                            continue
-                    return test.url or url
-            except Exception:
-                continue
+                if expected_package:
+                    found_package = _extract_package(body)
+                    if not found_package or found_package.lower() != expected_package.lower():
+                        continue
+                final_url = response.url or result_url
+                if "/android-apk-download/" in final_url:
+                    return final_url
+                parent = _apk_mirror_release_parent(final_url)
+                verified = release_matches(parent)
+                if verified:
+                    return verified
 
         raise ProviderError(f"Exact APKMirror version page not found for {target_version}")
-
     def get_variants(self, version_url: str, target_version: str) -> list[ApkCandidate]:
         response = self._get(version_url)
         soup = BeautifulSoup(response.text, "html.parser")
