@@ -199,7 +199,7 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
         if cleaned not in found:
             found.append(cleaned)
 
-    url_pattern = re.compile(r"https?://[^\s<>\\"\']+", re.I)
+    url_pattern = re.compile(r"https?://[^\s<>\"']+", re.I)
     for engine_url in engines:
         try:
             response = session.get(engine_url, timeout=30)
@@ -228,7 +228,7 @@ def _search_result_urls(query: str, allowed_hosts: tuple[str, ...], limit: int =
             continue
 
     if not found:
-        print(f"Provider search returned no usable URLs for query={query!r}; engines={", ".join(diagnostics)}")
+        print("Provider search returned no usable URLs for query={!r}; engines={}".format(query, ", ".join(diagnostics)))
     return found[:limit]
 
 def _apk_mirror_release_parent(url: str) -> str:
