@@ -5,10 +5,12 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote, urljoin, urlparse, unquote, parse_qs
 import base64
+import hashlib
 import os
 import re
 import time
 import xml.etree.ElementTree as ET
+from datetime import UTC, datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -24,6 +26,14 @@ USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 )
+
+UPTODOWN_API_BASE = "https://www.uptodown.app/eapi"
+UPTODOWN_APIKEY_SECRET = "$(=a%\u00b7!45J&S"
+UPTODOWN_API_USER_AGENT = (
+    "Dalvik/2.1.0 (Linux; U; Android 14; SM-G955F "
+    "Build/AP2A.240805.005)"
+)
+
 
 DEFAULT_PROVIDER_URLS = {
     "youtube": {
@@ -1061,6 +1071,50 @@ class UptodownProvider:
 
         return ""
 
+    @staticmethod
+    def _generate_apikey() -> str:
+        now = datetime.now(UTC)
+        epoch_ms = int(now.timestamp() * 1000)
+        offset_ms = (
+            now.minute * 60000
+            + now.second * 1000
+            + now.microsecond // 1000
+        )
+        hour_epoch = (epoch_ms - offset_ms) // 1000
+        raw = UPTODOWN_APIKEY_SECRET + str(hour_epoch)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _api_download_url(self, app_id: str, file_id: str) -> str:
+        if not app_id or not file_id:
+            raise ProviderError("Uptodown API download resolver requires app and file IDs")
+        url = (
+            f"{UPTODOWN_API_BASE}/apps/{quote(str(app_id), safe='')}/file/"
+            f"{quote(str(file_id), safe='')}/downloadUrl?update=0"
+        )
+        response = requests.get(
+            url,
+            headers={
+                "User-Agent": UPTODOWN_API_USER_AGENT,
+                "Identificador": "Uptodown_Android",
+                "Identificador-Version": "707",
+                "APIKEY": self._generate_apikey(),
+                "Accept": "application/json",
+            },
+            timeout=30,
+        )
+        if response.status_code != 200:
+            raise ProviderError(
+                f"Uptodown download API returned HTTP {response.status_code}"
+            )
+        try:
+            payload = response.json()
+            direct = str((payload.get("data") or {}).get("downloadURL") or "").strip()
+        except Exception as exc:
+            raise ProviderError(f"Uptodown download API returned invalid JSON: {exc}") from exc
+        if not direct.startswith(("http://", "https://")):
+            raise ProviderError("Uptodown download API returned no usable downloadURL")
+        return direct
+
     def _direct_from_download_page(self, url: str) -> str:
         response = self._get(url)
         direct = self._extract_direct_from_body(response.text or "")
@@ -1311,11 +1365,22 @@ class UptodownProvider:
 
     def download(self, candidate: ApkCandidate, destination: str) -> None:
         direct_url = candidate.download_url
+
+        # Prefer Uptodown's authenticated eAPI when the version/files endpoint
+        # supplied the app and file IDs. This avoids brittle HTML button scraping.
+        data_code = str(candidate.details.get("data_code") or "").strip()
+        file_id = str(candidate.details.get("file_id") or "").strip()
+        if not direct_url and data_code and file_id:
+            try:
+                direct_url = self._api_download_url(data_code, file_id)
+            except Exception as exc:
+                candidate.details["api_download_error"] = str(exc)
+
         if not direct_url:
             direct_url = self._direct_from_download_page(
                 candidate.download_page_url or candidate.page_url
             )
-            candidate.download_url = direct_url
+        candidate.download_url = direct_url
 
         Path(destination).parent.mkdir(parents=True, exist_ok=True)
         if not direct_url.startswith("https://dw.uptodown.com/dwn/"):
