@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791265748
+    "updated_at": 1791266253
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -27,63 +27,21 @@
     "target_version": "6.4.0",
     "package": "me.mycake",
     "apk_arch": "auto",
-    "manual_urls": [
-      "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
-      "https://me-mycake.en.uptodown.com/android/download/1127741310-x"
-    ],
+    "manual_urls": [],
     "attempts": [
       {
         "provider": "apkmirror",
         "version": "6.4.0",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "APKMirror app discovery could not verify package me.mycake"
+        "error": "APKMirror app search returned no app page for Cake"
       },
       {
         "provider": "uptodown",
         "version": "6.4.0",
-        "status": "download_failed",
-        "candidate": {
-          "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-          "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
-          "download_url": "",
-          "architecture": "arm64-v8a",
-          "dpi": "",
-          "is_bundle": false,
-          "artifact_type": "apk",
-          "details": {
-            "version_page": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-            "data_code": "792642",
-            "data_version": "12085684",
-            "file_id": "1127496678",
-            "download_page_error": "Uptodown direct download URL not found",
-            "package": "me.mycake"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
-      },
-      {
-        "provider": "uptodown",
-        "version": "6.4.0",
-        "status": "download_failed",
-        "candidate": {
-          "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-          "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127741310-x",
-          "download_url": "",
-          "architecture": "armeabi-v7a",
-          "dpi": "",
-          "is_bundle": false,
-          "artifact_type": "apk",
-          "details": {
-            "version_page": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-            "data_code": "792642",
-            "data_version": "12085684",
-            "file_id": "1127741310",
-            "download_page_error": "Uptodown direct download URL not found",
-            "package": "me.mycake"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown app discovery failed for Cake"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
