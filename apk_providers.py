@@ -322,6 +322,26 @@ class APKMirrorProvider:
             raise ProviderError("APKMirror app identity is not available for discovery")
 
         candidates = {}
+
+        # APKMirror exposes a machine-readable WordPress search endpoint.
+        # Prefer it over fragile search-engine HTML when available.
+        for search_query in queries:
+            try:
+                api_url = (
+                    "https://www.apkmirror.com/wp-json/wp/v2/search?search="
+                    + quote(search_query)
+                    + "&per_page=20"
+                )
+                api_response = self._get(api_url)
+                payload = api_response.json()
+                if isinstance(payload, list):
+                    for item in payload:
+                        url = str(item.get("url") or item.get("link") or "")
+                        if "/apk/" in url:
+                            candidates.setdefault(_normalize_url(api_url, url), str(item.get("title") or ""))
+            except Exception:
+                continue
+
         for search_query in queries:
             for search_type in ("app", "apk"):
                 search_url = (
