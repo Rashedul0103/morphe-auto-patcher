@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791393249
+    "updated_at": 1791393960
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -39,7 +39,7 @@
         "status": "seed_resolve_failed",
         "via": "morphe_api:arm64-v8a",
         "seed_url": "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/",
-        "error": "Failed to perform, curl: (28) Operation timed out after 30002 milliseconds with 0 bytes received. See https://curl.se/libcurl/c/libcurl-errors.html first for more details."
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/"
       },
       {
         "provider": "apkmirror",
