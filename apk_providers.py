@@ -135,9 +135,9 @@ def _morphe_api_abis(preferred_arch: str) -> list[str]:
     preferred = (preferred_arch or "").strip().lower().replace("_", "-")
     if preferred and preferred not in ("auto", "automatic"):
         return [preferred]
-    # Mirrors Morphe Manager's device-ABI request while keeping a server-side
-    # auto mode useful for the common Android ABIs.
-    return ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"]
+    # Morphe Manager asks its backend for the first device ABI. On our
+    # architecture-neutral server, arm64 is the normal Android default.
+    return ["arm64-v8a"]
 
 
 def _resolve_head_redirect(session, url: str) -> str:
@@ -207,7 +207,10 @@ def resolve_morphe_api_urls(
                 elif host.endswith("apkcombo.com"):
                     provider = "apkcombo"
                 else:
-                    provider = "direct"
+                    # Morphe Manager itself can fall back to Google search for
+                    # interactive use. The server cannot download from that page,
+                    # so leave it to our normal/manual fallback instead.
+                    continue
                 resolved.append(MorpheResolvedUrl(provider, final_url, abi))
                 print(
                     f"Morphe API resolved {package} {version} ({abi}) -> "
@@ -880,114 +883,6 @@ class APKMirrorProvider:
         variants.sort(key=lambda c: self._score(c, preferred_arch), reverse=True)
         return [c for c in variants if self._score(c, preferred_arch) > -1000]
 
-    def resolve_seed_url(
-        self,
-        seed_url: str,
-        target_version: str,
-        preferred_arch: str = "auto",
-        expected_package: str = "",
-    ) -> list[ApkCandidate]:
-        response = self._get(seed_url)
-        body = response.text or ""
-        exact = _clean_version(target_version)
-        if not (
-            _primary_version_matches(body, exact)
-            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
-        ):
-            raise ProviderError("Morphe API seed page does not prove the requested version")
-
-        found_package = _extract_package(body)
-        if expected_package and found_package and found_package.lower() != expected_package.lower():
-            raise ProviderError(
-                f"Morphe API seed page has package {found_package}; expected {expected_package}"
-            )
-
-        path = urlparse(seed_url).path.lower()
-        if "/download/" in path:
-            artifact_type = _artifact_type_from_text(body, "apk")
-            token_match = re.search(
-                r'''(?:android/)?post-download/([^"'<>\\s]+)''',
-                body,
-                re.I,
-            )
-            return [ApkCandidate(
-                provider=self.name,
-                version=target_version,
-                page_url=seed_url,
-                download_page_url=seed_url,
-                architecture=_extract_architecture(body),
-                is_bundle=artifact_type != "apk",
-                artifact_type=artifact_type,
-                details={
-                    "via": "morphe_api",
-                    "post_download_token": token_match.group(1) if token_match else "",
-                },
-            )]
-
-        # An app/version page returned by the resolver can be handed into the
-        # normal native Uptodown API path without search-engine discovery.
-        clean = seed_url.rstrip("/")
-        if "/versions" in clean:
-            self.app_url = clean.split("/versions", 1)[0]
-        else:
-            self.app_url = clean.split("/download/", 1)[0]
-        self.base_url = self.app_url + "/versions"
-        data_code = self._data_code()
-        records = self._version_record(data_code, target_version)
-        candidates: list[ApkCandidate] = []
-        for record in records:
-            version_page = self._version_page(record)
-            fallback_type = _artifact_type_from_text(
-                str(record.get("kindFile") or ""), "apk"
-            )
-            candidates.extend(
-                self._variant_candidates(
-                    version_page,
-                    data_code,
-                    target_version,
-                    fallback_type,
-                )
-            )
-        for candidate in candidates:
-            candidate.details["via"] = "morphe_api"
-        candidates.sort(
-            key=lambda c: self._arch_score(c, preferred_arch),
-            reverse=True,
-        )
-        return [c for c in candidates if self._arch_score(c, preferred_arch) > -1000]
-
-    def resolve_seed_url(
-        self,
-        seed_url: str,
-        target_version: str,
-        preferred_arch: str = "auto",
-        expected_package: str = "",
-    ) -> list[ApkCandidate]:
-        response = self._get(seed_url)
-        body = response.text or ""
-        exact = _clean_version(target_version)
-        if not (
-            _primary_version_matches(body, exact)
-            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
-        ):
-            raise ProviderError("Morphe API seed page does not prove the requested version")
-        found_package = _extract_package(body)
-        if expected_package and found_package and found_package.lower() != expected_package.lower():
-            raise ProviderError(
-                f"Morphe API seed page has package {found_package}; expected {expected_package}"
-            )
-
-        artifact_type = _artifact_type_from_text(body, "apk")
-        return [ApkCandidate(
-            provider=self.name,
-            version=target_version,
-            page_url=seed_url,
-            download_page_url=seed_url,
-            architecture=_extract_architecture(body),
-            is_bundle=artifact_type != "apk",
-            artifact_type=artifact_type,
-            details={"via": "morphe_api"},
-        )]
 
     def resolve(
         self,
@@ -1101,6 +996,8 @@ class APKMirrorProvider:
                     raise ProviderError("APKMirror returned HTML instead of an APK artifact")
                 first = False
                 fh.write(chunk)
+
+
 
 
 class UptodownProvider:
@@ -1751,6 +1648,83 @@ class UptodownProvider:
             return 3000
         return 0
 
+
+    def resolve_seed_url(
+        self,
+        seed_url: str,
+        target_version: str,
+        preferred_arch: str = "auto",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        response = self._get(seed_url)
+        body = response.text or ""
+        exact = _clean_version(target_version)
+        if not (
+            _primary_version_matches(body, exact)
+            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
+        ):
+            raise ProviderError("Morphe API seed page does not prove the requested version")
+
+        found_package = _extract_package(body)
+        if expected_package and found_package and found_package.lower() != expected_package.lower():
+            raise ProviderError(
+                f"Morphe API seed page has package {found_package}; expected {expected_package}"
+            )
+
+        path = urlparse(seed_url).path.lower()
+        if "/download/" in path:
+            artifact_type = _artifact_type_from_text(body, "apk")
+            token_match = re.search(
+                r'''(?:android/)?post-download/([^"'<>\\s]+)''',
+                body,
+                re.I,
+            )
+            return [ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=seed_url,
+                download_page_url=seed_url,
+                architecture=_extract_architecture(body),
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={
+                    "via": "morphe_api",
+                    "post_download_token": token_match.group(1) if token_match else "",
+                },
+            )]
+
+        # An app/version page returned by the resolver can be handed into the
+        # normal native Uptodown API path without search-engine discovery.
+        clean = seed_url.rstrip("/")
+        if "/versions" in clean:
+            self.app_url = clean.split("/versions", 1)[0]
+        else:
+            self.app_url = clean.split("/download/", 1)[0]
+        self.base_url = self.app_url + "/versions"
+        data_code = self._data_code()
+        records = self._version_record(data_code, target_version)
+        candidates: list[ApkCandidate] = []
+        for record in records:
+            version_page = self._version_page(record)
+            fallback_type = _artifact_type_from_text(
+                str(record.get("kindFile") or ""), "apk"
+            )
+            candidates.extend(
+                self._variant_candidates(
+                    version_page,
+                    data_code,
+                    target_version,
+                    fallback_type,
+                )
+            )
+        for candidate in candidates:
+            candidate.details["via"] = "morphe_api"
+        candidates.sort(
+            key=lambda c: self._arch_score(c, preferred_arch),
+            reverse=True,
+        )
+        return [c for c in candidates if self._arch_score(c, preferred_arch) > -1000]
+
     def resolve(
         self,
         target_version: str,
@@ -1935,6 +1909,8 @@ class UptodownProvider:
                 fh.write(chunk)
 
 
+
+
 class APKPureProvider:
     name = "apkpure"
 
@@ -2098,6 +2074,40 @@ class APKPureProvider:
                 return match.group(1)
 
         raise ProviderError("APKPure direct download link not found")
+
+
+    def resolve_seed_url(
+        self,
+        seed_url: str,
+        target_version: str,
+        preferred_arch: str = "auto",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        response = self._get(seed_url)
+        body = response.text or ""
+        exact = _clean_version(target_version)
+        if not (
+            _primary_version_matches(body, exact)
+            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
+        ):
+            raise ProviderError("Morphe API seed page does not prove the requested version")
+        found_package = _extract_package(body)
+        if expected_package and found_package and found_package.lower() != expected_package.lower():
+            raise ProviderError(
+                f"Morphe API seed page has package {found_package}; expected {expected_package}"
+            )
+
+        artifact_type = _artifact_type_from_text(body, "apk")
+        return [ApkCandidate(
+            provider=self.name,
+            version=target_version,
+            page_url=seed_url,
+            download_page_url=seed_url,
+            architecture=_extract_architecture(body),
+            is_bundle=artifact_type != "apk",
+            artifact_type=artifact_type,
+            details={"via": "morphe_api"},
+        )]
 
     def resolve(
         self,
@@ -2292,7 +2302,6 @@ def acquire_from_providers(
         return None
 
     ordered_providers = provider_order(app_config)
-    seed_first = list(morphe_seeds.keys())
     for provider_name in ordered_providers:
         provider = provider_instance(provider_name)
         if provider is None:
