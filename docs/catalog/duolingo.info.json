@@ -19,7 +19,7 @@
     "status": "success",
     "stage": "completed",
     "release_tag": "duolingo-v1.47.0",
-    "updated_at": 1791374502
+    "updated_at": 1791393249
   },
   "apk_acquisition": {
     "status": "downloaded_and_normalized",
@@ -38,7 +38,7 @@
       "source_sha256": "7d0373d18b23166ee393d77da3564a6c4e91224032e0a8ca1e0cbe64e4c8c7e4",
       "source_signer_sha256": [],
       "normalizer": "APKEditor",
-      "normalized_sha256": "cb0669b0612b843aa890c13a9099f87b41cdecf4243a20d0d96b547edb0dc25f"
+      "normalized_sha256": "a275a66d3d56ee12d8025aac11caf16ebebe9aeced6836edd3464dbb7b3d9524"
     }
   },
   "stock_apk": {
@@ -49,7 +49,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "cb0669b0612b843aa890c13a9099f87b41cdecf4243a20d0d96b547edb0dc25f",
+    "sha256": "a275a66d3d56ee12d8025aac11caf16ebebe9aeced6836edd3464dbb7b3d9524",
     "size_bytes": 198169490,
     "signer_sha256": [],
     "artifact_type": "apk"
@@ -62,7 +62,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "37cccf56774143db58a7a7fe1b70e066931f2817199ebf7661c2a03bff94187e",
+    "sha256": "3b7728a4267c988931e1cdebb14f2e19cc69a2070ec4f9d51cd8930163791322",
     "size_bytes": 146186300,
     "signer_sha256": [],
     "artifact_type": "apk"
