@@ -461,21 +461,34 @@ class APKMirrorProvider:
         self.session = _scraper()
 
     def _get(self, url: str):
-        response = self.session.get(url, timeout=30)
-        if response.status_code != 200:
-            raise ProviderError(f"HTTP {response.status_code}: {url}")
-        body = response.text or ""
-        if any(marker in body[:6000] for marker in (
-            "Just a moment",
-            "cf-chl-",
-            "__cf_chl_",
-            "Checking your browser",
-            "Attention Required",
-            "challenge-platform",
-            "cf_chl_opt",
-        )):
-            raise ProviderError("Cloudflare challenge page detected")
-        return response
+        last_status = None
+        for attempt in range(4):
+            response = self.session.get(url, timeout=30)
+            last_status = response.status_code
+            if response.status_code == 429:
+                retry_after = str(response.headers.get("Retry-After") or "").strip()
+                try:
+                    delay = min(60, max(2, int(float(retry_after))))
+                except ValueError:
+                    delay = (2, 5, 15, 30)[attempt]
+                if attempt < 3:
+                    time.sleep(delay)
+                    continue
+            if response.status_code != 200:
+                raise ProviderError(f"HTTP {response.status_code}: {url}")
+            body = response.text or ""
+            if any(marker in body[:6000] for marker in (
+                "Just a moment",
+                "cf-chl-",
+                "__cf_chl_",
+                "Checking your browser",
+                "Attention Required",
+                "challenge-platform",
+                "cf_chl_opt",
+            )):
+                raise ProviderError("Cloudflare challenge page detected")
+            return response
+        raise ProviderError(f"HTTP {last_status}: {url}")
 
     def _discover_app_page(self, query: str, expected_package: str = "") -> str:
         if self.base_url:
@@ -772,20 +785,26 @@ class APKMirrorProvider:
     def _resolve_download_page(self, variant_url: str) -> str:
         response = self._get(variant_url)
         soup = BeautifulSoup(response.text, "html.parser")
-        button = soup.find("a", class_="downloadButton", href=True)
-        if not button:
-            button = soup.find("a", attrs={"class": re.compile(r"downloadButton", re.I)}, href=True)
-        if not button:
-            raise ProviderError("APKMirror download button not found")
-        return _normalize_url(variant_url, button["href"])
+        urls = [
+            str(node.get("href") or "")
+            for node in soup.select("a.downloadButton[href], a[href*='/download/?key'][href]")
+        ]
+        for href in dict.fromkeys(urls):
+            if href.strip():
+                return _normalize_url(variant_url, href)
+        raise ProviderError("APKMirror download button not found")
 
     def _resolve_direct_download(self, download_page_url: str) -> str:
         response = self._get(download_page_url)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        direct = soup.find("a", attrs={"rel": "nofollow"}, href=True)
+        direct = soup.select_one("a#download-link[href]")
         if not direct:
-            direct = soup.find("a", href=True, string=re.compile(r"download", re.I))
+            direct = soup.select_one(
+                "a[href*='download.php'][href], a[href*='/download/?key='][href]"
+            )
+        if not direct:
+            direct = soup.find("a", attrs={"rel": "nofollow"}, href=True)
         if not direct:
             raise ProviderError("APKMirror direct download link not found")
         return _normalize_url(download_page_url, direct["href"])
@@ -1379,10 +1398,17 @@ class UptodownProvider:
             if host == "dw.uptodown.com" and parsed.path.startswith("/dwn/"):
                 return value
             return ""
+        if value.startswith("//"):
+            parsed = urlparse("https:" + value)
+            if parsed.netloc.lower() == "dw.uptodown.com" and parsed.path.startswith("/dwn/"):
+                return "https:" + value
+            return ""
         if value.startswith("/dwn/"):
             return "https://dw.uptodown.com" + value
-        # Uptodown's data-url is normally a long opaque CDN token.
-        if len(value) >= 20 and re.fullmatch(r"[A-Za-z0-9_./+=-]+", value):
+        # Uptodown's #detail-download-button[data-url] contains an opaque CDN
+        # token. It is not guaranteed to be long or restricted to a narrow
+        # character class, so preserve the provider's token verbatim.
+        if "://" not in value and not value.startswith(("javascript:", "market:", "intent:")):
             return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
         return ""
 
