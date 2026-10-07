@@ -191,6 +191,18 @@ def _bundle_members(path: str) -> list[str]:
         raise ApkValidationError("Downloaded split bundle is not a valid ZIP.") from exc
 
 
+def _is_single_apk_zip(path: str) -> bool:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = set(archive.namelist())
+            return (
+                "AndroidManifest.xml" in names
+                and "resources.arsc" in names
+            )
+    except zipfile.BadZipFile:
+        return False
+
+
 def _bundle_architectures(member_names: list[str]) -> list[str]:
     arches = []
     mapping = {
@@ -219,6 +231,21 @@ def _validate_bundle(
 ) -> ApkInfo:
     members = _bundle_members(path)
     if not members:
+        # Some download endpoints label a single APK as .apkm/.apks/.xapk.
+        # Detect the actual container format from its entries before treating it
+        # as an invalid split archive.
+        if _is_single_apk_zip(path):
+            info = _parse_badging(path, _run_aapt(path))
+            info.signer_sha256 = _extract_signers(path)
+            info.artifact_type = "apk"
+            _validate_identity(
+                info,
+                expected_package,
+                expected_version,
+                expected_arch,
+                expected_signer_sha256,
+            )
+            return info
         raise ApkValidationError("Split bundle contains no APK modules.")
 
     def member_priority(name: str) -> tuple[int, str]:
