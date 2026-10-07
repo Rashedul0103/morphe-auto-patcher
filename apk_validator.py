@@ -177,11 +177,15 @@ def _bundle_members(path: str) -> list[str]:
         with zipfile.ZipFile(path) as archive:
             names = []
             for name in archive.namelist():
-                if name.endswith("/") or not name.lower().endswith(".apk"):
+                normalized = name.replace("\\", "/")
+                if normalized.endswith("/") or not normalized.lower().endswith(".apk"):
                     continue
-                parts = name.replace("\\", "/").split("/")
-                if len(parts) <= 1 or (len(parts) == 2 and parts[0].lower() == "splits"):
-                    names.append(name)
+                # APKM/APKS/XAPK producers are not required to flatten their
+                # archive layout. Accept APK modules at any depth; the APK
+                # manifest/signature checks below remain authoritative.
+                if normalized.lower().startswith("__macosx/"):
+                    continue
+                names.append(name)
             return names
     except zipfile.BadZipFile as exc:
         raise ApkValidationError("Downloaded split bundle is not a valid ZIP.") from exc
