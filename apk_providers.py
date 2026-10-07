@@ -120,6 +120,106 @@ def _version_appears_exact(text: str, target_version: str) -> bool:
     return bool(re.search(rf"(?<!\d){re.escape(wanted)}(?!\d)", text or ""))
 
 
+MORPHE_API_URL = "https://api.morphe.software"
+MORPHE_API_MAX_REDIRECTS = 5
+
+
+@dataclass(frozen=True)
+class MorpheResolvedUrl:
+    provider: str
+    url: str
+    abi: str
+
+
+def _morphe_api_abis(preferred_arch: str) -> list[str]:
+    preferred = (preferred_arch or "").strip().lower().replace("_", "-")
+    if preferred and preferred not in ("auto", "automatic"):
+        return [preferred]
+    # Mirrors Morphe Manager's device-ABI request while keeping a server-side
+    # auto mode useful for the common Android ABIs.
+    return ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"]
+
+
+def _resolve_head_redirect(session, url: str) -> str:
+    current = url
+    for _ in range(MORPHE_API_MAX_REDIRECTS):
+        response = session.head(
+            current,
+            timeout=15,
+            allow_redirects=False,
+            headers={"User-Agent": USER_AGENT, "Accept": "*/*"},
+        )
+        if response.status_code in (301, 302, 303, 307, 308):
+            location = str(response.headers.get("Location") or "").strip()
+            if location:
+                current = urljoin(current, location)
+                continue
+        return current
+    return current
+
+
+def resolve_morphe_api_urls(
+    expected_package: str,
+    target_version: str,
+    preferred_arch: str = "auto",
+) -> list[MorpheResolvedUrl]:
+    package = str(expected_package or "").strip()
+    version = _clean_version(target_version)
+    if not package or not version:
+        return []
+
+    session = _scraper()
+    resolved: list[MorpheResolvedUrl] = []
+    seen: set[str] = set()
+
+    for abi in _morphe_api_abis(preferred_arch):
+        query = f"{package}~{version}~{abi}"
+        endpoint = f"{MORPHE_API_URL}/v2/web-search/{quote(query, safe='')}"
+        try:
+            final_url = _resolve_head_redirect(session, endpoint)
+            if final_url == endpoint or final_url.startswith(MORPHE_API_URL):
+                # Some network paths reject HEAD. A lightweight GET is a fallback,
+                # mirroring the same redirect-only role without downloading an APK.
+                response = session.get(
+                    endpoint,
+                    timeout=20,
+                    allow_redirects=True,
+                    stream=True,
+                    headers={"User-Agent": USER_AGENT, "Accept": "*/*"},
+                )
+                try:
+                    final_url = response.url or endpoint
+                finally:
+                    response.close()
+
+            host = (urlparse(final_url).netloc or "").lower()
+            if final_url == endpoint or not host or host.endswith("morphe.software"):
+                continue
+
+            if final_url not in seen:
+                seen.add(final_url)
+                if host.endswith("apkmirror.com"):
+                    provider = "apkmirror"
+                elif host.endswith("uptodown.com"):
+                    provider = "uptodown"
+                elif host.endswith("apkpure.com"):
+                    provider = "apkpure"
+                elif host.endswith("apkcombo.com"):
+                    provider = "apkcombo"
+                else:
+                    provider = "direct"
+                resolved.append(MorpheResolvedUrl(provider, final_url, abi))
+                print(
+                    f"Morphe API resolved {package} {version} ({abi}) -> "
+                    f"{final_url}"
+                )
+        except Exception as exc:
+            print(
+                f"Morphe API resolver failed for {package} {version} ({abi}): {exc}"
+            )
+    return resolved
+
+
 def _primary_version(html: str) -> str:
     """Extract the page's primary artifact version, not historical versions."""
     soup = BeautifulSoup(html or "", "html.parser")
@@ -723,6 +823,171 @@ class APKMirrorProvider:
 
         bundle_penalty = -100 if candidate.is_bundle else 0
         return arch_score + dpi_score + bundle_penalty
+
+    def resolve_seed_url(
+        self,
+        seed_url: str,
+        target_version: str,
+        preferred_arch: str = "auto",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        response = self._get(seed_url)
+        body = response.text or ""
+        exact = _clean_version(target_version)
+
+        version_ok = _primary_version_matches(body, exact) or _version_appears_exact(
+            f"{seed_url} {body[:12000]}", exact
+        )
+        if not version_ok:
+            raise ProviderError("Morphe API seed page does not prove the requested version")
+
+        found_package = _extract_package(body)
+        if expected_package and found_package and found_package.lower() != expected_package.lower():
+            raise ProviderError(
+                f"Morphe API seed page has package {found_package}; expected {expected_package}"
+            )
+
+        path = urlparse(seed_url).path.lower()
+        artifact_type = _artifact_type_from_text(body, "apk")
+        if path.endswith("-android-apk-download"):
+            return [ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=seed_url,
+                download_page_url=seed_url,
+                architecture=_extract_architecture(body),
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={"via": "morphe_api"},
+            )]
+
+        try:
+            variants = self.get_variants(seed_url, target_version)
+        except Exception as exc:
+            return [ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=seed_url,
+                download_page_url=seed_url,
+                architecture=_extract_architecture(body),
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={"via": "morphe_api", "variants_error": str(exc)},
+            )]
+
+        for candidate in variants:
+            candidate.details["via"] = "morphe_api"
+        variants.sort(key=lambda c: self._score(c, preferred_arch), reverse=True)
+        return [c for c in variants if self._score(c, preferred_arch) > -1000]
+
+    def resolve_seed_url(
+        self,
+        seed_url: str,
+        target_version: str,
+        preferred_arch: str = "auto",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        response = self._get(seed_url)
+        body = response.text or ""
+        exact = _clean_version(target_version)
+        if not (
+            _primary_version_matches(body, exact)
+            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
+        ):
+            raise ProviderError("Morphe API seed page does not prove the requested version")
+
+        found_package = _extract_package(body)
+        if expected_package and found_package and found_package.lower() != expected_package.lower():
+            raise ProviderError(
+                f"Morphe API seed page has package {found_package}; expected {expected_package}"
+            )
+
+        path = urlparse(seed_url).path.lower()
+        if "/download/" in path:
+            artifact_type = _artifact_type_from_text(body, "apk")
+            token_match = re.search(
+                r"(?:android/)?post-download/([^"'<>\s'"]+)",
+                body,
+                re.I,
+            )
+            return [ApkCandidate(
+                provider=self.name,
+                version=target_version,
+                page_url=seed_url,
+                download_page_url=seed_url,
+                architecture=_extract_architecture(body),
+                is_bundle=artifact_type != "apk",
+                artifact_type=artifact_type,
+                details={
+                    "via": "morphe_api",
+                    "post_download_token": token_match.group(1) if token_match else "",
+                },
+            )]
+
+        # An app/version page returned by the resolver can be handed into the
+        # normal native Uptodown API path without search-engine discovery.
+        clean = seed_url.rstrip("/")
+        if "/versions" in clean:
+            self.app_url = clean.split("/versions", 1)[0]
+        else:
+            self.app_url = clean.split("/download/", 1)[0]
+        self.base_url = self.app_url + "/versions"
+        data_code = self._data_code()
+        records = self._version_record(data_code, target_version)
+        candidates: list[ApkCandidate] = []
+        for record in records:
+            version_page = self._version_page(record)
+            fallback_type = _artifact_type_from_text(
+                str(record.get("kindFile") or ""), "apk"
+            )
+            candidates.extend(
+                self._variant_candidates(
+                    version_page,
+                    data_code,
+                    target_version,
+                    fallback_type,
+                )
+            )
+        for candidate in candidates:
+            candidate.details["via"] = "morphe_api"
+        candidates.sort(
+            key=lambda c: self._arch_score(c, preferred_arch),
+            reverse=True,
+        )
+        return [c for c in candidates if self._arch_score(c, preferred_arch) > -1000]
+
+    def resolve_seed_url(
+        self,
+        seed_url: str,
+        target_version: str,
+        preferred_arch: str = "auto",
+        expected_package: str = "",
+    ) -> list[ApkCandidate]:
+        response = self._get(seed_url)
+        body = response.text or ""
+        exact = _clean_version(target_version)
+        if not (
+            _primary_version_matches(body, exact)
+            or _version_appears_exact(f"{seed_url} {body[:12000]}", exact)
+        ):
+            raise ProviderError("Morphe API seed page does not prove the requested version")
+        found_package = _extract_package(body)
+        if expected_package and found_package and found_package.lower() != expected_package.lower():
+            raise ProviderError(
+                f"Morphe API seed page has package {found_package}; expected {expected_package}"
+            )
+
+        artifact_type = _artifact_type_from_text(body, "apk")
+        return [ApkCandidate(
+            provider=self.name,
+            version=target_version,
+            page_url=seed_url,
+            download_page_url=seed_url,
+            architecture=_extract_architecture(body),
+            is_bundle=artifact_type != "apk",
+            artifact_type=artifact_type,
+            details={"via": "morphe_api"},
+        )]
 
     def resolve(
         self,
@@ -1937,12 +2202,133 @@ def acquire_from_providers(
     if not expected_package and _looks_like_package(app_config.get("package", "")):
         expected_package = str(app_config.get("package")).strip()
 
-    for provider_name in provider_order(app_config):
-        base_url = urls.get(provider_name, "")
+    morphe_seeds: dict[str, list[MorpheResolvedUrl]] = {}
+    if expected_package:
+        for seed in resolve_morphe_api_urls(
+            expected_package,
+            target_version,
+            preferred_arch=preferred_arch,
+        ):
+            morphe_seeds.setdefault(seed.provider, []).append(seed)
+            if seed.url not in manual_urls:
+                manual_urls.append(seed.url)
+
+    def provider_instance(provider_name: str):
+        if provider_name == "apkmirror":
+            return APKMirrorProvider(urls.get(provider_name, ""))
+        if provider_name == "uptodown":
+            return UptodownProvider(urls.get(provider_name, ""))
+        if provider_name == "apkpure":
+            return APKPureProvider(urls.get(provider_name, ""))
+        return None
+
+    def attempt_candidates(
+        provider,
+        provider_name: str,
+        candidates: list[ApkCandidate],
+        via: str = "provider",
+    ) -> AcquisitionResult | None:
+        if not candidates:
+            return None
+
+        for index, candidate in enumerate(candidates, 1):
+            manual_url = candidate.download_page_url or candidate.page_url
+            if manual_url and manual_url not in manual_urls:
+                manual_urls.append(manual_url)
+
+            extension = _candidate_extension(candidate)
+            destination = os.path.join(
+                destination_dir,
+                f"{app_id}-{target_version}-{provider_name}-{index}{extension}",
+            )
+            try:
+                provider.download(candidate, destination)
+                if not os.path.exists(destination) or os.path.getsize(destination) <= 1024:
+                    raise ProviderError("Provider returned an empty or incomplete artifact")
+
+                try:
+                    validate_artifact(
+                        destination,
+                        expected_package=expected_package,
+                        expected_version=target_version,
+                        expected_arch=preferred_arch or "auto",
+                    )
+                except ApkValidationError as exc:
+                    raise ProviderError(
+                        f"Downloaded artifact failed identity validation: {exc}"
+                    ) from exc
+
+                return AcquisitionResult(
+                    status="downloaded",
+                    path=destination,
+                    candidate=candidate,
+                    attempts=attempts,
+                    manual_urls=manual_urls,
+                )
+            except Exception as exc:
+                attempts.append({
+                    "provider": provider_name,
+                    "version": target_version,
+                    "status": "download_failed",
+                    "via": via,
+                    "candidate": {
+                        "page_url": candidate.page_url,
+                        "download_page_url": candidate.download_page_url,
+                        "download_url": candidate.download_url,
+                        "architecture": candidate.architecture,
+                        "dpi": candidate.dpi,
+                        "is_bundle": candidate.is_bundle,
+                        "artifact_type": candidate.artifact_type,
+                        "details": candidate.details,
+                    },
+                    "error": str(exc),
+                })
+                try:
+                    if os.path.exists(destination):
+                        os.remove(destination)
+                except OSError:
+                    pass
+                time.sleep(1)
+        return None
+
+    ordered_providers = provider_order(app_config)
+    seed_first = list(morphe_seeds.keys())
+    for provider_name in ordered_providers:
+        provider = provider_instance(provider_name)
+        if provider is None:
+            continue
+
+        # Official Morphe Manager first resolves a destination page through the
+        # Morphe API. Use that exact resolver result before attempting catalog
+        # discovery of our own.
+        for seed in morphe_seeds.get(provider_name, []):
+            try:
+                candidates = provider.resolve_seed_url(
+                    seed.url,
+                    target_version,
+                    preferred_arch,
+                    expected_package,
+                )
+                result = attempt_candidates(
+                    provider,
+                    provider_name,
+                    candidates,
+                    via=f"morphe_api:{seed.abi}",
+                )
+                if result:
+                    return result
+            except Exception as exc:
+                attempts.append({
+                    "provider": provider_name,
+                    "version": target_version,
+                    "status": "seed_resolve_failed",
+                    "via": f"morphe_api:{seed.abi}",
+                    "seed_url": seed.url,
+                    "error": str(exc),
+                })
 
         try:
             if provider_name == "apkmirror":
-                provider = APKMirrorProvider(base_url)
                 candidates = provider.resolve(
                     target_version,
                     preferred_arch,
@@ -1950,7 +2336,6 @@ def acquire_from_providers(
                     expected_package=expected_package,
                 )
             elif provider_name == "uptodown":
-                provider = UptodownProvider(base_url)
                 candidates = provider.resolve(
                     target_version,
                     preferred_arch,
@@ -1958,7 +2343,6 @@ def acquire_from_providers(
                     expected_package=expected_package,
                 )
             elif provider_name == "apkpure":
-                provider = APKPureProvider(base_url)
                 candidates = provider.resolve(
                     target_version,
                     preferred_arch,
@@ -1972,74 +2356,32 @@ def acquire_from_providers(
             if not candidates:
                 raise ProviderError("No compatible candidate found")
 
-            for index, candidate in enumerate(candidates, 1):
-                manual_url = candidate.download_page_url or candidate.page_url
-                if manual_url and manual_url not in manual_urls:
-                    manual_urls.append(manual_url)
-
-                extension = _candidate_extension(candidate)
-                destination = os.path.join(
-                    destination_dir,
-                    f"{app_id}-{target_version}-{provider_name}-{index}{extension}",
-                )
-
-                try:
-                    provider.download(candidate, destination)
-                    if not os.path.exists(destination) or os.path.getsize(destination) <= 1024:
-                        raise ProviderError("Provider returned an empty or incomplete artifact")
-
-                    try:
-                        validate_artifact(
-                            destination,
-                            expected_package=expected_package,
-                            expected_version=target_version,
-                            expected_arch=preferred_arch or "auto",
-                        )
-                    except ApkValidationError as exc:
-                        raise ProviderError(
-                            f"Downloaded artifact failed identity validation: {exc}"
-                        ) from exc
-
-                    return AcquisitionResult(
-                        status="downloaded",
-                        path=destination,
-                        candidate=candidate,
-                        attempts=attempts,
-                        manual_urls=manual_urls,
-                    )
-                except Exception as exc:
-                    attempts.append({
-                        "provider": provider_name,
-                        "version": target_version,
-                        "status": "download_failed",
-                        "candidate": {
-                            "page_url": candidate.page_url,
-                            "download_page_url": candidate.download_page_url,
-                            "download_url": candidate.download_url,
-                            "architecture": candidate.architecture,
-                            "dpi": candidate.dpi,
-                            "is_bundle": candidate.is_bundle,
-                            "artifact_type": candidate.artifact_type,
-                            "details": candidate.details,
-                        },
-                        "error": str(exc),
-                    })
-                    try:
-                        if os.path.exists(destination):
-                            os.remove(destination)
-                    except OSError:
-                        pass
-                    time.sleep(1)
-
+            result = attempt_candidates(provider, provider_name, candidates)
+            if result:
+                return result
         except Exception as exc:
             attempts.append({
                 "provider": provider_name,
                 "version": target_version,
                 "status": "resolve_failed",
-                "base_url": base_url or None,
+                "base_url": urls.get(provider_name) or None,
                 "error": str(exc),
                 "app_query": app_query,
                 "expected_package": expected_package,
+            })
+
+    # A resolver can occasionally point to a provider not enabled in the config.
+    # Surface it as a manual destination rather than silently discarding it.
+    for provider_name, seeds in morphe_seeds.items():
+        if provider_name in ordered_providers:
+            continue
+        for seed in seeds:
+            attempts.append({
+                "provider": provider_name,
+                "version": target_version,
+                "status": "resolved_but_disabled",
+                "via": f"morphe_api:{seed.abi}",
+                "seed_url": seed.url,
             })
 
     return AcquisitionResult(
@@ -2048,3 +2390,4 @@ def acquire_from_providers(
         manual_urls=manual_urls,
         error="All automatic APK providers failed for the exact requested version.",
     )
+
