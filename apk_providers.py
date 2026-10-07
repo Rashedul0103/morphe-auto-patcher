@@ -906,7 +906,7 @@ class APKMirrorProvider:
         if "/download/" in path:
             artifact_type = _artifact_type_from_text(body, "apk")
             token_match = re.search(
-                r"(?:android/)?post-download/([^"'<>\s'"]+)",
+                r'''(?:android/)?post-download/([^"'<>\\s]+)''',
                 body,
                 re.I,
             )
