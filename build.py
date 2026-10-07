@@ -718,6 +718,28 @@ def _normalize_stock_artifact(
     suffix = Path(apk_path).suffix.lower()
     if suffix not in APK_BUNDLE_SUFFIXES:
         return apk_path, apk_info, {}
+    # A provider may occasionally label a plain APK with a bundle extension.
+    # The validator has already inspected the actual ZIP contents, so do not
+    # run APKEditor against a file that is really a single APK.
+    if apk_info is not None and getattr(apk_info, "artifact_type", "") == "apk":
+        normalized = os.path.join(
+            os.path.dirname(apk_path),
+            f"{app_id}-stock.apk",
+        )
+        if os.path.abspath(normalized) != os.path.abspath(apk_path):
+            shutil.copy2(apk_path, normalized)
+        normalized_info = validate_artifact(
+            normalized,
+            expected_package=package,
+            expected_version=version,
+            expected_arch=apk_arch or "auto",
+        )
+        return normalized, normalized_info, {
+            "normalized": False,
+            "source_artifact": os.path.basename(apk_path),
+            "source_artifact_type": suffix.lstrip("."),
+            "normalizer": "content-detected-single-apk",
+        }
 
     source_hash = apk_info.sha256 if apk_info else ""
     source_signers = list(getattr(apk_info, "signer_sha256", []) or [])
