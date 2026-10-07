@@ -97,7 +97,19 @@ def _scraper():
             s = cloudscraper.create_scraper()
         else:
             s = requests.Session()
-    s.headers.update({"User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.8"})
+    s.headers.update({
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+    })
     return s
 
 
@@ -463,15 +475,28 @@ class APKMirrorProvider:
     def _get(self, url: str):
         last_status = None
         for attempt in range(4):
-            response = self.session.get(url, timeout=30)
+            if attempt:
+                time.sleep((2, 4, 8)[attempt - 1])
+            response = self.session.get(
+                url,
+                timeout=30,
+                allow_redirects=True,
+                headers={
+                    "Referer": "https://www.apkmirror.com/" if attempt == 0 else url,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "same-origin",
+                },
+            )
             last_status = response.status_code
-            if response.status_code == 429:
+            if response.status_code in (403, 408, 429) or response.status_code >= 500:
                 retry_after = str(response.headers.get("Retry-After") or "").strip()
-                try:
-                    delay = min(60, max(2, int(float(retry_after))))
-                except ValueError:
-                    delay = (2, 5, 15, 30)[attempt]
                 if attempt < 3:
+                    try:
+                        delay = min(30, max(2, int(float(retry_after))))
+                    except ValueError:
+                        delay = (2, 5, 10)[attempt]
                     time.sleep(delay)
                     continue
             if response.status_code != 200:
@@ -997,14 +1022,36 @@ class APKMirrorProvider:
         candidate.download_url = self._resolve_direct_download(candidate.download_page_url)
         Path(destination).parent.mkdir(parents=True, exist_ok=True)
 
-        response = self.session.get(
-            candidate.download_url,
-            headers={"Referer": candidate.download_page_url, "User-Agent": USER_AGENT},
-            timeout=90,
-            stream=True,
-        )
-        if response.status_code != 200:
-            raise ProviderError(f"HTTP {response.status_code} while downloading APKMirror artifact")
+        response = None
+        last_status = None
+        for attempt in range(3):
+            if attempt:
+                time.sleep(2 ** attempt)
+            response = self.session.get(
+                candidate.download_url,
+                headers={
+                    "Referer": candidate.download_page_url or candidate.page_url,
+                    "Accept": "*/*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "same-origin",
+                    "User-Agent": USER_AGENT,
+                },
+                timeout=120,
+                allow_redirects=True,
+                stream=True,
+            )
+            last_status = response.status_code
+            if response.status_code == 200:
+                break
+            response.close()
+            if response.status_code not in (403, 408, 429) and response.status_code < 500:
+                break
+        if response is None or response.status_code != 200:
+            raise ProviderError(
+                f"HTTP {last_status} while downloading APKMirror artifact"
+            )
 
         with open(destination, "wb") as fh:
             first = True
@@ -1033,10 +1080,27 @@ class UptodownProvider:
         self.session = _scraper()
 
     def _get(self, url: str):
-        response = self.session.get(url, timeout=30)
-        if response.status_code != 200:
-            raise ProviderError(f"HTTP {response.status_code}: {url}")
-        return response
+        last_status = None
+        for attempt in range(3):
+            if attempt:
+                time.sleep(2 ** attempt)
+            response = self.session.get(
+                url,
+                timeout=30,
+                allow_redirects=True,
+                headers={
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "same-origin",
+                },
+            )
+            last_status = response.status_code
+            if response.status_code == 200:
+                return response
+            if response.status_code not in (403, 408, 429) and response.status_code < 500:
+                break
+        raise ProviderError(f"HTTP {last_status}: {url}")
 
     def _api_get(self, path: str):
         url = f"{UPTODOWN_API_BASE}{path}"
@@ -1912,16 +1976,32 @@ class UptodownProvider:
         Path(destination).parent.mkdir(parents=True, exist_ok=True)
         if not direct_url.startswith("https://dw.uptodown.com/dwn/"):
             raise ProviderError("Uptodown resolver did not produce a CDN artifact URL")
-        response = self.session.get(
-            direct_url,
-            headers={"Referer": candidate.download_page_url or candidate.page_url},
-            timeout=120,
-            allow_redirects=True,
-            stream=True,
-        )
-        if response.status_code != 200:
+        response = None
+        last_status = None
+        for attempt in range(3):
+            if attempt:
+                time.sleep(2 ** attempt)
+            response = self.session.get(
+                direct_url,
+                headers={
+                    "Referer": candidate.download_page_url or candidate.page_url,
+                    "Accept": "*/*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "User-Agent": USER_AGENT,
+                },
+                timeout=120,
+                allow_redirects=True,
+                stream=True,
+            )
+            last_status = response.status_code
+            if response.status_code == 200:
+                break
+            response.close()
+            if response.status_code not in (403, 408, 429) and response.status_code < 500:
+                break
+        if response is None or response.status_code != 200:
             raise ProviderError(
-                f"HTTP {response.status_code} while downloading Uptodown artifact"
+                f"HTTP {last_status} while downloading Uptodown artifact"
             )
 
         with open(destination, "wb") as fh:
