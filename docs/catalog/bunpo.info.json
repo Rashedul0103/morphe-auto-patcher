@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791369787
+    "updated_at": 1791374070
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,7 +28,9 @@
     "package": "com.bunpoapp",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://bunpo.en.uptodown.com/android/download/1219152866-x"
+      "https://bunpo.en.uptodown.com/android/download/1219152866-x",
+      "https://www.google.com/search?q=com.bunpoapp%203.23.1%20x86_64%20apkmirror.com%20OR%20uptodown.com%20OR%20apkpure.com%20OR%20apkcombo.com",
+      "https://www.google.com/search?q=com.bunpoapp%203.23.1%20x86%20apkmirror.com%20OR%20uptodown.com%20OR%20apkpure.com%20OR%20apkcombo.com"
     ],
     "attempts": [
       {
@@ -43,7 +45,16 @@
       {
         "provider": "uptodown",
         "version": "3.23.1",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://bunpo.en.uptodown.com/android/download/1219152866-x",
+        "error": "'UptodownProvider' object has no attribute 'resolve_seed_url'"
+      },
+      {
+        "provider": "uptodown",
+        "version": "3.23.1",
         "status": "download_failed",
+        "via": "provider",
         "candidate": {
           "page_url": "https://bunpo.en.uptodown.com/android/download/1219152866",
           "download_page_url": "https://bunpo.en.uptodown.com/android/download/1219152866-x",
@@ -73,6 +84,20 @@
         "error": "APKPure app discovery failed for Bunpo",
         "app_query": "Bunpo",
         "expected_package": "com.bunpoapp"
+      },
+      {
+        "provider": "direct",
+        "version": "3.23.1",
+        "status": "resolved_but_disabled",
+        "via": "morphe_api:x86_64",
+        "seed_url": "https://www.google.com/search?q=com.bunpoapp%203.23.1%20x86_64%20apkmirror.com%20OR%20uptodown.com%20OR%20apkpure.com%20OR%20apkcombo.com"
+      },
+      {
+        "provider": "direct",
+        "version": "3.23.1",
+        "status": "resolved_but_disabled",
+        "via": "morphe_api:x86",
+        "seed_url": "https://www.google.com/search?q=com.bunpoapp%203.23.1%20x86%20apkmirror.com%20OR%20uptodown.com%20OR%20apkpure.com%20OR%20apkcombo.com"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",

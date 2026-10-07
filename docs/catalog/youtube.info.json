@@ -19,9 +19,10 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791369787
+    "status": "success",
+    "stage": "completed",
+    "release_tag": "youtube-v1.46.0",
+    "updated_at": 1791374070
   },
   "apk_acquisition": {
     "status": "downloaded",
@@ -55,7 +56,7 @@
     "architectures": [
       "arm64-v8a"
     ],
-    "sha256": "9d3a62610e20bdd1e2f941f88c1c631cb5b584cb8463b63d3a7f62d021ba972a",
+    "sha256": "49fd190e8fc6810f6335d52001d514253b8a09e2e7224bb63d5a24fc9587ae62",
     "size_bytes": 103227528,
     "signer_sha256": [],
     "artifact_type": "apk"

@@ -16,49 +16,55 @@
   "icon_url": "catalog/icons/duolingo.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "failed",
-    "stage": "apk_acquisition",
-    "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791369787
+    "status": "success",
+    "stage": "completed",
+    "release_tag": "duolingo-v1.47.0",
+    "updated_at": 1791374070
   },
   "apk_acquisition": {
-    "status": "manual_required",
-    "provider": "",
+    "status": "downloaded_and_normalized",
+    "provider": "apkmirror",
     "target_version": "6.98.4",
     "package": "com.duolingo",
     "apk_arch": "auto",
-    "manual_urls": [],
-    "attempts": [
-      {
-        "provider": "apkmirror",
-        "version": "6.98.4",
-        "status": "resolve_failed",
-        "base_url": null,
-        "error": "No compatible candidate found",
-        "app_query": "Duolingo",
-        "expected_package": "com.duolingo"
-      },
-      {
-        "provider": "uptodown",
-        "version": "6.98.4",
-        "status": "resolve_failed",
-        "base_url": null,
-        "error": "No compatible candidate found",
-        "app_query": "Duolingo",
-        "expected_package": "com.duolingo"
-      },
-      {
-        "provider": "apkpure",
-        "version": "6.98.4",
-        "status": "resolve_failed",
-        "base_url": null,
-        "error": "APKPure app discovery failed for Duolingo",
-        "app_query": "Duolingo",
-        "expected_package": "com.duolingo"
-      }
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/duolingo/duolingo-duolingo/duolingo-language-lessons-6-98-4-release/duolingo-language-lessons-6-98-4-android-apk-download/"
     ],
-    "error": "All automatic APK providers failed for the exact requested version.",
-    "workspace": ".work/duolingo"
+    "attempts": [],
+    "normalization": {
+      "normalized": true,
+      "source_artifact": "duolingo-6.98.4-apkmirror-1.apkm",
+      "source_artifact_type": "apkm",
+      "source_sha256": "7d0373d18b23166ee393d77da3564a6c4e91224032e0a8ca1e0cbe64e4c8c7e4",
+      "source_signer_sha256": [],
+      "normalizer": "APKEditor",
+      "normalized_sha256": "ed4b07e7787643fa604489a291689de16ed00f484deda5de1881ac69a495d56a"
+    }
   },
-  "stock_apk": null
+  "stock_apk": {
+    "path": ".work/duolingo/stock/duolingo-normalized.apk",
+    "package": "com.duolingo",
+    "version_name": "6.98.4",
+    "version_code": "2463",
+    "architectures": [
+      "arm64-v8a"
+    ],
+    "sha256": "ed4b07e7787643fa604489a291689de16ed00f484deda5de1881ac69a495d56a",
+    "size_bytes": 198169490,
+    "signer_sha256": [],
+    "artifact_type": "apk"
+  },
+  "patched_apk": {
+    "path": ".work/duolingo/patched/duolingo-patched.apk",
+    "package": "com.duolingo",
+    "version_name": "6.98.4",
+    "version_code": "2463",
+    "architectures": [
+      "arm64-v8a"
+    ],
+    "sha256": "25d3465014e48373d56e0baaf05ede444708ddd4a24fccbfc514856ea6fef419",
+    "size_bytes": 146186300,
+    "signer_sha256": [],
+    "artifact_type": "apk"
+  }
 }

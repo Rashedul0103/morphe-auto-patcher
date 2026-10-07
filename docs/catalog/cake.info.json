@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791369787
+    "updated_at": 1791374070
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,10 +28,46 @@
     "package": "me.mycake",
     "apk_arch": "auto",
     "manual_urls": [
+      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/",
+      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-2-android-apk-download/",
+      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-4-android-apk-download/",
+      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-android-apk-download/",
       "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
       "https://me-mycake.en.uptodown.com/android/download/1127741310-x"
     ],
     "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "6.4.0",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/",
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "6.4.0",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:armeabi-v7a",
+        "seed_url": "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-2-android-apk-download/",
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-2-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "6.4.0",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:x86_64",
+        "seed_url": "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-4-android-apk-download/",
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-4-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "6.4.0",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:x86",
+        "seed_url": "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-android-apk-download/",
+        "error": "HTTP 429: https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-android-apk-download/"
+      },
       {
         "provider": "apkmirror",
         "version": "6.4.0",
@@ -45,6 +81,7 @@
         "provider": "uptodown",
         "version": "6.4.0",
         "status": "download_failed",
+        "via": "provider",
         "candidate": {
           "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
           "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
@@ -70,6 +107,7 @@
         "provider": "uptodown",
         "version": "6.4.0",
         "status": "download_failed",
+        "via": "provider",
         "candidate": {
           "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
           "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127741310-x",
