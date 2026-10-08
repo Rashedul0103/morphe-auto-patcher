@@ -39,16 +39,9 @@ UPTODOWN_API_USER_AGENT = (
 )
 
 
-DEFAULT_PROVIDER_URLS = {
-    "youtube": {
-        "apkmirror": "https://www.apkmirror.com/apk/google-inc/youtube/",
-        "uptodown": "https://youtube.en.uptodown.com/android/versions",
-    },
-    "youtube-music": {
-        "apkmirror": "https://www.apkmirror.com/apk/google-inc/youtube-music/",
-        "uptodown": "https://youtube-music.en.uptodown.com/android/versions",
-    },
-}
+# Provider URLs are supplied by app configuration or discovered from package/name.
+# Keep this module app-agnostic: no package-specific source URLs are hardcoded here.
+DEFAULT_PROVIDER_URLS = {}
 
 SUPPORTED_ARTIFACT_TYPES = {"apk", "apkm", "apks", "xapk"}
 
