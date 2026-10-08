@@ -19,10 +19,9 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "success",
-    "stage": "completed",
-    "release_tag": "youtube-v1.46.0",
-    "updated_at": 1791399288
+    "status": "running",
+    "stage": "patch_source",
+    "updated_at": 1791423933
   },
   "apk_acquisition": {
     "status": "downloaded",
