@@ -1477,37 +1477,41 @@ class UptodownProvider:
         return ""
 
     def _extract_direct_from_body(self, body: str) -> str:
+        """Extract Uptodown's own download token from the actual download button.
+
+        Do not scan arbitrary data-url attributes or anchors: Uptodown pages contain
+        unrelated navigation tokens such as 'apps', which would otherwise be turned
+        into the bogus CDN URL https://dw.uptodown.com/dwn/apps.
+        """
         soup = BeautifulSoup(body or "", "html.parser")
-        nodes = []
+        selectors = (
+            "#detail-download-button[data-url]",
+            "[data-button-id='detail-download-button'][data-url]",
+            "[data-download-button][data-url]",
+        )
+
+        for selector in selectors:
+            node = soup.select_one(selector)
+            if not node:
+                continue
+            direct = self._coerce_download_value(node.get("data-url"))
+            if direct:
+                return direct
+
+        # Keep support for equivalent download-button markup using one of the
+        # documented download-url attributes, but still scope it to that button.
         for selector in (
             "#detail-download-button",
             "[data-button-id='detail-download-button']",
             "[data-download-button]",
         ):
             node = soup.select_one(selector)
-            if node and node not in nodes:
-                nodes.append(node)
-
-        for node in nodes:
-            for attr in ("data-url", "data-download-url", "data-file-url"):
+            if not node:
+                continue
+            for attr in ("data-download-url", "data-file-url"):
                 direct = self._coerce_download_value(node.get(attr))
                 if direct:
                     return direct
-
-        for node in soup.find_all(attrs={"data-url": True}):
-            direct = self._coerce_download_value(node.get("data-url"))
-            if direct:
-                return direct
-
-        for match in re.findall(r"""data-url\s*=\s*["']([^"']+)["']""", body or "", re.I):
-            direct = self._coerce_download_value(match)
-            if direct:
-                return direct
-
-        for anchor in soup.find_all("a", href=True):
-            direct = self._coerce_download_value(anchor.get("href"))
-            if direct:
-                return direct
 
         return ""
 
