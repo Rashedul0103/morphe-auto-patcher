@@ -30,54 +30,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java 21
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Download Morphe CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download --repo MorpheApp/morphe-desktop --pattern "*-all.jar" --clobber
-
-      - name: Setup Android command-line tools
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-
-      - name: Install APK tooling
-        run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager "build-tools;35.0.0"
 
       - name: Install Python dependencies
         run: python3 -m pip install --disable-pip-version-check -r requirements.txt
 
-      - name: Restore Keystore
-        run: |
-          if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
-            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > ks.bks
-            echo "Keystore restored to ks.bks"
-          else
-            echo "::warning::KEYSTORE_B64 secret is not set. Custom APK signing key will not be used."
-          fi
-
       - name: Validate Web UI JavaScript
         run: |
-
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -94,6 +60,13 @@ jobs:
 
       - name: Run provider regression tests
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+  build:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
       - name: Run Build Script
         env:
