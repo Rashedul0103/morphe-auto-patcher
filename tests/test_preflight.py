@@ -69,6 +69,7 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("build:", workflow)
         self.assertIn("needs: test", workflow)
         self.assertIn("github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'", workflow)
+        self.assertIn("github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]')", workflow)
         self.assertIn("python3 -m unittest discover", workflow)
 
     def test_build_script_has_cli_and_target_controls(self):
