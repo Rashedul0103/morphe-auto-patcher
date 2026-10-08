@@ -189,61 +189,21 @@ const u64 = s => {
 };
 
 const LS = 'patch-manager-cfg';
-const PK_REGISTRY = {
-  'com.google.android.youtube': ['YouTube', '#e53935,#b71c1c'],
-  'com.google.android.apps.youtube.music': ['YouTube Music', '#ff7043,#d84315'],
-  'com.reddit.frontpage': ['Reddit', '#ff8f00,#e65100'],
-  'com.twitter.android': ['Twitter / X', '#1da1f2,#0d8ddb'],
-  'tv.twitch.android.app': ['Twitch', '#9146ff,#6441a5'],
-  'com.zhiliaoapp.musically': ['TikTok', '#fe2c55,#25f4ee'],
-  'com.ss.android.ugc.trill': ['TikTok', '#fe2c55,#25f4ee'],
-  'com.facebook.katana': ['Facebook', '#1877f2,#0d5ec4'],
-  'com.facebook.orca': ['Messenger', '#0084ff,#0060cc'],
-  'com.facebook.lite': ['Facebook Lite', '#1877f2,#0d5ec4'],
-  'com.instagram.android': ['Instagram', '#e1306c,#c13584'],
-  'com.instagram.barcelona': ['Threads', '#000000,#333333']
-};
-
 function getAppMeta(pkg) {
-  if (PK_REGISTRY[pkg]) {
-    return { name: PK_REGISTRY[pkg][0], color: PK_REGISTRY[pkg][1] };
-  }
-  const parts = (pkg || '').split('.');
+  const parts = String(pkg || '').split('.');
   const raw = parts[parts.length - 1] || pkg || 'app';
-  const name = raw.charAt(0).toUpperCase() + raw.slice(1);
-  return { name, color: '#1E5AA8,#00AFAE' };
+  const name = raw
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, ch => ch.toUpperCase());
+  return { name: name || 'App', color: '#1E5AA8,#00AFAE' };
 }
 
-const ICON_DOMAINS = {
-  'com.google.android.youtube': 'youtube.com',
-  'com.google.android.apps.youtube.music': 'music.youtube.com',
-  'com.duolingo': 'duolingo.com',
-  'Duolingo': 'duolingo.com',
-  'com.adguard.android': 'adguard.com',
-  'me.mycake': 'cakecorp.com',
-  'com.bunpoapp': 'bunpo.app',
-  'com.facebook.katana': 'facebook.com',
-  'com.facebook.orca': 'messenger.com',
-  'com.instagram.android': 'instagram.com',
-  'com.instagram.barcelona': 'threads.net',
-  'com.reddit.frontpage': 'reddit.com',
-  'com.twitter.android': 'x.com',
-  'tv.twitch.android.app': 'twitch.tv',
-  'com.zhiliaoapp.musically': 'tiktok.com',
-  'com.ss.android.ugc.trill': 'tiktok.com'
-};
-const APP_NAME_DOMAINS = {
-  'Facebook':'facebook.com','Messenger':'messenger.com','YouTube':'youtube.com','YouTube Music':'music.youtube.com',
-  'Duolingo':'duolingo.com','AdGuard':'adguard.com','Cake':'cakecorp.com','Bunpo':'bunpo.app','Reddit':'reddit.com','Twitter / X':'x.com','Twitch':'twitch.tv','TikTok':'tiktok.com',
-  'Instagram':'instagram.com','Threads':'threads.net','GitHub':'github.com','SoundCloud':'soundcloud.com',
-  'Sofascore':'sofascore.com','CamScanner':'camscanner.com','Prime Video':'primevideo.com','Proton VPN':'protonvpn.com'
-};
 function officialIconUrl(a) {
-  const pkg = String(a && a.package || '');
-  const name = ttl(a);
-  const domain = ICON_DOMAINS[pkg] || APP_NAME_DOMAINS[name] || '';
-  return domain ? 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128' : '';
+  // Icons are sourced from the generated catalog when available. Keep the UI
+  // generic rather than maintaining a package-specific icon/domain registry.
+  return '';
 }
+
 function appIconUrl(a) {
   const info = (a && S.cats[a.id] && S.cats[a.id].info) || {};
   return info.icon_url || (a && a.icon_url) || officialIconUrl(a);
