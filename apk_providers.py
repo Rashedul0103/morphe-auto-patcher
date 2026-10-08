@@ -1557,6 +1557,12 @@ class UptodownProvider:
             raise ProviderError(f"Uptodown download API returned invalid JSON: {exc}") from exc
         if not direct.startswith(("http://", "https://")):
             raise ProviderError("Uptodown download API returned no usable downloadURL")
+        parsed = urlparse(direct)
+        if parsed.netloc.lower() != "dw.uptodown.com" or not parsed.path.startswith("/dwn/"):
+            raise ProviderError("Uptodown download API returned a non-CDN URL")
+        token = parsed.path.rsplit("/", 1)[-1].strip().lower()
+        if token in ("", "apps", "app", "download", "versions", "android", "null", "undefined"):
+            raise ProviderError("Uptodown download API returned a placeholder CDN token")
         return direct
 
     def _direct_from_post_download(self, token: str) -> str:
@@ -1953,8 +1959,17 @@ class UptodownProvider:
     def download(self, candidate: ApkCandidate, destination: str) -> None:
         direct_url = candidate.download_url
 
-        # Prefer Uptodown's authenticated eAPI when the version/files endpoint
-        # supplied the app and file IDs. This avoids brittle HTML button scraping.
+        # Prefer the page-published button token first. Some Uptodown API responses
+        # can contain placeholder CDN URLs; the web helper treats the button token
+        # as the authoritative source for hosted downloads.
+        if not direct_url:
+            try:
+                direct_url = self._direct_from_download_page(
+                    candidate.download_page_url or candidate.page_url
+                )
+            except Exception as exc:
+                candidate.details["page_download_error"] = str(exc)
+
         data_code = str(candidate.details.get("data_code") or "").strip()
         file_id = str(candidate.details.get("file_id") or "").strip()
         if not direct_url and data_code and file_id:
