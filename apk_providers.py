@@ -1214,8 +1214,9 @@ class UptodownProvider:
             direct_url = ""
             for key in ("downloadURL", "downloadUrl", "download_url", "fileURL", "fileUrl"):
                 value = str(record.get(key) or "").strip()
-                if value.startswith("https://dw.uptodown.com/dwn/"):
-                    direct_url = value
+                candidate_url = self._coerce_download_value(value)
+                if candidate_url:
+                    direct_url = candidate_url
                     break
             architecture = ""
             for key in ("architecture", "arch", "cpu", "abi", "abis", "cpuArchitecture"):
@@ -1465,8 +1466,11 @@ class UptodownProvider:
         # Uptodown's #detail-download-button[data-url] contains an opaque CDN
         # token. It is not guaranteed to be long or restricted to a narrow
         # character class, so preserve the provider's token verbatim.
+        token = value.lstrip("/").strip()
+        if token.lower() in {"apps", "app", "download", "versions", "android", "null", "undefined"}:
+            return ""
         if "://" not in value and not value.startswith(("javascript:", "market:", "intent:")):
-            return f"https://dw.uptodown.com/dwn/{value.lstrip('/')}"
+            return f"https://dw.uptodown.com/dwn/{token}"
         return ""
 
     def _extract_direct_from_body(self, body: str) -> str:
@@ -1952,9 +1956,19 @@ class UptodownProvider:
     def download(self, candidate: ApkCandidate, destination: str) -> None:
         direct_url = candidate.download_url
 
-        # Prefer the page-published button token first. Some Uptodown API responses
-        # can contain placeholder CDN URLs; the web helper treats the button token
-        # as the authoritative source for hosted downloads.
+        data_code = str(candidate.details.get("data_code") or "").strip()
+        file_id = str(candidate.details.get("file_id") or "").strip()
+
+        # For a version-specific native API record, the file ID is tied to the
+        # exact requested version. Prefer that exact endpoint over a generic
+        # app landing-page download button.
+        if not direct_url and data_code and file_id:
+            try:
+                direct_url = self._api_download_url(data_code, file_id)
+            except Exception as exc:
+                candidate.details["api_download_error"] = str(exc)
+
+        # For web-resolved candidates, use Uptodown's published download button.
         if not direct_url:
             try:
                 direct_url = self._direct_from_download_page(
@@ -1962,14 +1976,6 @@ class UptodownProvider:
                 )
             except Exception as exc:
                 candidate.details["page_download_error"] = str(exc)
-
-        data_code = str(candidate.details.get("data_code") or "").strip()
-        file_id = str(candidate.details.get("file_id") or "").strip()
-        if not direct_url and data_code and file_id:
-            try:
-                direct_url = self._api_download_url(data_code, file_id)
-            except Exception as exc:
-                candidate.details["api_download_error"] = str(exc)
 
         if not direct_url:
             post_token = str(candidate.details.get("post_download_token") or "").strip()
