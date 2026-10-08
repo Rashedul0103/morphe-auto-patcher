@@ -1994,21 +1994,9 @@ async function inspectEnteredSource() {
       }
     });
 
-    if (discoveredPkgs.size === 0) {
-      const rLower = repo.toLowerCase();
-      const rBody = (rel.body || '').toLowerCase();
-      if (rLower.includes('facebook') || rBody.includes('facebook') || rBody.includes('katana')) discoveredPkgs.add('com.facebook.katana');
-      if (rLower.includes('messenger') || rBody.includes('messenger') || rBody.includes('orca')) discoveredPkgs.add('com.facebook.orca');
-      if (rLower.includes('tiktok') || rLower.includes('hushfeed') || rBody.includes('tiktok')) discoveredPkgs.add('com.zhiliaoapp.musically');
-      if (rLower.includes('threads') || rBody.includes('threads')) discoveredPkgs.add('com.instagram.barcelona');
-      if (rLower.includes('twitter') || rLower.includes('piko') || rBody.includes('twitter')) discoveredPkgs.add('com.twitter.android');
-      if (rLower.includes('reddit') || rBody.includes('reddit')) discoveredPkgs.add('com.reddit.frontpage');
-      if (rLower.includes('youtube') || rBody.includes('youtube')) discoveredPkgs.add('com.google.android.youtube');
-    }
-
     const pkgList = Array.from(discoveredPkgs);
     const mppAsset = (rel.assets || []).find(a => /\.mpp$/i.test(a.name));
-    if (!pkgList.length && !mppAsset) throw new Error('No Morphe patch bundle found in the selected release.');
+    if (!pkgList.length && !mppAsset) throw new Error('The source did not expose a detectable package or .mpp bundle. Enter the package name manually.');
     newSourceInspection = {
       repo, tag, prerelease: pre,
       packages: pkgList,
