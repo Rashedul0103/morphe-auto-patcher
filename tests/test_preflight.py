@@ -86,6 +86,7 @@ class PreflightTests(unittest.TestCase):
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
 
+# Controlled E2E trigger marker: commits tagged [e2e] run the full build.
 
 if __name__ == "__main__":
     unittest.main()
