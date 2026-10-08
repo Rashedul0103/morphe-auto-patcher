@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791423933
+    "updated_at": 1791428525
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -53,7 +53,7 @@
         "version": "6.98.4",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "No compatible candidate found",
+        "error": "Uptodown app discovery failed for Duolingo",
         "app_query": "Duolingo",
         "expected_package": "com.duolingo"
       },
