@@ -1454,6 +1454,9 @@ class UptodownProvider:
         if parsed.scheme in ("http", "https"):
             host = (parsed.netloc or "").lower()
             if host == "dw.uptodown.com" and parsed.path.startswith("/dwn/"):
+                token = parsed.path.rsplit("/", 1)[-1].strip().lower()
+                if token in {"", "apps", "app", "download", "versions", "android", "null", "undefined"}:
+                    return ""
                 return value
             return ""
         if value.startswith("//"):
@@ -1956,15 +1959,20 @@ class UptodownProvider:
     def download(self, candidate: ApkCandidate, destination: str) -> None:
         direct_url = candidate.download_url
 
-        data_code = str(candidate.details.get("data_code") or "").strip()
+        app_id = str(
+            candidate.details.get("app_id")
+            or candidate.details.get("data_code")
+            or ""
+        ).strip()
         file_id = str(candidate.details.get("file_id") or "").strip()
 
         # For a version-specific native API record, the file ID is tied to the
         # exact requested version. Prefer that exact endpoint over a generic
-        # app landing-page download button.
-        if not direct_url and data_code and file_id:
+        # app landing-page download button. Native API candidates use app_id;
+        # legacy web-derived candidates may still carry data_code.
+        if not direct_url and app_id and file_id:
             try:
-                direct_url = self._api_download_url(data_code, file_id)
+                direct_url = self._api_download_url(app_id, file_id)
             except Exception as exc:
                 candidate.details["api_download_error"] = str(exc)
 
