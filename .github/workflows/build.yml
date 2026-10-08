@@ -92,6 +92,9 @@ jobs:
       - name: Validate Python sources
         run: python3 -m py_compile apk_providers.py apk_validator.py build.py
 
+      - name: Run provider regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
       - name: Run Build Script
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
