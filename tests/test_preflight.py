@@ -25,7 +25,7 @@ class PreflightTests(unittest.TestCase):
             self.assertRegex(app_id, r"^[a-z0-9][a-z0-9_-]*$")
             self.assertRegex(
                 package,
-                r"^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+$",
+                r"^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$",
             )
             self.assertNotIn(app_id, seen_ids)
             self.assertNotIn(package, seen_packages)
