@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791448652
+    "updated_at": 1791484146
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -71,8 +71,8 @@
             "download_page_error": "Uptodown direct download URL not found",
             "post_download_token": "",
             "package": "me.mycake",
-            "page_download_error": "Uptodown direct download URL not found",
-            "api_download_error": "Uptodown download API returned HTTP 526"
+            "api_download_error": "Uptodown download API returned HTTP 526",
+            "page_download_error": "Uptodown direct download URL not found"
           }
         },
         "error": "Uptodown direct download URL not found"
@@ -98,8 +98,8 @@
             "download_page_error": "Uptodown direct download URL not found",
             "post_download_token": "",
             "package": "me.mycake",
-            "page_download_error": "Uptodown direct download URL not found",
-            "api_download_error": "Uptodown download API returned HTTP 526"
+            "api_download_error": "Uptodown download API returned HTTP 526",
+            "page_download_error": "Uptodown direct download URL not found"
           }
         },
         "error": "Uptodown direct download URL not found"
