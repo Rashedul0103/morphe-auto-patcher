@@ -1,5 +1,4 @@
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -82,7 +81,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_ui_accepts_all_supported_artifact_extensions(self):
         ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
-        self.assertRegex(ui, re.compile(r"\\.\\(apk\\|apkm\\|apks\\|xapk", re.I))
+        self.assertIn(".apk,.apkm,.apks,.xapk", ui)
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
 
