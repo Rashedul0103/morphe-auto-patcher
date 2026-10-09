@@ -1297,9 +1297,21 @@ def main():
             )
             print(f"⚠️ ACTION REQUIRED: Manual stock Android artifact required for '{app_id}'")
             manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
+            repository_slug = str(os.environ.get("GITHUB_REPOSITORY", "")).strip("/")
+            owner, separator, repository_name = repository_slug.partition("/")
             stock_release_url = (
-                f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}"
-                f"/releases/tag/stock-{app_id}"
+                f"https://github.com/{repository_slug}/releases/tag/stock-{app_id}"
+                if separator else ""
+            )
+            # The app-specific Patch Manager route opens the existing upload UI.
+            # PATCH_MANAGER_URL can override the standard GitHub Pages URL when
+            # the repository is served from a custom domain.
+            web_ui_base = str(os.environ.get("PATCH_MANAGER_URL", "")).strip()
+            if not web_ui_base and owner and repository_name:
+                web_ui_base = f"https://{owner}.github.io/{repository_name}/"
+            upload_ui_url = (
+                f"{web_ui_base.rstrip('/')}/#/upload/{urllib.parse.quote(app_id, safe='')}"
+                if web_ui_base else ""
             )
             reason = acquisition.get("error") or "Automatic stock APK acquisition failed."
             if discord_webhook:
@@ -1316,7 +1328,8 @@ def main():
                         {"name": "Target Version", "value": app_version or "Latest", "inline": True},
                         {"name": "Architecture Preference", "value": apk_arch, "inline": True},
                         {"name": "Download Exact APK", "value": f"[Open download page]({manual_link})", "inline": False},
-                        {"name": "Upload Stock Android Artifact", "value": f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
+                        {"name": "Upload through Patch Manager", "value": f"[Open {app_id} upload page]({upload_ui_url})" if upload_ui_url else f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
+                        {"name": "GitHub Release fallback", "value": f"[Open stock-{app_id} release]({stock_release_url})" if stock_release_url else "Not available", "inline": False},
                         {"name": "Reason", "value": reason[:1024], "inline": False}
                     ]
                 )
