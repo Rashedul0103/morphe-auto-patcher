@@ -1,0 +1,49 @@
+name: Test Discord Alerts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send-test-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "::error::DISCORD_WEBHOOK secret is missing."
+            exit 1
+          fi
+
+          payload=$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({
+              "embeds": [{
+                  "title": "🧪 Discord alert test",
+                  "description": "The Morphe Auto-Patcher GitHub Actions workflow can reach this Discord channel. This is a test message; no APK was acquired or patched.",
+                  "color": 3447003,
+                  "fields": [
+                      {"name": "Repository", "value": os.environ["REPOSITORY"], "inline": True},
+                      {"name": "Workflow run", "value": os.environ["RUN_URL"], "inline": False}
+                  ],
+                  "footer": {"text": "Morphe Auto-Patcher"}
+              }]
+          }))
+          PY
+          )
+
+          status=$(curl --silent --show-error --output /tmp/discord-response.txt --write-out "%{http_code}"             --request POST             --header "Content-Type: application/json"             --data "$payload"             "$DISCORD_WEBHOOK")
+
+          if [ "$status" != "204" ] && [ "$status" != "200" ]; then
+            echo "::error::Discord webhook returned HTTP $status."
+            cat /tmp/discord-response.txt
+            exit 1
+          fi
+
+          echo "Discord accepted the test notification (HTTP $status)."
