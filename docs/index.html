@@ -229,7 +229,7 @@ let S = {
       keep_releases: 3, 
       trigger_policy: 'on_new_patch', 
       check_interval_hours: 6,
-      discord_webhook: ''
+      discord_webhook: '', notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
     }, 
     sources: [], apps: [], hidden_apps: [] 
   },
@@ -411,11 +411,11 @@ async function connect(quiet) {
       if (e.status != 404) throw e;
       S.sha = '';
       S.config = { 
-        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '' }, 
+        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '', notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true }, 
         sources: [], apps: [], hidden_apps: [] 
       };
     }
-    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '' };
+    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '', notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true };
     if (!Array.isArray(S.config.apps)) S.config.apps = [];
     if (!Array.isArray(S.config.sources)) S.config.sources = [];
     if (!Array.isArray(S.config.hidden_apps)) S.config.hidden_apps = [];
@@ -1577,7 +1577,7 @@ function vSet() {
       keep_releases: 3, 
       trigger_policy: 'on_new_patch', 
       check_interval_hours: 6,
-      discord_webhook: ''
+      discord_webhook: '', notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
     };
     b = `
       <div class="card">
@@ -1621,7 +1621,22 @@ function vSet() {
 
         <div class="lbl" style="margin-top:14px">Discord Webhook URL (Optional Notifications)</div>
         <input type="text" data-c="cfg_st" data-k="discord_webhook" value="${esc(st.discord_webhook || '')}" placeholder="https://discord.com/api/webhooks/..." style="font-family:monospace;font-size:0.85rem">
-        <div class="d">Receive notifications when builds succeed or need manual APK recovery.</div>
+        <div class="d">Receive notifications when builds succeed or need manual APK recovery. The GitHub Actions secret is recommended for the webhook URL.</div>
+
+        <div class="lbl" style="margin-top:14px">Discord Failure Alerts</div>
+        <div class="d">Turn each failure notification on or off independently. These alerts are enabled by default for existing configurations.</div>
+        <div class="row" style="margin-top:10px">
+          <div class="g"><b>Patching failure</b><div class="d">Notify when Morphe cannot create the patched APK.</div></div>
+          ${sw(st.notify_patching_failure !== false, 'data-a="sw_discord_patching"')}
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="g"><b>Patched APK validation failure</b><div class="d">Notify when the output APK fails package, version, or architecture validation.</div></div>
+          ${sw(st.notify_output_validation_failure !== false, 'data-a="sw_discord_validation"')}
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="g"><b>Release publishing failure</b><div class="d">Notify when GitHub cannot publish the patched APK release.</div></div>
+          ${sw(st.notify_release_publishing_failure !== false, 'data-a="sw_discord_publishing"')}
+        </div>
       </div>
 
       <div class="card">
@@ -2165,6 +2180,27 @@ Object.assign(A, {
     S.config.settings = S.config.settings || {};
     const cur = S.config.settings.auto_prune !== false;
     S.config.settings.auto_prune = !cur;
+    t.classList.toggle('on', !cur);
+    dirty();
+  },
+  sw_discord_patching: t => {
+    S.config.settings = S.config.settings || {};
+    const cur = S.config.settings.notify_patching_failure !== false;
+    S.config.settings.notify_patching_failure = !cur;
+    t.classList.toggle('on', !cur);
+    dirty();
+  },
+  sw_discord_validation: t => {
+    S.config.settings = S.config.settings || {};
+    const cur = S.config.settings.notify_output_validation_failure !== false;
+    S.config.settings.notify_output_validation_failure = !cur;
+    t.classList.toggle('on', !cur);
+    dirty();
+  },
+  sw_discord_publishing: t => {
+    S.config.settings = S.config.settings || {};
+    const cur = S.config.settings.notify_release_publishing_failure !== false;
+    S.config.settings.notify_release_publishing_failure = !cur;
     t.classList.toggle('on', !cur);
     dirty();
   },

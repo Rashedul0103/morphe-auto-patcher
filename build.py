@@ -65,6 +65,175 @@ def send_discord_webhook(webhook_url, title, description, color=0x3B82F6, fields
     except Exception as e:
         print(f"Warning: Failed to send Discord webhook: {e}")
 
+
+DISCORD_FAILURE_ALERTS = {
+    "patching": {
+        "setting": "notify_patching_failure",
+        "title": "❌ Patching Failed",
+        "color": 0xDC2626,
+        "stage_label": "Morphe patching",
+    },
+    "output_validation": {
+        "setting": "notify_output_validation_failure",
+        "title": "❌ Patched APK Validation Failed",
+        "color": 0xDC2626,
+        "stage_label": "patched APK validation",
+    },
+    "release_publishing": {
+        "setting": "notify_release_publishing_failure",
+        "title": "❌ Release Publishing Failed",
+        "color": 0xDC2626,
+        "stage_label": "GitHub Release publishing",
+    },
+}
+
+
+def discord_failure_alert_enabled(settings, stage):
+    """Return whether a stage-specific failure alert is enabled.
+
+    Missing settings default to enabled so existing config.json files keep
+    receiving failure alerts after this feature is deployed.
+    """
+    spec = DISCORD_FAILURE_ALERTS.get(stage)
+    if not spec:
+        raise ValueError(f"Unknown Discord failure-alert stage: {stage}")
+    if not isinstance(settings, dict):
+        settings = {}
+    return settings.get(spec["setting"], True) is not False
+
+
+def send_build_failure_alert(
+    webhook_url, settings, stage, app_id, target_version, architecture, reason
+):
+    """Send a stage-specific failure alert unless its UI toggle is disabled."""
+    spec = DISCORD_FAILURE_ALERTS.get(stage)
+    if not spec:
+        raise ValueError(f"Unknown Discord failure-alert stage: {stage}")
+    if not webhook_url or not discord_failure_alert_enabled(settings, stage):
+        return False
+
+    fields = [
+        {"name": "App", "value": str(app_id or "Unknown")[:256], "inline": True},
+        {"name": "Target Version", "value": str(target_version or "Latest / auto")[:256], "inline": True},
+        {"name": "Architecture", "value": str(architecture or "auto")[:256], "inline": True},
+    ]
+    reason_text = str(reason or "No failure details were reported.").strip()
+    if len(reason_text) > 950:
+        reason_text = reason_text[:947] + "..."
+    fields.append({"name": "Reason", "value": reason_text, "inline": False})
+
+    repository = str(os.environ.get("GITHUB_REPOSITORY", "")).strip("/")
+    run_id = str(os.environ.get("GITHUB_RUN_ID", "")).strip()
+    server_url = str(os.environ.get("GITHUB_SERVER_URL", "https://github.com")).rstrip("/")
+    if repository and run_id:
+        run_url = f"{server_url}/{repository}/actions/runs/{run_id}"
+        fields.append({"name": "Workflow Run", "value": f"[Open failed workflow run]({run_url})", "inline": False})
+
+    send_discord_webhook(
+        webhook_url,
+        title=f"{spec['title']}: {app_id or 'Unknown'}",
+        description=(
+            f"The build failed during {spec['stage_label']}. "
+            "Review the reason and workflow log before retrying."
+        ),
+        color=spec["color"],
+        fields=fields,
+    )
+    return True
+
+
+def _manual_url_rank(url, package, target_version):
+    """Prefer direct artifacts and provider pages tied to the requested version."""
+    try:
+        parsed = urllib.parse.urlparse(str(url or "").strip())
+        host = (parsed.hostname or "").lower()
+        path = urllib.parse.unquote(parsed.path or "").lower()
+        decoded_url = urllib.parse.unquote_plus(str(url or "")).lower()
+    except Exception:
+        return -1
+    if parsed.scheme not in ("http", "https") or not host:
+        return -1
+
+    if path.endswith((".apk", ".apkm", ".apks", ".xapk", ".axapk")):
+        return 130
+
+    version = str(target_version or "").strip().lower()
+    markers = {version, version.replace(".", "-"), version.replace(".", "_")} if version else set()
+    has_version = any(marker and marker in decoded_url for marker in markers)
+    package_value = str(package or "").strip().lower()
+    has_package = bool(package_value and package_value in decoded_url)
+    known_provider = any(
+        host == domain or host.endswith("." + domain)
+        for domain in ("apkmirror.com", "uptodown.com", "apkpure.com", "apkcombo.com")
+    )
+    specific_route = known_provider and (
+        "/apk/" in path or "/app/" in path or "/android/" in path
+        or "/versions/" in path or path.count("/") >= 3
+    )
+    is_google_search = (host == "google.com" or host.endswith(".google.com")) and path.rstrip("/") == "/search"
+
+    if specific_route and has_version:
+        return 120
+    if has_version and has_package and not is_google_search:
+        return 105
+    if is_google_search and has_version and has_package:
+        return 95
+    if specific_route:
+        return 80
+    if has_version:
+        return 60
+    if known_provider:
+        return 40
+    return 10
+
+
+def select_manual_download_url(manual_urls, fallback_url, package, target_version):
+    """Choose the strongest available manual destination without inventing URLs."""
+    candidates = []
+    for candidate in list(manual_urls or []) + [fallback_url]:
+        value = str(candidate or "").strip()
+        if value.startswith(("https://", "http://")) and value not in candidates:
+            candidates.append(value)
+    if not candidates:
+        return ""
+    return max(
+        enumerate(candidates),
+        key=lambda item: (_manual_url_rank(item[1], package, target_version), -item[0]),
+    )[1]
+
+
+def manual_download_link_label(url, target_version):
+    """Describe the actual destination honestly; never imply a search is a direct download."""
+    parsed = urllib.parse.urlparse(str(url or ""))
+    host = (parsed.hostname or "").lower()
+    path = urllib.parse.unquote(parsed.path or "").lower()
+    decoded_url = urllib.parse.unquote_plus(str(url or "")).lower()
+    if path.endswith((".apk", ".apkm", ".apks", ".xapk", ".axapk")):
+        return "Download exact APK directly"
+    if (host == "google.com" or host.endswith(".google.com")) and path.rstrip("/") == "/search":
+        return "Search for exact app version"
+    if host.endswith("apkmirror.com") and path in ("", "/") and (
+        "searchtype=" in parsed.query.lower() or "s=" in parsed.query.lower()
+    ):
+        return "Search APKMirror for exact app version"
+
+    version = str(target_version or "").strip().lower()
+    markers = {version, version.replace(".", "-"), version.replace(".", "_")} if version else set()
+    has_version = any(marker and marker in decoded_url for marker in markers)
+    known_provider = any(
+        host == domain or host.endswith("." + domain)
+        for domain in ("apkmirror.com", "uptodown.com", "apkpure.com", "apkcombo.com")
+    )
+    specific_route = known_provider and (
+        "/apk/" in path or "/app/" in path or "/android/" in path
+        or "/versions/" in path or path.count("/") >= 3
+    )
+    if specific_route and has_version:
+        return "Open version download page"
+    if specific_route:
+        return "Open app version list (confirm exact version)"
+    return "Open version download page"
+
 def pre_flight_checks():
     if not shutil.which("java"):
         print("❌ Error: 'java' is not installed or not in PATH.")
@@ -1296,16 +1465,19 @@ def main():
                 },
             )
             print(f"⚠️ ACTION REQUIRED: Manual stock Android artifact required for '{app_id}'")
-            manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
+            manual_link = select_manual_download_url(
+                acquisition.get("manual_urls") or [],
+                apkmirror_url,
+                android_package or package,
+                app_version,
+            )
             manual_parsed = urllib.parse.urlparse(manual_link)
             manual_host = (manual_parsed.hostname or "").lower()
             manual_path = manual_parsed.path.lower()
             if manual_host == "google.com" or manual_host.endswith(".google.com"):
                 manual_link_label = "Search for exact app version"
-            elif manual_path.endswith((".apk", ".apkm", ".apks", ".xapk")):
-                manual_link_label = "Download exact APK directly"
             else:
-                manual_link_label = "Open version download page"
+                manual_link_label = manual_download_link_label(manual_link, app_version)
             repository_slug = str(os.environ.get("GITHUB_REPOSITORY", "")).strip("/")
             owner, separator, repository_name = repository_slug.partition("/")
             stock_release_url = (
@@ -1388,6 +1560,12 @@ def main():
             )
             print(f"Error: Patching failed for {app_id}!")
             with open(f"{app_id}-patch-error.log", 'w') as f: f.write(patch_out)
+            failure_reason = "Morphe patch command failed or produced no APK."
+            if patch_out:
+                failure_reason += "\n\n" + patch_out[-700:]
+            send_build_failure_alert(
+                discord_webhook, repo_settings, "patching", app_id, app_version, arch, failure_reason
+            )
             has_errors = True
             continue
 
@@ -1418,6 +1596,9 @@ def main():
             )
             with open(f"{app_id}-output-validation-error.log", 'w') as f: f.write(str(exc))
             print(f"Error: Patched APK validation failed for {app_id}: {exc}")
+            send_build_failure_alert(
+                discord_webhook, repo_settings, "output_validation", app_id, app_version, arch, str(exc)
+            )
             has_errors = True
             continue
 
@@ -1452,6 +1633,10 @@ def main():
                         "reason": rel_out or "GitHub release creation failed.",
                         "updated_at": now,
                     },
+                )
+                send_build_failure_alert(
+                    discord_webhook, repo_settings, "release_publishing", app_id, app_version, arch,
+                    rel_out or "GitHub Release creation failed.",
                 )
                 has_errors = True
             else:

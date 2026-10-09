@@ -121,7 +121,10 @@
     "keep_releases": 3,
     "trigger_policy": "on_new_patch",
     "check_interval_hours": 6,
-    "discord_webhook": ""
+    "discord_webhook": "",
+    "notify_patching_failure": true,
+    "notify_output_validation_failure": true,
+    "notify_release_publishing_failure": true
   },
   "sources": [
     {
