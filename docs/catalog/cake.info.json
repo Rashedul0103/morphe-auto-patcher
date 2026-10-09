@@ -13,13 +13,13 @@
     "hoo-dles/morphe-patches"
   ],
   "stock_signer_sha256": [],
-  "icon_url": "catalog/icons/cake.png",
-  "icon_source": "google_play",
+  "icon_url": "",
+  "icon_source": "",
   "build_status": {
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791484146
+    "updated_at": 1791533509
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,9 +28,7 @@
     "package": "me.mycake",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/",
-      "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
-      "https://me-mycake.en.uptodown.com/android/download/1127741310-x"
+      "https://www.apkmirror.com/apk/cake-corp/cake-lesson-updates-every-day/cake-learn-english-korean-6-4-0-release/cake-learn-english-korean-6-4-0-3-android-apk-download/"
     ],
     "attempts": [
       {
@@ -53,56 +51,11 @@
       {
         "provider": "uptodown",
         "version": "6.4.0",
-        "status": "download_failed",
-        "via": "provider",
-        "candidate": {
-          "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-          "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678-x",
-          "download_url": "",
-          "architecture": "arm64-v8a",
-          "dpi": "",
-          "is_bundle": false,
-          "artifact_type": "apk",
-          "details": {
-            "version_page": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-            "data_code": "792642",
-            "data_version": "12085684",
-            "file_id": "1127496678",
-            "download_page_error": "Uptodown direct download URL not found",
-            "post_download_token": "",
-            "package": "me.mycake",
-            "api_download_error": "Uptodown download API returned HTTP 526",
-            "page_download_error": "Uptodown direct download URL not found"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
-      },
-      {
-        "provider": "uptodown",
-        "version": "6.4.0",
-        "status": "download_failed",
-        "via": "provider",
-        "candidate": {
-          "page_url": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-          "download_page_url": "https://me-mycake.en.uptodown.com/android/download/1127741310-x",
-          "download_url": "",
-          "architecture": "armeabi-v7a",
-          "dpi": "",
-          "is_bundle": false,
-          "artifact_type": "apk",
-          "details": {
-            "version_page": "https://me-mycake.en.uptodown.com/android/download/1127496678",
-            "data_code": "792642",
-            "data_version": "12085684",
-            "file_id": "1127741310",
-            "download_page_error": "Uptodown direct download URL not found",
-            "post_download_token": "",
-            "package": "me.mycake",
-            "api_download_error": "Uptodown download API returned HTTP 526",
-            "page_download_error": "Uptodown direct download URL not found"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown app discovery failed for Cake",
+        "app_query": "Cake",
+        "expected_package": "me.mycake"
       },
       {
         "provider": "apkpure",
