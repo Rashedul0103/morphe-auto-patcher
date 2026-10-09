@@ -423,6 +423,12 @@ async function connect(quiet) {
     S.connected = true; S.dirty = false; persist(); closeDlg(); render();
     await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
     render();
+    // Discord recovery links use #/upload/<app-id>. After the repository data
+    // is loaded and the user is connected, open the app's existing upload form.
+    const currentRoute = route();
+    if (currentRoute.v === 'upload' && app(currentRoute.id)) {
+      openUploadApkDialog(currentRoute.id);
+    }
     if (!quiet) toast('Connected ✔');
   } catch(e) {
     S.connected = false;
@@ -928,10 +934,10 @@ function theme() {
 }
 
 function render() {
-  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', sources: 'sources', builds: 'builds', settings: 'settings', patched: 'patched' }[r.v] || 'home';
+  const r = route(), m = $('#main'), nav = { home: 'home', app: 'home', upload: 'home', sources: 'sources', builds: 'builds', settings: 'settings', patched: 'patched' }[r.v] || 'home';
   document.querySelectorAll('.bb[data-nav]').forEach(b => b.classList.toggle('hl', b.dataset.nav === nav));
   $('#fab').style.display = S.dirty ? 'block' : 'none';
-  m.innerHTML = ({ home: vHome, app: vApp, sources: vSources, builds: vBuilds, settings: vSet, patched: vPatchedApps }[r.v] || vHome)(r);
+  m.innerHTML = ({ home: vHome, app: vApp, upload: vApp, sources: vSources, builds: vBuilds, settings: vSet, patched: vPatchedApps }[r.v] || vHome)(r);
   if (r.v === 'home') initGestures();
   if (r.v === 'builds') paintLive();
 }
