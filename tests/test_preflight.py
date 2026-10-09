@@ -6,6 +6,7 @@ from apk_providers import (
     DEFAULT_PROVIDER_URLS,
     SUPPORTED_ARTIFACT_TYPES,
     provider_order,
+    morphe_manual_search_url,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,6 +90,28 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("function openUploadApkDialog(id)", ui)
         self.assertIn("function uploadStockApk(id, file)", ui)
         self.assertIn("Verify & Start Patch", ui)
+
+    def test_morphe_manual_fallback_search_is_exact_version_and_catalog_scoped(self):
+        url = morphe_manual_search_url(
+            "com.example.sample",
+            "4.2.1",
+            "auto",
+        )
+        self.assertTrue(url.startswith("https://google.com/search?q="))
+        from urllib.parse import unquote_plus
+        query = unquote_plus(url.split("q=", 1)[1])
+        self.assertIn('"com.example.sample"', query)
+        self.assertIn('"4.2.1"', query)
+        self.assertIn("site:apkmirror.com", query)
+        self.assertIn("site:uptodown.com", query)
+        self.assertIn("site:apkpure.com", query)
+        self.assertIn("site:apkcombo.com", query)
+
+    def test_discord_link_label_distinguishes_search_from_provider_page(self):
+        build = (ROOT / "build.py").read_text(encoding="utf-8")
+        self.assertIn("Search for exact app version", build)
+        self.assertIn("Open version download page", build)
+        self.assertIn('manual_host == "google.com"', build)
 
     def test_discord_manual_recovery_links_to_upload_flow(self):
         build = (ROOT / "build.py").read_text(encoding="utf-8")
