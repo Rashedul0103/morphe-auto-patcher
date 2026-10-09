@@ -1297,12 +1297,15 @@ def main():
             )
             print(f"⚠️ ACTION REQUIRED: Manual stock Android artifact required for '{app_id}'")
             manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
-            manual_host = (urllib.parse.urlparse(manual_link).hostname or "").lower()
-            manual_link_label = (
-                "Search for exact app version"
-                if manual_host == "google.com" or manual_host.endswith(".google.com")
-                else "Open version download page"
-            )
+            manual_parsed = urllib.parse.urlparse(manual_link)
+            manual_host = (manual_parsed.hostname or "").lower()
+            manual_path = manual_parsed.path.lower()
+            if manual_host == "google.com" or manual_host.endswith(".google.com"):
+                manual_link_label = "Search for exact app version"
+            elif manual_path.endswith((".apk", ".apkm", ".apks", ".xapk")):
+                manual_link_label = "Download exact APK directly"
+            else:
+                manual_link_label = "Open version download page"
             repository_slug = str(os.environ.get("GITHUB_REPOSITORY", "")).strip("/")
             owner, separator, repository_name = repository_slug.partition("/")
             stock_release_url = (
