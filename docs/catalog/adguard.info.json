@@ -13,13 +13,13 @@
     "hoo-dles/morphe-patches"
   ],
   "stock_signer_sha256": [],
-  "icon_url": "",
-  "icon_source": "",
+  "icon_url": "catalog/icons/adguard.png",
+  "icon_source": "google_play",
   "build_status": {
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791533509
+    "updated_at": 1791564213
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -53,7 +53,7 @@
         "version": "4.14.2",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "Uptodown app discovery failed for AdGuard",
+        "error": "No compatible candidate found",
         "app_query": "AdGuard",
         "expected_package": "com.adguard.android"
       },

@@ -11,7 +11,12 @@
   "patch_source": "MorpheApp/morphe-patches",
   "patch_filter": "com.google.android.youtube",
   "android_package": "com.google.android.youtube",
-  "patch_source_attempts": [],
+  "patch_source_attempts": [
+    {
+      "repo": "MorpheApp/morphe-patches",
+      "status": "no_release"
+    }
+  ],
   "patch_source_candidates": [
     "MorpheApp/morphe-patches"
   ],
@@ -19,9 +24,10 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
+    "status": "failed",
     "stage": "patch_source",
-    "updated_at": 1791533509
+    "reason": "No compatible patch source found.",
+    "updated_at": 1791564213
   },
   "apk_acquisition": {
     "status": "downloaded",
