@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from urllib.parse import quote, urljoin, urlparse, unquote, parse_qs
+from urllib.parse import quote, quote_plus, urljoin, urlparse, unquote, parse_qs
 import base64
 import hashlib
 import os
@@ -161,6 +161,22 @@ def _resolve_head_redirect(session, url: str) -> str:
                 continue
         return current
     return current
+
+
+def morphe_manual_search_url(expected_package: str, target_version: str, preferred_arch: str = "auto") -> str:
+    """Mirror Morphe Manager's safe manual fallback when its redirect API has no destination."""
+    package = str(expected_package or "").strip()
+    version = _clean_version(target_version)
+    if not package:
+        return ""
+    version_part = f'"{version}" ' if version else ""
+    arch = (preferred_arch or "").strip().lower().replace("_", "-")
+    # APK catalog searches commonly use nodpi for a page-level result; only
+    # include an ABI when the caller explicitly selected one.
+    architecture = arch if arch and arch not in ("auto", "automatic") else "nodpi"
+    sites = "(site:apkmirror.com OR site:uptodown.com OR site:apkpure.com OR site:apkcombo.com)"
+    query = f'"{package}" {version_part}{architecture} {sites}'
+    return "https://google.com/search?q=" + quote_plus(query)
 
 
 def resolve_morphe_api_urls(
@@ -2524,6 +2540,19 @@ def acquire_from_providers(
                 "via": f"morphe_api:{seed.abi}",
                 "seed_url": seed.url,
             })
+
+    # Match Morphe Manager: if the API/provider resolvers could not give us a
+    # concrete destination, send the user to a package + exact-version web search
+    # restricted to the supported APK catalogs. Never label a generic provider
+    # homepage as the exact version's download page.
+    if not manual_urls:
+        fallback_url = morphe_manual_search_url(
+            expected_package or app_query,
+            target_version,
+            preferred_arch,
+        )
+        if fallback_url:
+            manual_urls.append(fallback_url)
 
     return AcquisitionResult(
         status="manual_required",
