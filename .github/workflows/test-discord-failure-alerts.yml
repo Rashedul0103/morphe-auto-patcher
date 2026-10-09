@@ -1,0 +1,115 @@
+name: Test Discord Failure Alerts
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Which simulated failure alert to send"
+        required: true
+        type: choice
+        options:
+          - all
+          - patching
+          - output_validation
+          - release_publishing
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  test-failure-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Send selected simulated failure alert(s)
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          SELECTED_STAGE: ${{ inputs.stage }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          webhook = os.environ.get("DISCORD_WEBHOOK", "").strip()
+          if not webhook:
+              raise SystemExit("DISCORD_WEBHOOK secret is missing.")
+
+          with open("config.json", encoding="utf-8") as f:
+              config = json.load(f)
+          settings = config.get("settings", {})
+
+          stages = {
+              "patching": {
+                  "setting": "notify_patching_failure",
+                  "title": "🧪 TEST — Patching Failed",
+                  "reason": "Simulated test only: the patching-failure alert path was selected. No APK was patched.",
+              },
+              "output_validation": {
+                  "setting": "notify_output_validation_failure",
+                  "title": "🧪 TEST — Patched APK Validation Failed",
+                  "reason": "Simulated test only: the output-validation alert path was selected. No APK was built or validated.",
+              },
+              "release_publishing": {
+                  "setting": "notify_release_publishing_failure",
+                  "title": "🧪 TEST — Release Publishing Failed",
+                  "reason": "Simulated test only: the release-publishing alert path was selected. No GitHub Release was created.",
+              },
+          }
+
+          selected = os.environ["SELECTED_STAGE"]
+          names = list(stages) if selected == "all" else [selected]
+          sent = 0
+          skipped = []
+
+          for stage in names:
+              spec = stages.get(stage)
+              if not spec:
+                  raise SystemExit(f"Unknown stage: {stage}")
+              if settings.get(spec["setting"], True) is False:
+                  skipped.append(stage)
+                  print(f"SKIPPED {stage}: its config.json alert setting is OFF.")
+                  continue
+
+              payload = {
+                  "embeds": [{
+                      "title": spec["title"],
+                      "description": spec["reason"],
+                      "color": 15158332,
+                      "fields": [
+                          {"name": "Simulated stage", "value": stage, "inline": True},
+                          {"name": "Repository", "value": os.environ["REPOSITORY"], "inline": True},
+                          {"name": "Workflow run", "value": os.environ["RUN_URL"], "inline": False},
+                      ],
+                      "footer": {"text": "Morphe Auto-Patcher • TEST ALERT — not a real failure"},
+                  }]
+              }
+              request = urllib.request.Request(
+                  webhook,
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json", "User-Agent": "Morphe-Auto-Patcher-Test/1.0"},
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=15) as response:
+                      if response.status not in (200, 204):
+                          raise SystemExit(f"Discord returned unexpected HTTP status {response.status} for {stage}.")
+              except urllib.error.HTTPError as exc:
+                  body = exc.read().decode("utf-8", errors="replace")
+                  raise SystemExit(f"Discord rejected {stage} alert: HTTP {exc.code}: {body}") from exc
+              except Exception as exc:
+                  raise SystemExit(f"Could not deliver {stage} alert: {exc}") from exc
+
+              sent += 1
+              print(f"DELIVERED {stage} simulated failure alert.")
+
+          print(f"Finished: {sent} alert(s) delivered; {len(skipped)} alert(s) skipped because their setting is OFF.")
+          if sent == 0:
+              raise SystemExit("No alerts were delivered. Check the selected stage and config.json settings.")
+          PY
