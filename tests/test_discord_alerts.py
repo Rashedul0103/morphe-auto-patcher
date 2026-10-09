@@ -58,7 +58,7 @@ class DiscordFailureAlertTests(unittest.TestCase):
         self.assertTrue(result)
         send.assert_called_once()
         args, kwargs = send.call_args
-        self.assertIn("Validation Failed", args[1])
+        self.assertIn("Validation Failed", kwargs["title"])
         fields = {field["name"]: field["value"] for field in kwargs["fields"]}
         self.assertEqual(fields["Target Version"], "20.40.39")
         self.assertEqual(fields["Architecture"], "arm64-v8a")
