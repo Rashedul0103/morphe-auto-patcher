@@ -115,6 +115,7 @@ jobs:
           FORCE_BUILD: ${{ inputs.force || (github.event_name == 'push') }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          PATCH_MANAGER_URL: ${{ vars.PATCH_MANAGER_URL }}
         run: python3 build.py
 
       - name: Commit Catalog
