@@ -24,92 +24,73 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Send selected simulated failure alert(s)
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install project dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Exercise the actual build.py Discord alert helper
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           SELECTED_STAGE: ${{ inputs.stage }}
-          REPOSITORY: ${{ github.repository }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
-          python3 - <<'PY'
+          python - <<'PY'
           import json
           import os
-          import urllib.error
-          import urllib.request
+          import sys
+          import build
 
           webhook = os.environ.get("DISCORD_WEBHOOK", "").strip()
           if not webhook:
               raise SystemExit("DISCORD_WEBHOOK secret is missing.")
 
           with open("config.json", encoding="utf-8") as f:
-              config = json.load(f)
-          settings = config.get("settings", {})
+              settings = json.load(f).get("settings", {})
 
           stages = {
-              "patching": {
-                  "setting": "notify_patching_failure",
-                  "title": "🧪 TEST — Patching Failed",
-                  "reason": "Simulated test only: the patching-failure alert path was selected. No APK was patched.",
-              },
-              "output_validation": {
-                  "setting": "notify_output_validation_failure",
-                  "title": "🧪 TEST — Patched APK Validation Failed",
-                  "reason": "Simulated test only: the output-validation alert path was selected. No APK was built or validated.",
-              },
-              "release_publishing": {
-                  "setting": "notify_release_publishing_failure",
-                  "title": "🧪 TEST — Release Publishing Failed",
-                  "reason": "Simulated test only: the release-publishing alert path was selected. No GitHub Release was created.",
-              },
+              "patching": "SIMULATED ONLY: testing the patching-failure notification helper. No APK was patched.",
+              "output_validation": "SIMULATED ONLY: testing the output-validation notification helper. No APK was built or validated.",
+              "release_publishing": "SIMULATED ONLY: testing the release-publishing notification helper. No GitHub Release was created.",
           }
-
           selected = os.environ["SELECTED_STAGE"]
           names = list(stages) if selected == "all" else [selected]
-          sent = 0
-          skipped = []
+          if any(stage not in stages for stage in names):
+              raise SystemExit(f"Unknown stage selection: {selected}")
 
+          delivered = 0
+          skipped = 0
           for stage in names:
-              spec = stages.get(stage)
-              if not spec:
-                  raise SystemExit(f"Unknown stage: {stage}")
-              if settings.get(spec["setting"], True) is False:
-                  skipped.append(stage)
-                  print(f"SKIPPED {stage}: its config.json alert setting is OFF.")
+              enabled = build.discord_failure_alert_enabled(settings, stage)
+              if not enabled:
+                  print(f"SKIPPED {stage}: config.json setting is OFF.")
+                  skipped += 1
                   continue
 
-              payload = {
-                  "embeds": [{
-                      "title": spec["title"],
-                      "description": spec["reason"],
-                      "color": 15158332,
-                      "fields": [
-                          {"name": "Simulated stage", "value": stage, "inline": True},
-                          {"name": "Repository", "value": os.environ["REPOSITORY"], "inline": True},
-                          {"name": "Workflow run", "value": os.environ["RUN_URL"], "inline": False},
-                      ],
-                      "footer": {"text": "Morphe Auto-Patcher • TEST ALERT — not a real failure"},
-                  }]
-              }
-              request = urllib.request.Request(
-                  webhook,
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={"Content-Type": "application/json", "User-Agent": "Morphe-Auto-Patcher-Test/1.0"},
-                  method="POST",
-              )
               try:
-                  with urllib.request.urlopen(request, timeout=15) as response:
-                      if response.status not in (200, 204):
-                          raise SystemExit(f"Discord returned unexpected HTTP status {response.status} for {stage}.")
-              except urllib.error.HTTPError as exc:
-                  body = exc.read().decode("utf-8", errors="replace")
-                  raise SystemExit(f"Discord rejected {stage} alert: HTTP {exc.code}: {body}") from exc
+                  result = build.send_build_failure_alert(
+                      webhook,
+                      settings,
+                      stage,
+                      "TEST ONLY — no app",
+                      "SIMULATED",
+                      "not applicable",
+                      stages[stage],
+                  )
               except Exception as exc:
-                  raise SystemExit(f"Could not deliver {stage} alert: {exc}") from exc
+                  raise SystemExit(f"Alert helper raised an exception for {stage}: {exc}") from exc
 
-              sent += 1
-              print(f"DELIVERED {stage} simulated failure alert.")
+              if not result:
+                  raise SystemExit(f"Alert helper did not send the enabled {stage} notification.")
+              print(f"DELIVERED {stage}: actual build.py alert helper returned successfully.")
+              delivered += 1
 
-          print(f"Finished: {sent} alert(s) delivered; {len(skipped)} alert(s) skipped because their setting is OFF.")
-          if sent == 0:
-              raise SystemExit("No alerts were delivered. Check the selected stage and config.json settings.")
+          print(f"Finished: {delivered} actual helper alert(s) sent; {skipped} skipped because settings were OFF.")
+          if delivered == 0:
+              raise SystemExit("No alert was sent. Enable at least one stage in config.json.")
           PY
