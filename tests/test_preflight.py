@@ -85,6 +85,17 @@ class PreflightTests(unittest.TestCase):
         self.assertIn(".apk,.apkm,.apks,.xapk", ui)
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
+        self.assertIn("upload: vApp", ui)
+        self.assertIn("function openUploadApkDialog(id)", ui)
+        self.assertIn("function uploadStockApk(id, file)", ui)
+        self.assertIn("Verify & Start Patch", ui)
+
+    def test_discord_manual_recovery_links_to_upload_flow(self):
+        build = (ROOT / "build.py").read_text(encoding="utf-8")
+        self.assertIn("PATCH_MANAGER_URL", build)
+        self.assertIn("#/upload/", build)
+        self.assertIn("Upload through Patch Manager", build)
+        self.assertIn("GitHub Release fallback", build)
 
 # Controlled E2E trigger marker: commits tagged [e2e] run the full build.
 
