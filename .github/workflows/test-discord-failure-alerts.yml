@@ -13,6 +13,16 @@ on:
           - output_validation
           - release_publishing
         default: all
+      disable_stage:
+        description: "Temporarily simulate one alert switch being OFF (test only)"
+        required: true
+        type: choice
+        options:
+          - none
+          - patching
+          - output_validation
+          - release_publishing
+        default: none
 
 permissions:
   contents: read
@@ -36,6 +46,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           SELECTED_STAGE: ${{ inputs.stage }}
+          DISABLE_STAGE: ${{ inputs.disable_stage }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
@@ -43,7 +54,6 @@ jobs:
           python - <<'PY'
           import json
           import os
-          import sys
           import build
 
           webhook = os.environ.get("DISCORD_WEBHOOK", "").strip()
@@ -51,46 +61,59 @@ jobs:
               raise SystemExit("DISCORD_WEBHOOK secret is missing.")
 
           with open("config.json", encoding="utf-8") as f:
-              settings = json.load(f).get("settings", {})
+              settings = dict(json.load(f).get("settings", {}))
 
           stages = {
-              "patching": "SIMULATED ONLY: testing the patching-failure notification helper. No APK was patched.",
-              "output_validation": "SIMULATED ONLY: testing the output-validation notification helper. No APK was built or validated.",
-              "release_publishing": "SIMULATED ONLY: testing the release-publishing notification helper. No GitHub Release was created.",
+              "patching": ("notify_patching_failure", "SIMULATED ONLY: testing the patching-failure notification helper. No APK was patched."),
+              "output_validation": ("notify_output_validation_failure", "SIMULATED ONLY: testing the output-validation notification helper. No APK was built or validated."),
+              "release_publishing": ("notify_release_publishing_failure", "SIMULATED ONLY: testing the release-publishing notification helper. No GitHub Release was created."),
           }
           selected = os.environ["SELECTED_STAGE"]
+          disable_stage = os.environ["DISABLE_STAGE"]
           names = list(stages) if selected == "all" else [selected]
           if any(stage not in stages for stage in names):
               raise SystemExit(f"Unknown stage selection: {selected}")
+          if disable_stage != "none":
+              if disable_stage not in stages:
+                  raise SystemExit(f"Unknown disable-stage selection: {disable_stage}")
+              if disable_stage not in names:
+                  raise SystemExit("To test an OFF switch, select that stage or 'all' in the stage field.")
+              # Change only this in-memory test setting; config.json and website settings remain untouched.
+              settings[stages[disable_stage][0]] = False
+              print(f"TEST MODE: temporarily treating {disable_stage} alert as OFF in memory only.")
 
           delivered = 0
           skipped = 0
           for stage in names:
+              setting_name, reason = stages[stage]
               enabled = build.discord_failure_alert_enabled(settings, stage)
               if not enabled:
-                  print(f"SKIPPED {stage}: config.json setting is OFF.")
+                  result = build.send_build_failure_alert(
+                      webhook, settings, stage, "TEST ONLY — no app",
+                      "SIMULATED", "not applicable", reason
+                  )
+                  if result is not False:
+                      raise SystemExit(f"OFF-switch check failed for {stage}: helper should return False without sending.")
+                  print(f"PASS {stage}: OFF switch suppressed the notification.")
                   skipped += 1
                   continue
 
               try:
                   result = build.send_build_failure_alert(
-                      webhook,
-                      settings,
-                      stage,
-                      "TEST ONLY — no app",
-                      "SIMULATED",
-                      "not applicable",
-                      stages[stage],
+                      webhook, settings, stage, "TEST ONLY — no app",
+                      "SIMULATED", "not applicable", reason
                   )
               except Exception as exc:
                   raise SystemExit(f"Alert helper raised an exception for {stage}: {exc}") from exc
 
               if not result:
                   raise SystemExit(f"Alert helper did not send the enabled {stage} notification.")
-              print(f"DELIVERED {stage}: actual build.py alert helper returned successfully.")
+              print(f"SENT {stage}: actual build.py alert helper returned successfully.")
               delivered += 1
 
-          print(f"Finished: {delivered} actual helper alert(s) sent; {skipped} skipped because settings were OFF.")
+          print(f"Finished: {delivered} enabled alert(s) attempted; {skipped} disabled alert(s) suppressed.")
           if delivered == 0:
-              raise SystemExit("No alert was sent. Enable at least one stage in config.json.")
+              raise SystemExit("No enabled alerts were sent. Select a stage that is ON.")
+          if disable_stage != "none" and skipped != 1:
+              raise SystemExit("Expected exactly one suppressed alert for the selected OFF-switch test.")
           PY
