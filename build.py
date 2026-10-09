@@ -1297,6 +1297,12 @@ def main():
             )
             print(f"⚠️ ACTION REQUIRED: Manual stock Android artifact required for '{app_id}'")
             manual_link = (acquisition.get("manual_urls") or [apkmirror_url])[0]
+            manual_host = (urllib.parse.urlparse(manual_link).hostname or "").lower()
+            manual_link_label = (
+                "Search for exact app version"
+                if manual_host == "google.com" or manual_host.endswith(".google.com")
+                else "Open version download page"
+            )
             repository_slug = str(os.environ.get("GITHUB_REPOSITORY", "")).strip("/")
             owner, separator, repository_name = repository_slug.partition("/")
             stock_release_url = (
@@ -1327,7 +1333,7 @@ def main():
                     fields=[
                         {"name": "Target Version", "value": app_version or "Latest", "inline": True},
                         {"name": "Architecture Preference", "value": apk_arch, "inline": True},
-                        {"name": "Download Exact APK", "value": f"[Open download page]({manual_link})", "inline": False},
+                        {"name": "Find Exact APK", "value": f"[{manual_link_label}]({manual_link})", "inline": False},
                         {"name": "Upload through Patch Manager", "value": f"[Open {app_id} upload page]({upload_ui_url})" if upload_ui_url else f"[Open stock-{app_id} release]({stock_release_url})", "inline": False},
                         {"name": "GitHub Release fallback", "value": f"[Open stock-{app_id} release]({stock_release_url})" if stock_release_url else "Not available", "inline": False},
                         {"name": "Reason", "value": reason[:1024], "inline": False}
