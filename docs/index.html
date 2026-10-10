@@ -818,12 +818,12 @@ async function ensureStockRelease(id) {
   }
 }
 
-async function uploadReleaseAsset(release, file, onProgress) {
+async function uploadReleaseAsset(release, file, onProgress, uploadName = file.name) {
   const base = String(release.upload_url || '').replace(/\{\?name,label\}$/, '');
   if (!base) throw new Error('GitHub release upload URL is unavailable.');
   return await new Promise((resolve,reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', base + '?name=' + encodeURIComponent(file.name), true);
+    xhr.open('POST', base + '?name=' + encodeURIComponent(uploadName), true);
     xhr.setRequestHeader('Authorization','Bearer ' + S.token);
     xhr.setRequestHeader('Accept','application/vnd.github+json');
     xhr.setRequestHeader('X-GitHub-Api-Version','2022-11-28');
@@ -849,7 +849,9 @@ async function uploadStockApk(id, file) {
   const release = await ensureStockRelease(id);
   const assets = await gh('/releases/' + release.id + '/assets');
   const same = (assets || []).filter(a => a.name === file.name);
-  for (const asset of same) await gh('/releases/assets/' + asset.id, {method:'DELETE'});
+  const extension = file.name.match(/\.[^.]+$/)[0];
+  const stem = file.name.slice(0, -extension.length);
+  const stagedName = same.length ? `${stem}.replacement-${Date.now()}${extension}` : file.name;
 
   dlg(`
     <h2>Uploading Android Artifact</h2>
@@ -863,7 +865,16 @@ async function uploadStockApk(id, file) {
   const result = await uploadReleaseAsset(release,file,pct => {
     const p=$('#apk_up_pct'), b=$('#apk_up_bar'), t=$('#apk_up_status');
     if(p)p.textContent=pct+'%'; if(b)b.style.width=pct+'%'; if(t)t.textContent=pct<100?'Uploading…':'Uploaded. Refreshing verification state…';
-  });
+  }, stagedName);
+
+  if (same.length) {
+    try {
+      for (const asset of same) await gh('/releases/assets/' + asset.id, {method:'DELETE'});
+      await gh('/releases/assets/' + result.id, {method:'PATCH', body:JSON.stringify({name:file.name})});
+    } catch (error) {
+      throw new Error(`The new artifact is uploaded as ${stagedName}, but GitHub could not finish replacing the old filename: ${error.message}`);
+    }
+  }
 
   await loadRels();
   await loadLocalCatalogs();
