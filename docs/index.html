@@ -783,7 +783,7 @@ async function ensureStockRelease(id) {
 }
 
 async function uploadReleaseAsset(release, file, onProgress) {
-  const base = String(release.upload_url || '').replace(/\\{\\?name,label\\}$/, '');
+  const base = String(release.upload_url || '').replace(/\{\?name,label\}$/, '');
   if (!base) throw new Error('GitHub release upload URL is unavailable.');
   return await new Promise((resolve,reject) => {
     const xhr = new XMLHttpRequest();
