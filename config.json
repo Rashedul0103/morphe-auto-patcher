@@ -1,5 +1,41 @@
 {
-  "apps": [],
+  "apps": [
+    {
+      "id": "youtube",
+      "package": "com.google.android.youtube",
+      "patches_repo": "MorpheApp/morphe-patches",
+      "patch_sources": [
+        "MorpheApp/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "21.40.161",
+      "force": false,
+      "auto_patch": true,
+      "icon_url": "",
+      "enable": [],
+      "disable": [],
+      "options": {}
+    },
+    {
+      "id": "music",
+      "package": "com.google.android.apps.youtube.music",
+      "patches_repo": "MorpheApp/morphe-patches",
+      "patch_sources": [
+        "MorpheApp/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "",
+      "force": false,
+      "auto_patch": true,
+      "enable": [],
+      "disable": [],
+      "options": {}
+    }
+  ],
   "settings": {
     "default_arch": "arm64-v8a",
     "auto_prune": true,
@@ -11,6 +47,31 @@
     "notify_output_validation_failure": true,
     "notify_release_publishing_failure": true
   },
-  "sources": [],
+  "sources": [
+    {
+      "repo": "MorpheApp/morphe-patches",
+      "enabled": true,
+      "prerelease": false,
+      "tag": "v1.47.0-dev.18",
+      "release_name": "v1.47.0-dev.18",
+      "patch_count": 169,
+      "icon_url": "",
+      "apps": [
+        {
+          "package": "com.google.android.youtube",
+          "name": "Youtube"
+        },
+        {
+          "package": "com.google.android.apps.youtube.music",
+          "name": "Music"
+        },
+        {
+          "package": "com.reddit.frontpage",
+          "name": "Frontpage"
+        }
+      ],
+      "last_inspected": "2026-10-10T13:26:52.654Z"
+    }
+  ],
   "hidden_apps": []
 }
