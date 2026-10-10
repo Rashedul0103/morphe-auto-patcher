@@ -225,6 +225,9 @@ input:focus, select:focus { border-color: var(--primary); }
  .manager-detail-actions { gap:7px; }
 }
 
+#dock .bb span { display:none; }
+.manager-home-card .ico { background:transparent; }
+@media (min-width:900px) { #dock .bb span { display:block; } }
 </style>
 </head>
 <body>
@@ -1112,6 +1115,7 @@ function vHome() {
     '<div class="manager-search"><i class="ms">search</i><label for="home-search">Search apps</label><input id="home-search" type="search" autocomplete="off" value="' + esc(S.homeSearch || '') + '" placeholder=" " aria-label="Search apps"></div>' +
     '</div>' +
     '<div id="apps">' + listApps() + '</div>' +
+    '<div id="home-search-empty" class="manager-page-card" style="display:none;text-align:center">No matching apps. Try another app name or package.</div>' +
     '<button class="manager-select-apps" data-a="home_sources">Select other apps</button>';
 }
 
@@ -2200,9 +2204,12 @@ async function inspectEnteredSource() {
 
 function applyHomeSearch(value) {
   const q = String(value || '').trim().toLowerCase();
-  document.querySelectorAll('.manager-home-card').forEach(card => {
+  const cards = Array.from(document.querySelectorAll('.manager-home-card'));
+  cards.forEach(card => {
     card.closest('.swipe-box').style.display = !q || (card.dataset.search || '').includes(q) ? '' : 'none';
   });
+  const empty = $('#home-search-empty');
+  if (empty) empty.style.display = q && !cards.some(card => card.closest('.swipe-box').style.display !== 'none') ? '' : 'none';
 }
 
 
