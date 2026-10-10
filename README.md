@@ -2,7 +2,16 @@
 
 A GitHub Actions project for building Morphe-patched Android apps, with a web manager hosted through GitHub Pages.
 
-## Use your own copy
+## Start here
+
+1. **Fork this repository** to your GitHub account.
+2. **Enable GitHub Actions and Pages** in your fork. Publish the `main` branch's `/docs` folder.
+3. **Open your fork's web manager** and connect it with a fine-grained token for that fork.
+4. **Add your patch source and apps** in the manager, then start a build.
+
+The detailed setup steps are below. Use your own fork so your settings, builds, and APK releases stay in your repository.
+
+## Fork and set up your copy
 
 Create a fork first. Your fork stores your app list, patch sources, uploaded original APKs, build history, and published APKs. Do not connect the manager to the upstream project unless you own it.
 
