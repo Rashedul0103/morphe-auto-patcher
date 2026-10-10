@@ -1129,42 +1129,59 @@ class UptodownProvider:
         package = str(package or "").strip()
         if not package:
             return ""
+        endpoint_statuses = []
         try:
             response = self._api_get(
                 f"/apps/byPackagename/{quote(package, safe='')}"
             )
+            endpoint_statuses.append(f"package lookup HTTP {response.status_code}")
             if response.status_code == 200:
-                payload = response.json()
-                data = payload.get("data", payload) if isinstance(payload, dict) else payload
-                if isinstance(data, dict):
-                    app_id = data.get("appID") or data.get("appId") or data.get("id")
-                    if app_id:
-                        return str(app_id)
-        except Exception:
-            pass
+                app_id = self._app_id_from_payload(response.json(), package)
+                if app_id:
+                    return app_id
+        except Exception as exc:
+            endpoint_statuses.append(f"package lookup {type(exc).__name__}")
 
         # API search is the second native route. Only accept an exact package.
         try:
             response = self._api_get(
                 f"/v2/apps/search/{quote(package, safe='')}?page[limit]=10&page[offset]=0"
             )
+            endpoint_statuses.append(f"search HTTP {response.status_code}")
             if response.status_code == 200:
-                payload = response.json()
-                data = payload.get("data", {}) if isinstance(payload, dict) else {}
-                items = data.get("results", []) if isinstance(data, dict) else []
-                if isinstance(items, list):
-                    for item in items:
-                        if not isinstance(item, dict):
-                            continue
-                        found_package = str(
-                            item.get("packageName") or item.get("packagename") or ""
-                        ).strip()
-                        if found_package.lower() == package.lower():
-                            app_id = item.get("appID") or item.get("appId") or item.get("id")
-                            if app_id:
-                                return str(app_id)
-        except Exception:
-            pass
+                app_id = self._app_id_from_payload(response.json(), package)
+                if app_id:
+                    return app_id
+        except Exception as exc:
+            endpoint_statuses.append(f"search {type(exc).__name__}")
+        detail = "; ".join(endpoint_statuses) or "no API response"
+        raise ProviderError(f"Uptodown app ID lookup failed ({detail})")
+
+    @staticmethod
+    def _app_id_from_payload(payload, expected_package: str) -> str:
+        """Read app IDs from the object and list shapes used by Uptodown eAPI."""
+        if isinstance(payload, dict):
+            data = payload.get("data", payload)
+            if isinstance(data, dict):
+                app_id = data.get("appID") or data.get("appId") or data.get("id")
+                found_package = str(
+                    data.get("packageName") or data.get("packagename") or ""
+                ).strip()
+                if app_id and (not found_package or found_package.lower() == expected_package.lower()):
+                    return str(app_id)
+                payloads = (data.get("results"), data.get("items"), data.get("apps"))
+                for items in payloads:
+                    app_id = UptodownProvider._app_id_from_payload(items, expected_package)
+                    if app_id:
+                        return app_id
+                return ""
+            payload = data
+
+        if isinstance(payload, list):
+            for item in payload:
+                app_id = UptodownProvider._app_id_from_payload(item, expected_package)
+                if app_id:
+                    return app_id
         return ""
 
     def _api_detail(self, app_id: str) -> dict:
@@ -1848,6 +1865,7 @@ class UptodownProvider:
         app_query: str = "",
         expected_package: str = "",
     ) -> list[ApkCandidate]:
+        native_api_error = ""
         # First use Uptodown's package-native API. This avoids slug guessing and
         # search-engine dependence entirely when the package is known.
         if expected_package:
@@ -1876,10 +1894,12 @@ class UptodownProvider:
                         raise ProviderError(
                             f"Uptodown API returned mismatched package {real_package}; expected {expected_package}"
                         )
-            except ProviderError:
-                raise
+            except ProviderError as exc:
+                # Keep the page/search resolver available when the native API
+                # is blocked or returns an unsupported response shape.
+                native_api_error = str(exc)
             except Exception as exc:
-                print(f"Uptodown native API discovery failed: {exc}")
+                native_api_error = f"{type(exc).__name__}: {exc}"
 
         try:
             if target_version:
@@ -1927,6 +1947,10 @@ class UptodownProvider:
                 data_code = self._data_code()
         except ProviderError:
             if not self.app_url:
+                if native_api_error:
+                    raise ProviderError(
+                        f"Uptodown resolution failed; native API: {native_api_error}"
+                    )
                 raise
             # A cached/configured provider URL can go stale; rediscover rather
             # than turning that stale mapping into a permanent failure.
