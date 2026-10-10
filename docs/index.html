@@ -27,7 +27,7 @@ body { font-family: Roboto, system-ui, sans-serif; background: var(--bg); color:
 
 /* Header & Top Bar */
 .top { display: flex; align-items: center; gap: 10px; padding: 14px 0; position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
-.logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #1E5AA8, #00AFAE); display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #fff; flex: none; }
+.logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #8D274D); display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #fff; flex: none; box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 26%, transparent); }
 .top h1 { font-size: 1.25rem; font-weight: 500; flex: 1; }
 .top small { display: block; font-size: 0.72rem; color: var(--out); font-weight: 400; }
 .ib { width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; color: var(--on); display: grid; place-items: center; cursor: pointer; flex: none; }
@@ -105,7 +105,7 @@ input:focus, select:focus { border-color: var(--primary); }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); animation: p 1.6s infinite; flex: none; }
 @keyframes p { 50% { opacity: 0.3; } }
 .wavy-bar { height: 12px; border-radius: 6px; background: var(--sv); overflow: hidden; margin: 12px 0; }
-.wavy-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #1E5AA8, #00AFAE, #A4C9FF); background-size: 200%; animation: sh 1.5s linear infinite; transition: width 0.3s; }
+.wavy-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), #8D274D, #F49AB0); background-size: 200%; animation: sh 1.5s linear infinite; transition: width 0.3s; }
 @keyframes sh { to { background-position: -200%; } }
 #term { background: #0a0b0c; color: #e3e2e6; border-radius: 16px; padding: 12px; font: 0.75rem/1.5 ui-monospace, monospace; max-height: 320px; overflow-y: auto; margin-top: 10px; }
 .INFO { color: #8ab4f8; } .SUCCESS { color: #90D889; } .ERROR { color: #FFB4AB; }
@@ -1052,8 +1052,12 @@ function appCard(a) {
   const sourceTag = S.upstreamTags[a.patches_repo] || info.patch_tag || '';
   const update = !!(asset && info.patch_tag && sourceTag && sourceTag !== info.patch_tag);
   const version = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : '';
-  const status = update ? '↑ Update' : asset ? 'Patched' : 'Not patched yet';
-  const statusIcon = update ? 'north' : asset ? 'check' : 'download';
+  const configuredRepos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+  const hasConfiguredSource = configuredRepos.some(repo => configuredSourceForRepo(repo));
+  const readiness = apkReadiness(a, info);
+  const sourceUnavailable = !hasConfiguredSource || (info.build_status && info.build_status.status === 'failed' && info.build_status.stage === 'patch_source');
+  const status = update ? '↑ Update' : asset ? 'Patched' : sourceUnavailable ? 'Source needed' : readiness.state === 'ready' ? 'Original ready' : 'Get APK';
+  const statusIcon = update ? 'north' : asset ? 'check' : sourceUnavailable ? 'warning' : readiness.state === 'ready' ? 'verified' : 'download';
   const palette = hue(a).split(',');
   const searchable = (ttl(a) + ' ' + a.package + ' ' + (a.android_package || '') + ' ' + (version || '')).toLowerCase();
   return '<div class="swipe-box manager-app-wrap">' +
@@ -1395,24 +1399,25 @@ function vApp(r) {
   const readiness = apkReadiness(a, info);
   if (!asset && readiness.state === 'ready') {
     const sourceFailed = info.build_status && info.build_status.status === 'failed' && info.build_status.stage === 'patch_source';
+    const configuredRepos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+    const hasConfiguredSource = configuredRepos.some(repo => configuredSourceForRepo(repo));
     const verifiedVersion = readiness.target || targetVersionFor(a, info);
     const verifiedArch = info.stock_apk && Array.isArray(info.stock_apk.architectures) && info.stock_apk.architectures.length
       ? info.stock_apk.architectures.join(' · ')
       : (a.apk_arch || a.arch || 'Architecture recorded');
-    return hdr(ttl(a), a.android_package || a.package, 1) +
-      '<div class="manager-flow-title">Original APK verified</div>' +
-      '<div class="manager-flow-subtitle">' + esc(ttl(a)) + ' · v' + esc(verifiedVersion) + '</div>' +
+    const sourceLabel = hasConfiguredSource ? configuredRepos.filter(repo => configuredSourceForRepo(repo)).join(' · ') : 'No compatible source configured';
+    return hdr(ttl(a), 'v' + verifiedVersion, 1) +
+      '<div class="manager-detail-hero"><div class="app-hero">' + appIconHtml(a) + '<div class="hero-copy"><div class="manager-detail-title">' + esc(ttl(a)) + '</div><div class="manager-detail-meta">v' + esc(verifiedVersion) + '</div><div style="margin-top:10px"><span class="chip ok"><i class="ms" style="font-size:14px">verified</i> Original APK verified</span><span class="chip">Ready for patching</span></div></div></div></div>' +
+      (sourceFailed || !hasConfiguredSource
+        ? '<div class="manager-update-panel"><div class="status-title" style="justify-content:center"><i class="ms">warning</i><b>Patch source needs attention</b></div><div class="d" style="margin:10px 0">' + esc(info.build_status && info.build_status.reason ? info.build_status.reason : 'This app has no configured compatible patch source yet.') + '</div><button class="pill" data-a="go" data-h="sources"><i class="ms">source</i> Review patch sources</button></div>'
+        : '<div class="manager-update-panel"><div class="status-title" style="justify-content:center"><i class="ms">verified</i><b>Original APK ready</b></div><div class="d" style="margin:10px 0">The exact original APK is verified. Choose patch options, then start a build.</div><button class="pill" data-a="dispatch_app" data-id="' + esc(a.id) + '"><i class="ms">auto_fix_high</i> Start patch</button><button class="pill o" data-a="go_patcher" data-id="' + esc(a.id) + '"><i class="ms">tune</i> Choose patches</button>') +
       '<div class="manager-page-card">' +
-        '<div class="manager-detail-row"><i class="ms">verified</i><div><div class="detail-label">Original APK</div><div class="detail-value">Exact version verified and stored for the next build.</div></div></div>' +
-        '<div class="manager-detail-row"><i class="ms">inventory_2</i><div><div class="detail-label">Android package</div><div class="detail-value">' + esc(a.android_package || a.package) + '</div></div></div>' +
+        '<div class="manager-detail-row"><i class="ms">inventory_2</i><div><div class="detail-label">Package name</div><div class="detail-value">' + esc(a.android_package || a.package || 'Not recorded') + '</div></div></div>' +
+        '<div class="manager-detail-row"><i class="ms">update</i><div><div class="detail-label">Original APK version</div><div class="detail-value">v' + esc(verifiedVersion) + '</div></div></div>' +
         '<div class="manager-detail-row"><i class="ms">memory</i><div><div class="detail-label">Architecture</div><div class="detail-value">' + esc(verifiedArch) + '</div></div></div>' +
+        '<div class="manager-detail-row"><i class="ms">source</i><div><div class="detail-label">Configured patch source</div><div class="detail-value">' + esc(sourceLabel) + '</div></div></div>' +
+        '<div class="manager-detail-row"><i class="ms">done_all</i><div><div class="detail-label">Selected patches</div><div class="detail-value">' + selectedCount + ' of ' + patches.length + ' available patches selected</div></div></div>' +
       '</div>' +
-      (sourceFailed
-        ? '<div class="status-card"><div class="status-title"><span class="status-icon bad"><i class="ms">warning</i></span><div><b>Patch source needs attention</b><div class="d" style="margin-top:4px">' + esc(info.build_status.reason || 'No compatible patch source was found.') + '</div></div></div><div class="d" style="margin-top:8px">The APK is ready; the last build could not find a compatible patch bundle. Review the configured sources before retrying.</div></div>' +
-          '<button class="pill manager-full-action primary" data-a="go" data-h="sources"><i class="ms">source</i> Review patch sources</button>' +
-          '<button class="pill manager-full-action secondary" data-a="dispatch_app" data-id="' + esc(a.id) + '"><i class="ms">refresh</i> Retry build</button>'
-        : '<button class="pill manager-full-action primary" data-a="go_patcher" data-id="' + esc(a.id) + '"><i class="ms">tune</i> Choose patches</button>' +
-          '<button class="pill manager-full-action secondary" data-a="dispatch_app" data-id="' + esc(a.id) + '"><i class="ms">auto_fix_high</i> Start patch</button>') +
       '<button class="pill manager-full-action secondary" data-a="help_find_apk" data-id="' + esc(a.id) + '"><i class="ms">download</i> Find another APK</button>';
   }
   if (!asset) {
