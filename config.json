@@ -1,5 +1,95 @@
 {
-  "apps": [],
+  "apps": [
+    {
+      "id": "orca",
+      "package": "com.facebook.orca",
+      "patches_repo": "SysAdminDoc/HushMessenger",
+      "patch_sources": [
+        "SysAdminDoc/HushMessenger"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "580.0.0.49.91",
+      "force": false,
+      "auto_patch": true,
+      "icon_url": "https://raw.githubusercontent.com/SysAdminDoc/HushMessenger/v0.22.0/assets/icon.png",
+      "enable": [],
+      "disable": [],
+      "options": {}
+    },
+    {
+      "id": "latin",
+      "package": "com.google.android.inputmethod.latin",
+      "patches_repo": "jasonwu1994/Gboard-patches",
+      "patch_sources": [
+        "jasonwu1994/Gboard-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "18.0.3.954559732-release-arm64-v8a",
+      "force": false,
+      "auto_patch": true,
+      "icon_url": "",
+      "enable": [],
+      "disable": [],
+      "options": {}
+    },
+    {
+      "id": "katana",
+      "package": "com.facebook.katana",
+      "patches_repo": "SysAdminDoc/Hushfacebook",
+      "patch_sources": [
+        "SysAdminDoc/Hushfacebook"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "582.0.0.50.54",
+      "force": false,
+      "auto_patch": true,
+      "icon_url": "https://raw.githubusercontent.com/SysAdminDoc/HushFacebook/v0.9.0/assets/icons/icon-256.png",
+      "enable": [],
+      "disable": [],
+      "options": {}
+    },
+    {
+      "id": "youtube",
+      "package": "com.google.android.youtube",
+      "patches_repo": "MorpheApp/morphe-patches",
+      "patch_sources": [
+        "MorpheApp/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "21.40.161",
+      "force": false,
+      "auto_patch": true,
+      "icon_url": "",
+      "enable": [],
+      "disable": [],
+      "options": {}
+    },
+    {
+      "id": "music",
+      "package": "com.google.android.apps.youtube.music",
+      "patches_repo": "MorpheApp/morphe-patches",
+      "patch_sources": [
+        "MorpheApp/morphe-patches"
+      ],
+      "prerelease": false,
+      "arch": "arm64-v8a",
+      "apk_arch": "auto",
+      "version": "",
+      "force": false,
+      "auto_patch": true,
+      "enable": [],
+      "disable": [],
+      "options": {}
+    }
+  ],
   "settings": {
     "default_arch": "arm64-v8a",
     "auto_prune": true,
@@ -10,6 +100,79 @@
     "notify_output_validation_failure": true,
     "notify_release_publishing_failure": true
   },
-  "sources": [],
+  "sources": [
+    {
+      "repo": "SysAdminDoc/HushMessenger",
+      "enabled": true,
+      "prerelease": false,
+      "tag": "v0.22.0",
+      "release_name": "v0.22.0",
+      "patch_count": 43,
+      "icon_url": "https://raw.githubusercontent.com/SysAdminDoc/HushMessenger/v0.22.0/assets/icon.png",
+      "apps": [
+        {
+          "package": "com.facebook.orca",
+          "name": "Orca"
+        }
+      ],
+      "last_inspected": "2026-10-10T19:29:39.352Z"
+    },
+    {
+      "repo": "jasonwu1994/Gboard-patches",
+      "enabled": true,
+      "prerelease": false,
+      "tag": "v3.12.0",
+      "release_name": "v3.12.0",
+      "patch_count": 43,
+      "icon_url": "",
+      "apps": [
+        {
+          "package": "com.google.android.inputmethod.latin",
+          "name": "Latin"
+        }
+      ],
+      "last_inspected": "2026-10-10T19:30:25.625Z"
+    },
+    {
+      "repo": "SysAdminDoc/Hushfacebook",
+      "enabled": true,
+      "prerelease": false,
+      "tag": "v0.9.0",
+      "release_name": "v0.9.0",
+      "patch_count": 86,
+      "icon_url": "https://raw.githubusercontent.com/SysAdminDoc/HushFacebook/v0.9.0/assets/icons/icon-256.png",
+      "apps": [
+        {
+          "package": "com.facebook.katana",
+          "name": "Katana"
+        }
+      ],
+      "last_inspected": "2026-10-10T19:30:57.176Z"
+    },
+    {
+      "repo": "MorpheApp/morphe-patches",
+      "enabled": true,
+      "prerelease": false,
+      "tag": "v1.47.0-dev.20",
+      "release_name": "v1.47.0-dev.20",
+      "patch_count": 169,
+      "icon_url": "",
+      "apps": [
+        {
+          "package": "com.google.android.youtube",
+          "name": "Youtube"
+        },
+        {
+          "package": "com.google.android.apps.youtube.music",
+          "name": "Music"
+        },
+        {
+          "package": "com.reddit.frontpage",
+          "name": "Frontpage"
+        }
+      ],
+      "last_inspected": "2026-10-10T19:31:24.921Z"
+    }
+  ],
   "hidden_apps": []
 }
