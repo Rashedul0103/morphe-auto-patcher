@@ -11,6 +11,7 @@ on:
       - 'apk_validator.py'
       - 'requirements.txt'
       - 'tests/**'
+      - 'docs/**'
       - '.github/workflows/**'
   workflow_dispatch:
     inputs:
