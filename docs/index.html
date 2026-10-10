@@ -182,6 +182,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #dock { left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:stretch; width:min(680px,calc(100% - 28px)); gap:7px; padding:7px; border-radius:28px; background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:0 5px 22px #0005; backdrop-filter:blur(12px); }
 #dock .bb { width:100%; min-width:0; min-height:64px; padding:8px 4px; border:1px solid color-mix(in srgb,var(--out) 38%,transparent); border-radius:21px; font-size:.69rem; gap:3px; justify-content:center; }
 #dock .bb .ms { font-size:25px; }
+#dock.is-compact { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.bb[hidden] { display:none!important; }
 #dock .bb.hl { background:var(--pc); color:var(--primary); border-color:color-mix(in srgb,var(--primary) 55%,var(--out)); }
 #main { padding-bottom:calc(164px + env(safe-area-inset-bottom)); max-width:760px; }
 .manager-extra-menu { position:relative; flex:none; }
@@ -240,6 +242,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .appearance-choice button { min-width:0; min-height:56px; justify-content:center; padding:8px; border-radius:16px; }
 .settings-row { display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid #8882; }
 .settings-row:last-child { border-bottom:0; }
+.settings-row input[type=color] { width:64px; flex:none; }
 .settings-row .g { flex:1; min-width:0; }
 .settings-row .d { font-size:.77rem; color:var(--out); margin-top:3px; }
 .manager-group { margin:16px 0; }
@@ -1106,6 +1109,7 @@ function theme() {
     : S.accent;
   d.style.setProperty('--primary', primary);
   d.style.setProperty('--fs', 16 * S.scale / 100 + 'px');
+  setBackgroundAnimation(S.ui.backgroundAnimation !== false);
 }
 
 function render() {
@@ -1119,7 +1123,10 @@ function render() {
   const dock = $('#dock');
   if (dock) dock.style.display = r.v === 'home' ? 'flex' : 'none';
   const sortButton = $('#dock [data-a="home_sort"]');
-  if (sortButton) sortButton.hidden = S.ui.showSort === false;
+  if (sortButton) {
+    sortButton.hidden = S.ui.showSort === false;
+    dock.classList.toggle('is-compact', sortButton.hidden);
+  }
   if (r.v === 'home' && S.homeSearch) applyHomeSearch(S.homeSearch);
 }
 
@@ -1892,7 +1899,7 @@ function vSet() {
         <div class="appearance-choice">
           ${[['morphe','Morphe'],['material','Material You'],['monochrome','Monochrome']].map(([style,label]) => '<button class="pill ' + (ui.colorStyle===style?'':'o') + '" data-a="ui_color_style" data-v="' + style + '">' + label + '</button>').join('')}
         </div>
-        ${toggleRow('black','Pure black','Use true black backgrounds on dark theme.')}
+        <div class="settings-row"><div class="g"><b>Pure black</b><div class="d">Use true black backgrounds on dark theme.</div></div>${sw(S.black, 'data-a="sw_black"')}</div>
         ${toggleRow('appColors','App and source colors','Use each app’s own color instead of the theme accent.')}
         ${toggleRow('outlines','Outlines','Draw a thin edge around cards, panels, and controls.')}
         ${toggleRow('backgroundAnimation','Background animation','Show the subtle moving background circles.')}
@@ -1921,13 +1928,6 @@ function vSet() {
           return '<div class="settings-row"><div class="g"><b>' + esc(ttl(a)) + '</b><div class="d">' + esc(a.package || '') + '</div></div><input type="color" aria-label="Card color for ' + esc(ttl(a)) + '" data-c="ui_card_color" data-id="' + esc(a.id) + '" value="' + esc(current) + '">' +
             (ui.appCardColors[a.id] ? '<button class="pill t" data-a="ui_card_color_reset" data-id="' + esc(a.id) + '" aria-label="Reset ' + esc(ttl(a)) + ' color">Reset</button>' : '') + '</div>';
         }).join('') : '<div class="d">Add apps to set individual card colors.</div>'}
-      </div>
-      <div class="card">
-        <div class="settings-group-title">Interface size</div>
-        <div class="d" style="margin:4px 0 10px">Change text size without changing the layout.</div>
-        <div class="appearance-choice">
-          ${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
-        </div>
       </div>
     `;
   } else if (settingsTab === 1) {
@@ -2734,25 +2734,49 @@ document.addEventListener('change', e => {
 });
 $('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', theme);
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => setBackgroundAnimation(S.ui.backgroundAnimation !== false));
 
-if (S.ui.backgroundAnimation !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  (function(){
-    const c = $('#bg'), x = c.getContext('2d'); let w, h, o = [];
-    function r() {
-      w = c.width = innerWidth; h = c.height = innerHeight;
-      o = [...Array(6)].map(() => ({ x: Math.random()*w, y: Math.random()*h, r: 60 + Math.random()*120, vx: (Math.random() - 0.5)*0.2, vy: (Math.random() - 0.5)*0.2 }));
-    }
-    r(); addEventListener('resize', r);
-    (function f(){
-      x.clearRect(0,0,w,h);
-      o.forEach(a => {
-        a.x = (a.x + a.vx + w) % w; a.y = (a.y + a.vy + h) % h;
-        x.beginPath(); x.arc(a.x, a.y, a.r, 0, 7);
-        x.fillStyle = 'rgba(30,90,168,0.08)'; x.fill();
-      });
-      requestAnimationFrame(f);
-    })();
-  })();
+let backgroundFrame = 0;
+let backgroundObjects = [];
+let backgroundResizeBound = false;
+function resizeBackground() {
+  const canvas = $('#bg');
+  if (!canvas) return;
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+  backgroundObjects = [...Array(6)].map(() => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    r: 60 + Math.random()*120, vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2
+  }));
+}
+function setBackgroundAnimation(enabled) {
+  const canvas = $('#bg');
+  if (!canvas) return;
+  const context = canvas.getContext('2d');
+  const allowed = enabled && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!allowed) {
+    if (backgroundFrame) cancelAnimationFrame(backgroundFrame);
+    backgroundFrame = 0;
+    context.clearRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+  if (backgroundFrame) return;
+  if (!backgroundResizeBound) {
+    resizeBackground();
+    addEventListener('resize', resizeBackground);
+    backgroundResizeBound = true;
+  }
+  const draw = () => {
+    context.clearRect(0,0,canvas.width,canvas.height);
+    backgroundObjects.forEach(point => {
+      point.x = (point.x + point.vx + canvas.width) % canvas.width;
+      point.y = (point.y + point.vy + canvas.height) % canvas.height;
+      context.beginPath(); context.arc(point.x,point.y,point.r,0,7);
+      context.fillStyle = 'rgba(30,90,168,0.08)'; context.fill();
+    });
+    backgroundFrame = requestAnimationFrame(draw);
+  };
+  backgroundFrame = requestAnimationFrame(draw);
 }
 
 function syncInstallAction() {
