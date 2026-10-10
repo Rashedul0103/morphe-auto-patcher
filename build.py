@@ -67,6 +67,12 @@ def send_discord_webhook(webhook_url, title, description, color=0x3B82F6, fields
 
 
 DISCORD_FAILURE_ALERTS = {
+    "patch_source": {
+        "setting": "notify_patch_source_failure",
+        "title": "⚠️ Compatible Patch Source Not Found",
+        "color": 0xF59E0B,
+        "stage_label": "patch source discovery",
+    },
     "patching": {
         "setting": "notify_patching_failure",
         "title": "❌ Patching Failed",
@@ -1238,6 +1244,20 @@ def main():
         source_repos = patch_source_candidates(app, patch_filter, config)
 
         if not source_repos:
+            reason = "No patch sources are configured for this app."
+            _update_info_metadata(
+                info_path,
+                build_status={
+                    "status": "failed",
+                    "stage": "patch_source",
+                    "reason": reason,
+                    "updated_at": now,
+                },
+            )
+            send_build_failure_alert(
+                discord_webhook, repo_settings, "patch_source", app_id,
+                app.get("version", ""), arch, reason,
+            )
             print(f"Failed: no patch sources configured for {app_id}")
             has_errors = True
             continue
@@ -1350,6 +1370,15 @@ def main():
                     "reason": "No compatible patch source found.",
                     "updated_at": now,
                 },
+            )
+            reason_details = "; ".join(
+                f"{item.get('repo', 'unknown source')}: {item.get('status', 'unknown status')}"
+                for item in source_attempts
+            ) or "No candidate source was evaluated."
+            reason = "No compatible patch source found. Attempts: " + reason_details
+            send_build_failure_alert(
+                discord_webhook, repo_settings, "patch_source", app_id,
+                app.get("version", ""), arch, reason,
             )
             print(f"Error: No compatible patch source found for {app_id}")
             has_errors = True
