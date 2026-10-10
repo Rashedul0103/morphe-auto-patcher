@@ -297,7 +297,7 @@ const EXT = /\.(apk|apkm|apks|xapk|axapk)$/i;
 
 let S = {
   owner: '', repo: '', branch: 'main', token: '', wf: 'build.yml',
-  mode: 'system', black: false, accent: '#A4C9FF', scale: 100,
+  mode: 'system', black: false, accent: '#E34A70', scale: 100,
   config: { 
     settings: { 
       default_arch: 'arm64-v8a', 
@@ -319,6 +319,7 @@ if (/github\.io$/.test(location.hostname)) {
 }
 try {
   const cached = JSON.parse(localStorage.getItem(LS) || localStorage.getItem('patchmanager') || '{}');
+  if (cached.accent === '#A4C9FF') cached.accent = '#E34A70';
   Object.assign(S, cached);
 } catch(e){}
 
@@ -362,7 +363,7 @@ function apkReadiness(a, info) {
   info = info || {};
   const acquisition = info.apk_acquisition || {};
   const stock = info.stock_apk || null;
-  const target = acquisition.target_version || info.recommended_version || a.version || '';
+  const target = a.version || acquisition.target_version || info.recommended_version || '';
   const stockExact = !!(stock && stock.version_name && target && stock.version_name === target);
   const stockRelease = stockRel(a.id);
   const hasStockAsset = !!(stockRelease && (stockRelease.assets || []).some(x => EXT.test(x.name)));
@@ -377,7 +378,7 @@ function apkReadiness(a, info) {
 function targetVersionFor(a, info) {
   info = info || {};
   const acq = info.apk_acquisition || {};
-  return acq.target_version || info.recommended_version || a.version || 'Auto';
+  return a.version || acq.target_version || info.recommended_version || 'Auto';
 }
 
 function latestPatchedAsset(a) {
