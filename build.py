@@ -1245,6 +1245,40 @@ def release_app_version(tag):
     return match.group(1).strip() if match else ""
 
 
+def webhook_url_from_environment(environ=None):
+    """Read Discord webhook credentials only from the process environment."""
+    environment = os.environ if environ is None else environ
+    return str(environment.get("DISCORD_WEBHOOK") or "").strip()
+
+
+def publish_release(release_tag, output_apk, title, notes_file, replace_existing_release, run_id=None):
+    """Publish a replacement safely, keeping a staged copy if final publishing fails."""
+    def create(tag):
+        return ["gh", "release", "create", tag, output_apk, "--title", title, "--notes-file", notes_file]
+
+    if not replace_existing_release:
+        return run_cmd(create(release_tag))
+
+    staging_id = str(run_id or time.time_ns())
+    staging_tag = f"{release_tag}-replacement-{staging_id}"
+    staged, staged_out = run_cmd(create(staging_tag))
+    if not staged:
+        return False, f"Replacement staging release failed; existing release was preserved. {staged_out}"
+
+    deleted, delete_out = run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
+    if not deleted:
+        return False, f"Could not replace existing release; the new APK remains available at {staging_tag}. {delete_out}"
+
+    published, publish_out = run_cmd(create(release_tag))
+    if not published:
+        return False, f"Final release publishing failed; the validated new APK remains available at {staging_tag}. {publish_out}"
+
+    cleanup_ok, cleanup_out = run_cmd(["gh", "release", "delete", staging_tag, "--yes", "--cleanup-tag"], silent=True)
+    if not cleanup_ok:
+        print(f"Warning: Replacement was published, but staging release {staging_tag} could not be removed: {cleanup_out}")
+    return True, publish_out
+
+
 def main():
     print("Starting Auto-Patcher Build...")
     pre_flight_checks()
@@ -1267,7 +1301,7 @@ def main():
     keep_releases_count = int(repo_settings.get('keep_releases', 3))
     check_interval_hours = int(repo_settings.get('check_interval_hours', 6))
     trigger_policy = repo_settings.get('trigger_policy', 'on_new_patch')
-    discord_webhook = os.environ.get("DISCORD_WEBHOOK") or repo_settings.get("discord_webhook", "").strip()
+    discord_webhook = webhook_url_from_environment()
 
     catalog_dir = "docs/catalog"
     os.makedirs(catalog_dir, exist_ok=True)
@@ -1762,15 +1796,15 @@ def main():
 
         try:
             if replace_existing_release:
-                print(f"Replacing existing release {release_tag} after the new APK passed validation...")
-                run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
-            create_cmd = [
-                "gh", "release", "create", release_tag,
+                print(f"Staging a validated replacement before changing release {release_tag}...")
+            ok_rel, rel_out = publish_release(
+                release_tag,
                 output_apk,
-                "--title", f"{app_id} {tag_name}",
-                "--notes-file", notes_file
-            ]
-            ok_rel, rel_out = run_cmd(create_cmd)
+                f"{app_id} {tag_name}",
+                notes_file,
+                replace_existing_release,
+                os.environ.get("GITHUB_RUN_ID"),
+            )
             if not ok_rel:
                 _update_info_metadata(
                     info_path,
