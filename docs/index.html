@@ -316,7 +316,7 @@ let S = {
       keep_releases: 3, 
       trigger_policy: 'on_new_patch', 
       check_interval_hours: 6,
-      discord_webhook: '', notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
+      notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
     }, 
     sources: [], apps: [], hidden_apps: [] 
   },
@@ -531,16 +531,18 @@ async function connect(quiet) {
       if (e.status != 404) throw e;
       S.sha = '';
       S.config = { 
-        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '', notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true }, 
+        settings: { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true }, 
         sources: [], apps: [], hidden_apps: [] 
       };
     }
-    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, discord_webhook: '', notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true };
+    if (!S.config.settings) S.config.settings = { default_arch: 'arm64-v8a', auto_prune: true, keep_releases: 3, trigger_policy: 'on_new_patch', check_interval_hours: 6, notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true };
+    const hadLegacyWebhook = Object.prototype.hasOwnProperty.call(S.config.settings, 'discord_webhook');
+    delete S.config.settings.discord_webhook;
     if (!Array.isArray(S.config.apps)) S.config.apps = [];
     if (!Array.isArray(S.config.sources)) S.config.sources = [];
     if (!Array.isArray(S.config.hidden_apps)) S.config.hidden_apps = [];
 
-    S.connected = true; S.dirty = false; persist(); closeDlg(); render();
+    S.connected = true; S.dirty = hadLegacyWebhook; persist(); closeDlg(); render();
     await Promise.all([loadLocalCatalogs(), loadRels(), loadRuns(), checkLocalApks(), checkUpstreamUpdates()]);
     render();
     // Discord recovery links use #/upload/<app-id>. After the repository data
@@ -632,11 +634,12 @@ async function save() {
       body: JSON.stringify({
         message: 'Update config from Patch Manager Web UI',
         branch: S.branch,
-        content: u64(JSON.stringify(S.config, null, 2) + '\n'),
+        content: u64(JSON.stringify((() => { const config = JSON.parse(JSON.stringify(S.config)); if (config.settings) delete config.settings.discord_webhook; return config; })(), null, 2) + '\n'),
         ...(S.sha ? { sha: S.sha } : {})
       })
     });
     S.sha = r.content.sha;
+    if (S.config.settings) delete S.config.settings.discord_webhook;
     S.dirty = false;
     render();
     toast('Saved ✔ Build triggered automatically');
@@ -1837,7 +1840,7 @@ function vSet() {
       keep_releases: 3, 
       trigger_policy: 'on_new_patch', 
       check_interval_hours: 6,
-      discord_webhook: '', notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
+      notify_patch_source_failure: true, notify_patching_failure: true, notify_output_validation_failure: true, notify_release_publishing_failure: true
     };
     b = `
       <div class="card">
@@ -1879,9 +1882,8 @@ function vSet() {
           <option value="5" ${st.keep_releases==5?'selected':''}>Keep 5 releases</option>
         </select>
 
-        <div class="lbl" style="margin-top:14px">Discord Webhook URL (Optional Notifications)</div>
-        <input type="text" data-c="cfg_st" data-k="discord_webhook" value="${esc(st.discord_webhook || '')}" placeholder="https://discord.com/api/webhooks/..." style="font-family:monospace;font-size:0.85rem">
-        <div class="d">Receive notifications when builds succeed or need manual APK recovery. The GitHub Actions secret is recommended for the webhook URL.</div>
+        <div class="lbl" style="margin-top:14px">Discord Notifications</div>
+        <div class="d">To receive alerts, add a repository Actions secret named <code>DISCORD_WEBHOOK</code>. Webhook URLs are never saved in the public configuration.</div>
 
         <div class="lbl" style="margin-top:14px">Discord Failure Alerts</div>
         <div class="d">Turn each failure notification on or off independently. These alerts are enabled by default for existing configurations.</div>
