@@ -1,0 +1,27 @@
+{
+  "id": "./",
+  "name": "Morphe Patcher",
+  "short_name": "Morphe",
+  "description": "Manage patch sources and build patched Android apps.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#101116",
+  "theme_color": "#101116",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./icons/app-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
