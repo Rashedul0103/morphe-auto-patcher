@@ -10,6 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DiscordFailureAlertTests(unittest.TestCase):
+    def test_webhook_is_read_only_from_environment(self):
+        self.assertEqual(
+            build.webhook_url_from_environment({"DISCORD_WEBHOOK": "  https://discord.com/api/webhooks/test  "}),
+            "https://discord.com/api/webhooks/test",
+        )
+        self.assertEqual(build.webhook_url_from_environment({}), "")
+
+    def test_failed_staging_keeps_existing_release(self):
+        with patch("build.run_cmd", return_value=(False, "upload failed")) as run:
+            ok, message = build.publish_release("app-v1", "out.apk", "App v1", "notes.md", True, "123")
+        self.assertFalse(ok)
+        self.assertIn("existing release was preserved", message)
+        self.assertEqual(run.call_count, 1)
+
+    def test_failed_final_publish_keeps_staged_recovery_release(self):
+        with patch("build.run_cmd", side_effect=[(True, "staged"), (True, "deleted"), (False, "publish failed")]) as run:
+            ok, message = build.publish_release("app-v1", "out.apk", "App v1", "notes.md", True, "123")
+        self.assertFalse(ok)
+        self.assertIn("app-v1-replacement-123", message)
+        self.assertEqual(run.call_count, 3)
+        self.assertIn("app-v1-replacement-123", run.call_args_list[0].args[0])
+
     def test_latest_tag_falls_back_to_public_api_when_cli_returns_no_release(self):
         api_releases = [
             {"tag_name": "v1.46.0-dev.8", "draft": False, "prerelease": True},
