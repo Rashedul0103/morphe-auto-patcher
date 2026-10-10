@@ -65,6 +65,33 @@ class DiscordFailureAlertTests(unittest.TestCase):
         self.assertEqual(fields["Reason"], "package mismatch")
         self.assertIn("/actions/runs/123456", fields["Workflow Run"])
 
+
+    def test_patch_source_failure_can_send_a_diagnostic_alert(self):
+        env = {
+            "GITHUB_REPOSITORY": "Rashedul0103/morphe-auto-patcher",
+            "GITHUB_RUN_ID": "987654",
+            "GITHUB_SERVER_URL": "https://github.com",
+        }
+        with patch.dict(os.environ, env), patch("build.send_discord_webhook") as send:
+            result = build.send_build_failure_alert(
+                "https://discord.com/api/webhooks/test",
+                {},
+                "patch_source",
+                "youtube",
+                "21.16.256",
+                "arm64-v8a",
+                "No compatible patch source found. Attempts: MorpheApp/morphe-patches: no_release",
+            )
+        self.assertTrue(result)
+        send.assert_called_once()
+        args, kwargs = send.call_args
+        self.assertIn("Compatible Patch Source", args[1])
+        self.assertIn("patch source discovery", args[2])
+        fields = {field["name"]: field["value"] for field in kwargs["fields"]}
+        self.assertEqual(fields["Target Version"], "21.16.256")
+        self.assertEqual(fields["Reason"], "No compatible patch source found. Attempts: MorpheApp/morphe-patches: no_release")
+        self.assertIn("/actions/runs/987654", fields["Workflow Run"])
+
     def test_manual_link_prefers_exact_version_provider_page(self):
         urls = [
             "https://google.com/search?q=%22com.example.app%22+%224.2.1%22+site%3Aapkmirror.com",
@@ -93,12 +120,14 @@ class DiscordFailureAlertTests(unittest.TestCase):
     def test_ui_exposes_independent_failure_alert_toggles(self):
         ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
         for key in (
+            "notify_patch_source_failure",
             "notify_patching_failure",
             "notify_output_validation_failure",
             "notify_release_publishing_failure",
         ):
             with self.subTest(setting=key):
                 self.assertIn(key, ui)
+        self.assertIn('data-a="sw_discord_patchsource"', ui)
         self.assertIn('data-a="sw_discord_patching"', ui)
         self.assertIn('data-a="sw_discord_validation"', ui)
         self.assertIn('data-a="sw_discord_publishing"', ui)
