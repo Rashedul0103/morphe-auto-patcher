@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import Mock, patch
 
-from apk_providers import DEFAULT_PROVIDER_URLS, UptodownProvider
+from apk_providers import DEFAULT_PROVIDER_URLS, ProviderError, UptodownProvider
 
 
 class UptodownProviderTests(unittest.TestCase):
@@ -74,6 +75,47 @@ class UptodownProviderTests(unittest.TestCase):
 
     def test_no_app_specific_provider_defaults(self):
         self.assertEqual(DEFAULT_PROVIDER_URLS, {})
+
+    def test_app_id_parser_accepts_nested_results_and_checks_package(self):
+        payload = {"data": {"results": [
+            {"packageName": "com.other.app", "appID": "wrong"},
+            {"packageName": "com.example.app", "appID": "right"},
+        ]}}
+        self.assertEqual(
+            UptodownProvider._app_id_from_payload(payload, "com.example.app"),
+            "right",
+        )
+        self.assertEqual(
+            UptodownProvider._app_id_from_payload(
+                {"data": {"packageName": "com.other.app", "appID": "wrong"}},
+                "com.example.app",
+            ),
+            "",
+        )
+
+    def test_app_id_resolution_handles_list_response(self):
+        provider = UptodownProvider()
+        response = Mock(status_code=200)
+        response.json.return_value = {"data": [{
+            "packageName": "com.example.app", "appID": "1234",
+        }]}
+        with patch.object(provider, "_api_get", return_value=response):
+            self.assertEqual(provider._resolve_app_id("com.example.app"), "1234")
+
+    def test_app_id_resolution_reports_http_failures(self):
+        provider = UptodownProvider()
+        responses = [Mock(status_code=403), Mock(status_code=429)]
+        with patch.object(provider, "_api_get", side_effect=responses):
+            with self.assertRaisesRegex(ProviderError, "package lookup HTTP 403; search HTTP 429"):
+                provider._resolve_app_id("com.example.app")
+
+    def test_native_api_failure_does_not_prevent_page_fallback(self):
+        provider = UptodownProvider()
+        with patch.object(provider, "_resolve_app_id", side_effect=ProviderError("API blocked")), \
+             patch("apk_providers._search_result_urls", return_value=[]), \
+             patch.object(provider, "_discover_app_page", side_effect=ProviderError("page unavailable")):
+            with self.assertRaisesRegex(ProviderError, "native API: API blocked"):
+                provider.resolve("1.2.3", expected_package="com.example.app")
 
 
 if __name__ == "__main__":
