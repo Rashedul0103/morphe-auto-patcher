@@ -282,7 +282,7 @@ function officialIconUrl(a) {
 
 function appIconUrl(a) {
   const info = (a && S.cats[a.id] && S.cats[a.id].info) || {};
-  return info.icon_url || (a && a.icon_url) || officialIconUrl(a);
+  return info.icon_url || (a && a.icon_url) || (a && a.id ? 'catalog/icons/' + encodeURIComponent(a.id) + '.png' : '') || officialIconUrl(a);
 }
 function appIconHtml(a) {
   const label = esc((ttl(a)[0] || 'A').toUpperCase());
@@ -707,7 +707,7 @@ function startPatchFlow(id) {
 }
 
 function showDownloadInstructions(id) {
-  return showManualApkFlow(id);
+  location.hash = '#/download/' + encodeURIComponent(id);
 }
 
 function showManualApkFlow(id) {
@@ -1048,11 +1048,11 @@ function appCard(a) {
   const asset = latestPatchedAsset(a);
   const sourceTag = S.upstreamTags[a.patches_repo] || info.patch_tag || '';
   const update = !!(asset && info.patch_tag && sourceTag && sourceTag !== info.patch_tag);
-  const version = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : targetVersionFor(a, info);
-  const status = update ? '↑ Update' : asset ? 'Patched' : (apkReadiness(a, info).state === 'ready' ? 'APK ready' : 'Not patched yet');
+  const version = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : '';
+  const status = update ? '↑ Update' : asset ? 'Patched' : 'Not patched yet';
   const statusIcon = update ? 'north' : asset ? 'check' : 'download';
   const palette = hue(a).split(',');
-  const searchable = (ttl(a) + ' ' + a.package + ' ' + (version || '')).toLowerCase();
+  const searchable = (ttl(a) + ' ' + a.package + ' ' + (a.android_package || '') + ' ' + (version || '')).toLowerCase();
   return '<div class="swipe-box manager-app-wrap">' +
     '<div class="swipe-bg right"><span class="row"><i class="ms">tune</i> View Patches</span></div>' +
     '<div class="swipe-front manager-home-card" data-id="' + esc(a.id) + '" data-search="' + esc(searchable) + '" style="--app-a:' + esc(palette[0] || '#164e9a') + ';--app-b:' + esc(palette[1] || '#0e7479') + '">' +
@@ -1392,7 +1392,7 @@ function vApp(r) {
     if (selected && selected !== 'Auto' && !versions.includes(selected)) versions.unshift(selected);
     if (recommended && !versions.includes(recommended)) versions.unshift(recommended);
     const rows = versions.length ? versions.map(v => '<label class="manager-version-row"><input class="manager-radio" type="radio" name="target-version" value="' + esc(v) + '" data-c="cfg_version" data-id="' + esc(a.id) + '" ' + (v===selected?'checked':'') + '><span class="manager-version-name">v' + esc(v) + '</span>' + (v===recommended?'<span class="manager-recommended"><i class="ms" style="font-size:14px">thumb_up</i> Recommended</span>':'') + '</label>').join('') : '<div class="d">No supported version list is published for this app yet. The build system will attempt automatic version resolution.</div>';
-    return hdr(ttl(a), a.package, 1) +
+    return hdr(ttl(a), a.android_package || a.package, 1) +
       '<div class="manager-flow-title">Need help finding an original unpatched APK?</div>' +
       '<div class="manager-flow-subtitle">To patch <b>' + esc(ttl(a)) + '</b>, you need an unpatched APK of versions:</div>' +
       '<div class="manager-page-card">' + rows + '</div>' +
@@ -1406,7 +1406,7 @@ function vApp(r) {
   const releaseTag = latestRel ? latestRel.tag_name : '';
   const size = asset.size ? (asset.size >= 1048576 ? (asset.size/1048576).toFixed(2)+' MB' : (asset.size/1024).toFixed(0)+' KB') : 'Not recorded';
   const architectures = info.stock_apk && Array.isArray(info.stock_apk.architectures) && info.stock_apk.architectures.length ? info.stock_apk.architectures.join(' · ') : (a.arch || (S.config.settings && S.config.settings.default_arch) || 'Not recorded');
-  const packageName = a.package || 'Not recorded';
+  const packageName = a.android_package || a.package || 'Not recorded';
   return hdr(ttl(a), 'v' + version, 1) +
     '<div class="manager-detail-hero"><div class="app-hero">' + icon + '<div class="hero-copy"><div class="manager-detail-title">' + esc(ttl(a)) + '</div><div class="manager-detail-meta">v' + esc(version) + '</div><div style="margin-top:10px"><span class="chip ok"><i class="ms" style="font-size:14px">verified</i> Patched APK</span><span class="chip">' + esc(ago(latestRel.published_at || latestRel.created_at)) + '</span></div></div></div></div>' +
     (patchUpdate ?
