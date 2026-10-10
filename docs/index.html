@@ -1055,8 +1055,9 @@ function appCard(a) {
   const configuredRepos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
   const hasConfiguredSource = configuredRepos.some(repo => configuredSourceForRepo(repo));
   const readiness = apkReadiness(a, info);
-  const sourceUnavailable = !hasConfiguredSource || (info.build_status && info.build_status.status === 'failed' && info.build_status.stage === 'patch_source');
-  const status = update ? '↑ Update' : asset ? 'Patched' : sourceUnavailable ? 'Source needed' : readiness.state === 'ready' ? 'Original ready' : 'Get APK';
+  const sourceFailed = !!(info.build_status && info.build_status.status === 'failed' && info.build_status.stage === 'patch_source');
+  const sourceUnavailable = !hasConfiguredSource || sourceFailed;
+  const status = update ? '↑ Update' : asset ? 'Patched' : !hasConfiguredSource ? 'Add source' : sourceFailed ? 'Source issue' : readiness.state === 'ready' ? 'Original ready' : 'Get APK';
   const statusIcon = update ? 'north' : asset ? 'check' : sourceUnavailable ? 'warning' : readiness.state === 'ready' ? 'verified' : 'download';
   const palette = hue(a).split(',');
   const searchable = (ttl(a) + ' ' + a.package + ' ' + (a.android_package || '') + ' ' + (version || '')).toLowerCase();
