@@ -254,17 +254,46 @@ def pre_flight_checks():
             sys.exit(1)
 
 def get_latest_tag(repo, allow_prerelease=False):
+    """Return the newest eligible release tag, falling back to the GitHub REST API.
+
+    Some GitHub CLI responses can be empty for repositories whose releases are
+    visible in the public API. The REST fallback keeps prerelease discovery
+    reliable without changing the preferred CLI path.
+    """
     ok, out = run_cmd(["gh", "release", "list", "-R", repo, "--limit", "10", "--json", "tagName,isPrerelease,isDraft"])
-    if not ok or not out:
-        return None
+    if ok and out:
+        try:
+            releases = json.loads(out)
+            for release in releases:
+                if release.get("isDraft"):
+                    continue
+                if release.get("isPrerelease") and not allow_prerelease:
+                    continue
+                if release.get("tagName"):
+                    return release["tagName"]
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     try:
-        releases = json.loads(out)
-        for r in releases:
-            if r.get("isDraft"): continue
-            if r.get("isPrerelease") and not allow_prerelease: continue
-            return r["tagName"]
-    except json.JSONDecodeError:
-        return None
+        response = requests.get(
+            f"https://api.github.com/repos/{repo}/releases?per_page=20",
+            timeout=20,
+            headers={"Accept": "application/vnd.github+json", "User-Agent": "Morphe-Auto-Patcher/1.0"},
+        )
+        response.raise_for_status()
+        releases = response.json()
+        if not isinstance(releases, list):
+            return None
+        for release in releases:
+            if not isinstance(release, dict) or release.get("draft"):
+                continue
+            if release.get("prerelease") and not allow_prerelease:
+                continue
+            tag = release.get("tag_name")
+            if tag:
+                return str(tag)
+    except (requests.RequestException, ValueError, TypeError) as exc:
+        print(f"Warning: Could not discover releases for {repo} via GitHub API: {exc}")
     return None
 
 def release_exists(tag):
