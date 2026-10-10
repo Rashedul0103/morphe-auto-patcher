@@ -85,8 +85,8 @@ class DiscordFailureAlertTests(unittest.TestCase):
         self.assertTrue(result)
         send.assert_called_once()
         args, kwargs = send.call_args
-        self.assertIn("Compatible Patch Source", args[1])
-        self.assertIn("patch source discovery", args[2])
+        self.assertIn("Compatible Patch Source", kwargs["title"])
+        self.assertIn("patch source discovery", kwargs["description"])
         fields = {field["name"]: field["value"] for field in kwargs["fields"]}
         self.assertEqual(fields["Target Version"], "21.16.256")
         self.assertEqual(fields["Reason"], "No compatible patch source found. Attempts: MorpheApp/morphe-patches: no_release")
