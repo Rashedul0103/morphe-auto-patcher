@@ -1,41 +1,5 @@
 {
-  "apps": [
-    {
-      "id": "youtube",
-      "package": "com.google.android.youtube",
-      "patches_repo": "MorpheApp/morphe-patches",
-      "patch_sources": [
-        "MorpheApp/morphe-patches"
-      ],
-      "prerelease": false,
-      "arch": "arm64-v8a",
-      "apk_arch": "auto",
-      "version": "21.40.161",
-      "force": false,
-      "auto_patch": true,
-      "icon_url": "",
-      "enable": [],
-      "disable": [],
-      "options": {}
-    },
-    {
-      "id": "music",
-      "package": "com.google.android.apps.youtube.music",
-      "patches_repo": "MorpheApp/morphe-patches",
-      "patch_sources": [
-        "MorpheApp/morphe-patches"
-      ],
-      "prerelease": false,
-      "arch": "arm64-v8a",
-      "apk_arch": "auto",
-      "version": "",
-      "force": false,
-      "auto_patch": true,
-      "enable": [],
-      "disable": [],
-      "options": {}
-    }
-  ],
+  "apps": [],
   "settings": {
     "default_arch": "arm64-v8a",
     "auto_prune": true,
