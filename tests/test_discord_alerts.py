@@ -10,6 +10,30 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DiscordFailureAlertTests(unittest.TestCase):
+    def test_latest_tag_falls_back_to_public_api_when_cli_returns_no_release(self):
+        api_releases = [
+            {"tag_name": "v1.46.0-dev.8", "draft": False, "prerelease": True},
+            {"tag_name": "v1.45.0", "draft": False, "prerelease": False},
+        ]
+        response = unittest.mock.Mock()
+        response.json.return_value = api_releases
+        response.raise_for_status.return_value = None
+        with patch("build.run_cmd", return_value=(True, "[]")), patch("build.requests.get", return_value=response) as get:
+            self.assertEqual(build.get_latest_tag("MorpheApp/morphe-patches", allow_prerelease=True), "v1.46.0-dev.8")
+        get.assert_called_once()
+        self.assertIn("/repos/MorpheApp/morphe-patches/releases", get.call_args.args[0])
+
+    def test_latest_tag_fallback_skips_prereleases_when_disabled(self):
+        api_releases = [
+            {"tag_name": "v1.46.0-dev.8", "draft": False, "prerelease": True},
+            {"tag_name": "v1.45.0", "draft": False, "prerelease": False},
+        ]
+        response = unittest.mock.Mock()
+        response.json.return_value = api_releases
+        response.raise_for_status.return_value = None
+        with patch("build.run_cmd", return_value=(False, "")), patch("build.requests.get", return_value=response):
+            self.assertEqual(build.get_latest_tag("MorpheApp/morphe-patches", allow_prerelease=False), "v1.45.0")
+
     def test_all_failure_alerts_are_enabled_by_default(self):
         for stage in build.DISCORD_FAILURE_ALERTS:
             with self.subTest(stage=stage):
