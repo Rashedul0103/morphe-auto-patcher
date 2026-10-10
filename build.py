@@ -1500,9 +1500,7 @@ def main():
                 print(f"Release {release_tag} is current for app version {current_release_version or 'unknown'}; refreshed supported-version metadata.")
                 continue
             print(f"A newer supported app version is available for {release_tag}; rebuilding.")
-        if release_is_present:
-            print(f"Deleting existing release {release_tag} before publishing the updated APK...")
-            run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
+        replace_existing_release = release_is_present
 
         with open(os.path.join(catalog_dir, f"{app_id}.json"), 'w') as f:
             json.dump(patches_list, f, indent=2)
@@ -1763,6 +1761,9 @@ def main():
             notes_file = tf.name
 
         try:
+            if replace_existing_release:
+                print(f"Replacing existing release {release_tag} after the new APK passed validation...")
+                run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
             create_cmd = [
                 "gh", "release", "create", release_tag,
                 output_apk,
