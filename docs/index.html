@@ -234,6 +234,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #dock .bb span { display:none; }
 #dock .bb.hl span { display:block; }
 .manager-home-card .ico { background:transparent; }
+.bb[hidden] { display:none!important; }
+.settings-group-title { font-size:.78rem; color:var(--sec); font-weight:700; margin:18px 4px 8px; text-transform:uppercase; letter-spacing:.04em; }
+.appearance-choice { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:10px; }
+.appearance-choice button { min-width:0; min-height:56px; justify-content:center; padding:8px; border-radius:16px; }
+.settings-row { display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid #8882; }
+.settings-row:last-child { border-bottom:0; }
+.settings-row .g { flex:1; min-width:0; }
+.settings-row .d { font-size:.77rem; color:var(--out); margin-top:3px; }
+.manager-group { margin:16px 0; }
+.manager-group-title { color:var(--sec); font-size:.8rem; font-weight:700; letter-spacing:.04em; padding:0 5px 8px; text-transform:uppercase; }
+.manager-update-notice { display:flex; align-items:center; gap:10px; background:color-mix(in srgb,var(--warn) 16%,var(--card)); border:1px solid color-mix(in srgb,var(--warn) 55%,transparent); border-radius:20px; padding:12px 14px; margin:0 0 12px; }
+.manager-update-notice .ms { color:var(--warn); }
+.no-outlines .card, .no-outlines .swipe-front, .no-outlines .manager-page-card, .no-outlines .manager-steps, .no-outlines .manager-update-notice { border-color:transparent!important; }
+.no-app-colors .manager-home-card { background:linear-gradient(112deg,color-mix(in srgb,var(--primary) 82%,var(--card)),color-mix(in srgb,var(--primary) 48%,var(--card)))!important; }
 @media (min-width:900px) { #dock .bb span { display:block; } }
 </style>
 </head>
@@ -273,6 +287,11 @@ const u64 = s => {
 };
 
 const LS = 'patch-manager-cfg';
+const UI_DEFAULTS = {
+  colorStyle: 'morphe', appColors: true, outlines: true, backgroundAnimation: true,
+  greeting: true, repatchNotice: true, showSort: true, appGrouping: false,
+  groupBy: 'source', appCardColors: {}
+};
 function getAppMeta(pkg) {
   const parts = String(pkg || '').split('.');
   const raw = parts[parts.length - 1] || pkg || 'app';
@@ -309,6 +328,7 @@ let deferredInstallPrompt = null;
 let S = {
   owner: '', repo: '', branch: 'main', token: '', wf: 'build.yml',
   mode: 'system', black: false, accent: '#E34A70', scale: 100,
+  ui: { ...UI_DEFAULTS },
   config: { 
     settings: { 
       default_arch: 'arm64-v8a', 
@@ -333,10 +353,11 @@ try {
   if (cached.accent === '#A4C9FF') cached.accent = '#E34A70';
   Object.assign(S, cached);
 } catch(e){}
+S.ui = { ...UI_DEFAULTS, ...(S.ui || {}), appCardColors: { ...((S.ui && S.ui.appCardColors) || {}) } };
 
 const persist = () => {
-  const { owner, repo, branch, token, wf, mode, black, accent, scale, homeSort, homeSearch } = S;
-  localStorage.setItem(LS, JSON.stringify({ owner, repo, branch, token, wf, mode, black, accent, scale, homeSort, homeSearch }));
+  const { owner, repo, branch, token, wf, mode, black, accent, scale, homeSort, homeSearch, ui } = S;
+  localStorage.setItem(LS, JSON.stringify({ owner, repo, branch, token, wf, mode, black, accent, scale, homeSort, homeSearch, ui }));
 };
 const sw = (on, attrs) => `<div class="sw ${on?'on':''}" ${attrs}></div>`;
 const A = {}, C = {};
@@ -1077,7 +1098,13 @@ function theme() {
   const d = document.documentElement, light = S.mode === 'light' || (S.mode === 'system' && matchMedia('(prefers-color-scheme: light)').matches);
   d.classList.toggle('light', light);
   d.classList.toggle('black', S.black && !light);
-  d.style.setProperty('--primary', S.accent);
+  d.classList.toggle('no-outlines', S.ui.outlines === false);
+  d.classList.toggle('no-app-colors', S.ui.appColors === false);
+  d.dataset.colorStyle = S.ui.colorStyle || 'morphe';
+  const primary = S.ui.colorStyle === 'material' ? (light ? '#435F91' : '#A4C9FF')
+    : S.ui.colorStyle === 'monochrome' ? (light ? '#5F5E66' : '#C6C6D0')
+    : S.accent;
+  d.style.setProperty('--primary', primary);
   d.style.setProperty('--fs', 16 * S.scale / 100 + 'px');
 }
 
@@ -1091,6 +1118,8 @@ function render() {
   if (r.v === 'builds') paintLive();
   const dock = $('#dock');
   if (dock) dock.style.display = r.v === 'home' ? 'flex' : 'none';
+  const sortButton = $('#dock [data-a="home_sort"]');
+  if (sortButton) sortButton.hidden = S.ui.showSort === false;
   if (r.v === 'home' && S.homeSearch) applyHomeSearch(S.homeSearch);
 }
 
@@ -1129,7 +1158,9 @@ function appCard(a) {
   const sourceUnavailable = !hasConfiguredSource || sourceFailed;
   const status = update ? '↑ Update' : asset ? 'Patched' : !hasConfiguredSource ? 'Add source' : sourceFailed ? 'Source issue' : readiness.state === 'ready' ? 'Original ready' : 'Get APK';
   const statusIcon = update ? 'north' : asset ? 'check' : sourceUnavailable ? 'warning' : readiness.state === 'ready' ? 'verified' : 'download';
-  const palette = hue(a).split(',');
+  const savedColor = S.ui.appCardColors && S.ui.appCardColors[a.id];
+  const customColor = /^#[0-9a-f]{6}$/i.test(savedColor || '') ? savedColor : '';
+  const palette = customColor ? [customColor, customColor] : hue(a).split(',');
   const searchable = (ttl(a) + ' ' + a.package + ' ' + (a.android_package || '') + ' ' + (version || '')).toLowerCase();
   return '<div class="swipe-box manager-app-wrap">' +
     '<div class="swipe-bg right"><span class="row"><i class="ms">tune</i> View Patches</span></div>' +
@@ -1144,6 +1175,12 @@ function appCard(a) {
   '</div>';
 }
 
+function appGroupLabel(a) {
+  if (S.ui.groupBy === 'category') return String(a.category || 'Other');
+  const repos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
+  return repos[0] || 'No patch source';
+}
+
 function listApps() {
   const hidden = S.config.hidden_apps || [];
   let appList = (S.config.apps || []).filter(a => !hidden.includes(a.id));
@@ -1156,9 +1193,27 @@ function listApps() {
   if (!appList.length) {
     return '<div class="card" style="text-align:center;padding:30px 16px"><b>No apps yet</b><div class="d" style="margin:8px 0 14px">Add an app from a patch source or enter its Play Store link.</div><button class="pill" data-a="addapp"><i class="ms">add</i> Add App</button></div>';
   }
-  return '<div class="manager-home-list">' + appList.map(appCard).join('') + '</div>';
+  if (!S.ui.appGrouping) return '<div class="manager-home-list">' + appList.map(appCard).join('') + '</div>';
+  const groups = new Map();
+  appList.forEach(a => {
+    const label = appGroupLabel(a);
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(a);
+  });
+  return [...groups].map(([label, apps]) =>
+    '<section class="manager-group"><h2 class="manager-group-title">' + esc(label) + '</h2><div class="manager-home-list">' + apps.map(appCard).join('') + '</div></section>'
+  ).join('');
 }
 
+function homeUpdateNotice() {
+  if (!S.ui.repatchNotice) return '';
+  const apps = (S.config.apps || []).filter(a => !(S.config.hidden_apps || []).includes(a.id))
+    .filter(a => updateAvailability(a, (S.cats[a.id] && S.cats[a.id].info) || {}, latestPatchedAsset(a)).hasUpdate);
+  if (!apps.length) return '';
+  const names = apps.slice(0, 3).map(ttl).join(', ');
+  const more = apps.length > 3 ? ' and ' + (apps.length - 3) + ' more' : '';
+  return '<div class="manager-update-notice"><i class="ms">system_update</i><div class="g"><b>Updates available</b><div class="d">' + esc(names + more) + ' can be patched again.</div></div><span class="chip warn">' + apps.length + '</span></div>';
+}
 function dashboardSummary() {
   const apps = (S.config.apps || []).filter(a => !(S.config.hidden_apps || []).includes(a.id));
   let ready = 0, attention = 0, updates = 0;
@@ -1187,9 +1242,10 @@ function vHome() {
       '<button class="menu-item" data-a="go" data-h="settings"><i class="ms">settings</i> Web settings</button>' +
     '</div></div>';
   return '<div class="manager-home-head"><div style="display:flex;justify-content:flex-end;align-items:center;height:22px">' + extraMenu + '</div>' +
-    '<div class="manager-home-title">' + greeting + ' ' + phrase + '</div>' +
+    (S.ui.greeting ? '<div class="manager-home-title">' + greeting + ' ' + phrase + '</div>' : '') +
     '<div class="manager-search"><i class="ms">search</i><label for="home-search">Search apps</label><input id="home-search" type="search" autocomplete="off" value="' + esc(S.homeSearch || '') + '" placeholder=" " aria-label="Search apps"></div>' +
     '</div>' +
+    homeUpdateNotice() +
     '<div id="apps">' + listApps() + '</div>' +
     '<div id="home-search-empty" class="manager-page-card" style="display:none;text-align:center">No matching apps. Try another app name or package.</div>' +
     '<button class="manager-select-apps" data-a="home_sources">Select other apps</button>';
@@ -1822,29 +1878,59 @@ let settingsTab = 0;
 function vSet() {
   let b = '';
   if (settingsTab === 0) {
-    b = `
+    const ui = S.ui;
+    const apps = S.config.apps || [];
+    const toggleRow = (key, title, detail) => '<div class="settings-row"><div class="g"><b>' + title + '</b><div class="d">' + detail + '</div></div>' + sw(ui[key] !== false, 'data-a="ui_toggle" data-k="' + key + '"') + '</div>';
+    b = \`
       <div class="card">
-        <b>Theme Mode</b>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          ${['system','light','dark'].map(m => `
-            <button class="pill ${S.mode===m?'':'o'}" data-a="set_theme" data-v="${m}">${m.toUpperCase()}</button>
-          `).join('')}
+        <div class="settings-group-title">Language & display</div>
+        <b>Theme mode</b>
+        <div class="appearance-choice">
+          \${[['system','System'],['light','Light'],['dark','Dark']].map(([mode,label]) => '<button class="pill ' + (S.mode===mode?'':'o') + '" data-a="set_theme" data-v="' + mode + '">' + label + '</button>').join('')}
         </div>
-        <div class="row" style="margin-top:10px">
-          <div class="g">Pure Black (OLED)</div>
-          ${sw(S.black, 'data-a="sw_black"')}
+        <div class="settings-group-title">Color style</div>
+        <div class="appearance-choice">
+          \${[['morphe','Morphe'],['material','Material You'],['monochrome','Monochrome']].map(([style,label]) => '<button class="pill ' + (ui.colorStyle===style?'':'o') + '" data-a="ui_color_style" data-v="' + style + '">' + label + '</button>').join('')}
+        </div>
+        \${toggleRow('black','Pure black','Use true black backgrounds on dark theme.')}
+        \${toggleRow('appColors','App and source colors','Use each app’s own color instead of the theme accent.')}
+        \${toggleRow('outlines','Outlines','Draw a thin edge around cards, panels, and controls.')}
+        \${toggleRow('backgroundAnimation','Background animation','Show the subtle moving background circles.')}
+        <div class="settings-group-title">Interface scale</div>
+        <div class="appearance-choice">
+          \${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
         </div>
       </div>
-
       <div class="card">
-        <b>Display Size</b>
-        <div class="d" style="margin:4px 0 10px">Adjust text size without changing the layout.</div>
-        <div style="display:flex;gap:6px">
-          ${[90,100,110,120].map(v => '<button class="pill '+(S.scale===v?'':'o')+'" data-a="set_scale" data-v="'+v+'">'+v+'%</button>').join('')}
+        <div class="settings-group-title">Home screen</div>
+        \${toggleRow('greeting','Greeting phrases','Show a time-based greeting above your apps.')}
+        \${toggleRow('repatchNotice','Re-patch notice','Show a banner when a patched app has an update.')}
+        \${toggleRow('showSort','Sort and filter button','Show the app sorting control in the bottom bar.')}
+        \${toggleRow('appGrouping','App grouping','Group your apps by patch source or category.')}
+        <div class="lbl">Group apps by</div>
+        <select data-c="ui_group_by">
+          <option value="source" \${ui.groupBy==='source'?'selected':''}>Patch source</option>
+          <option value="category" \${ui.groupBy==='category'?'selected':''}>Category</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="settings-group-title">App card colors</div>
+        <div class="d" style="margin:4px 0 12px">Set an optional color for each app. Apps without a custom color keep their generated colors.</div>
+        \${apps.length ? apps.map(a => {
+          const current = ui.appCardColors[a.id] || '#5369A8';
+          return '<div class="settings-row"><div class="g"><b>' + esc(ttl(a)) + '</b><div class="d">' + esc(a.package || '') + '</div></div><input type="color" aria-label="Card color for ' + esc(ttl(a)) + '" data-c="ui_card_color" data-id="' + esc(a.id) + '" value="' + esc(current) + '">' +
+            (ui.appCardColors[a.id] ? '<button class="pill t" data-a="ui_card_color_reset" data-id="' + esc(a.id) + '" aria-label="Reset ' + esc(ttl(a)) + ' color">Reset</button>' : '') + '</div>';
+        }).join('') : '<div class="d">Add apps to set individual card colors.</div>'}
+      </div>
+      <div class="card">
+        <div class="settings-group-title">Interface size</div>
+        <div class="d" style="margin:4px 0 10px">Change text size without changing the layout.</div>
+        <div class="appearance-choice">
+          \${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
         </div>
       </div>
-    `;
-  } else if (settingsTab === 1) {
+    \`;
+  }  } else if (settingsTab === 1) {
     const st = S.config.settings || { 
       default_arch: 'arm64-v8a', 
       auto_prune: true, 
@@ -2541,6 +2627,17 @@ Object.assign(A, {
   },
   set_theme: t => { S.mode = t.dataset.v; persist(); theme(); render(); },
   sw_black: t => { S.black = !S.black; persist(); theme(); render(); },
+  ui_toggle: t => {
+    const key = t.dataset.k;
+    if (!(key in S.ui)) return;
+    S.ui[key] = S.ui[key] === false ? true : false;
+    persist(); theme(); render();
+  },
+  ui_color_style: t => { S.ui.colorStyle = t.dataset.v || 'morphe'; persist(); theme(); render(); },
+  ui_card_color_reset: t => {
+    delete S.ui.appCardColors[t.dataset.id];
+    persist(); render();
+  },
   set_stab: t => { settingsTab = +t.dataset.v; render(); },
   set_scale: t => { S.scale = +t.dataset.v || 100; persist(); theme(); render(); },
   unhide: t => {
@@ -2592,6 +2689,12 @@ Object.assign(C, {
     S.config.settings[e.dataset.k] = e.value;
     dirty();
   },
+  ui_group_by: e => { S.ui.groupBy = e.value === 'category' ? 'category' : 'source'; persist(); render(); },
+  ui_card_color: e => {
+    if (!/^#[0-9a-f]{6}$/i.test(e.value)) return;
+    S.ui.appCardColors[e.dataset.id] = e.value;
+    persist(); render();
+  },
   dlg_opt_val: e => {
     const a = app(e.dataset.id); if (!a) return;
     a.options = a.options || {};
@@ -2632,23 +2735,25 @@ document.addEventListener('change', e => {
 $('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', theme);
 
-(function(){
-  const c = $('#bg'), x = c.getContext('2d'); let w, h, o = [];
-  function r() {
-    w = c.width = innerWidth; h = c.height = innerHeight;
-    o = [...Array(6)].map(() => ({ x: Math.random()*w, y: Math.random()*h, r: 60 + Math.random()*120, vx: (Math.random() - 0.5)*0.2, vy: (Math.random() - 0.5)*0.2 }));
-  }
-  r(); addEventListener('resize', r);
-  (function f(){
-    x.clearRect(0,0,w,h);
-    o.forEach(a => {
-      a.x = (a.x + a.vx + w) % w; a.y = (a.y + a.vy + h) % h;
-      x.beginPath(); x.arc(a.x, a.y, a.r, 0, 7);
-      x.fillStyle = 'rgba(30,90,168,0.08)'; x.fill();
-    });
-    requestAnimationFrame(f);
+if (S.ui.backgroundAnimation !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  (function(){
+    const c = $('#bg'), x = c.getContext('2d'); let w, h, o = [];
+    function r() {
+      w = c.width = innerWidth; h = c.height = innerHeight;
+      o = [...Array(6)].map(() => ({ x: Math.random()*w, y: Math.random()*h, r: 60 + Math.random()*120, vx: (Math.random() - 0.5)*0.2, vy: (Math.random() - 0.5)*0.2 }));
+    }
+    r(); addEventListener('resize', r);
+    (function f(){
+      x.clearRect(0,0,w,h);
+      o.forEach(a => {
+        a.x = (a.x + a.vx + w) % w; a.y = (a.y + a.vy + h) % h;
+        x.beginPath(); x.arc(a.x, a.y, a.r, 0, 7);
+        x.fillStyle = 'rgba(30,90,168,0.08)'; x.fill();
+      });
+      requestAnimationFrame(f);
+    })();
   })();
-})();
+}
 
 function syncInstallAction() {
   const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
