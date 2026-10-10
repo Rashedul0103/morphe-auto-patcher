@@ -11,31 +11,6 @@
     "notify_output_validation_failure": true,
     "notify_release_publishing_failure": true
   },
-  "sources": [
-    {
-      "repo": "MorpheApp/morphe-patches",
-      "enabled": true,
-      "prerelease": false,
-      "tag": "v1.47.0-dev.18",
-      "release_name": "v1.47.0-dev.18",
-      "patch_count": 169,
-      "icon_url": "",
-      "apps": [
-        {
-          "package": "com.google.android.youtube",
-          "name": "Youtube"
-        },
-        {
-          "package": "com.google.android.apps.youtube.music",
-          "name": "Music"
-        },
-        {
-          "package": "com.reddit.frontpage",
-          "name": "Frontpage"
-        }
-      ],
-      "last_inspected": "2026-10-10T13:26:52.654Z"
-    }
-  ],
+  "sources": [],
   "hidden_apps": []
 }
