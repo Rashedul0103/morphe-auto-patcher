@@ -1881,42 +1881,42 @@ function vSet() {
     const ui = S.ui;
     const apps = S.config.apps || [];
     const toggleRow = (key, title, detail) => '<div class="settings-row"><div class="g"><b>' + title + '</b><div class="d">' + detail + '</div></div>' + sw(ui[key] !== false, 'data-a="ui_toggle" data-k="' + key + '"') + '</div>';
-    b = \`
+    b = `
       <div class="card">
         <div class="settings-group-title">Language & display</div>
         <b>Theme mode</b>
         <div class="appearance-choice">
-          \${[['system','System'],['light','Light'],['dark','Dark']].map(([mode,label]) => '<button class="pill ' + (S.mode===mode?'':'o') + '" data-a="set_theme" data-v="' + mode + '">' + label + '</button>').join('')}
+          ${[['system','System'],['light','Light'],['dark','Dark']].map(([mode,label]) => '<button class="pill ' + (S.mode===mode?'':'o') + '" data-a="set_theme" data-v="' + mode + '">' + label + '</button>').join('')}
         </div>
         <div class="settings-group-title">Color style</div>
         <div class="appearance-choice">
-          \${[['morphe','Morphe'],['material','Material You'],['monochrome','Monochrome']].map(([style,label]) => '<button class="pill ' + (ui.colorStyle===style?'':'o') + '" data-a="ui_color_style" data-v="' + style + '">' + label + '</button>').join('')}
+          ${[['morphe','Morphe'],['material','Material You'],['monochrome','Monochrome']].map(([style,label]) => '<button class="pill ' + (ui.colorStyle===style?'':'o') + '" data-a="ui_color_style" data-v="' + style + '">' + label + '</button>').join('')}
         </div>
-        \${toggleRow('black','Pure black','Use true black backgrounds on dark theme.')}
-        \${toggleRow('appColors','App and source colors','Use each app’s own color instead of the theme accent.')}
-        \${toggleRow('outlines','Outlines','Draw a thin edge around cards, panels, and controls.')}
-        \${toggleRow('backgroundAnimation','Background animation','Show the subtle moving background circles.')}
+        ${toggleRow('black','Pure black','Use true black backgrounds on dark theme.')}
+        ${toggleRow('appColors','App and source colors','Use each app’s own color instead of the theme accent.')}
+        ${toggleRow('outlines','Outlines','Draw a thin edge around cards, panels, and controls.')}
+        ${toggleRow('backgroundAnimation','Background animation','Show the subtle moving background circles.')}
         <div class="settings-group-title">Interface scale</div>
         <div class="appearance-choice">
-          \${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
+          ${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
         </div>
       </div>
       <div class="card">
         <div class="settings-group-title">Home screen</div>
-        \${toggleRow('greeting','Greeting phrases','Show a time-based greeting above your apps.')}
-        \${toggleRow('repatchNotice','Re-patch notice','Show a banner when a patched app has an update.')}
-        \${toggleRow('showSort','Sort and filter button','Show the app sorting control in the bottom bar.')}
-        \${toggleRow('appGrouping','App grouping','Group your apps by patch source or category.')}
+        ${toggleRow('greeting','Greeting phrases','Show a time-based greeting above your apps.')}
+        ${toggleRow('repatchNotice','Re-patch notice','Show a banner when a patched app has an update.')}
+        ${toggleRow('showSort','Sort and filter button','Show the app sorting control in the bottom bar.')}
+        ${toggleRow('appGrouping','App grouping','Group your apps by patch source or category.')}
         <div class="lbl">Group apps by</div>
         <select data-c="ui_group_by">
-          <option value="source" \${ui.groupBy==='source'?'selected':''}>Patch source</option>
-          <option value="category" \${ui.groupBy==='category'?'selected':''}>Category</option>
+          <option value="source" ${ui.groupBy==='source'?'selected':''}>Patch source</option>
+          <option value="category" ${ui.groupBy==='category'?'selected':''}>Category</option>
         </select>
       </div>
       <div class="card">
         <div class="settings-group-title">App card colors</div>
         <div class="d" style="margin:4px 0 12px">Set an optional color for each app. Apps without a custom color keep their generated colors.</div>
-        \${apps.length ? apps.map(a => {
+        ${apps.length ? apps.map(a => {
           const current = ui.appCardColors[a.id] || '#5369A8';
           return '<div class="settings-row"><div class="g"><b>' + esc(ttl(a)) + '</b><div class="d">' + esc(a.package || '') + '</div></div><input type="color" aria-label="Card color for ' + esc(ttl(a)) + '" data-c="ui_card_color" data-id="' + esc(a.id) + '" value="' + esc(current) + '">' +
             (ui.appCardColors[a.id] ? '<button class="pill t" data-a="ui_card_color_reset" data-id="' + esc(a.id) + '" aria-label="Reset ' + esc(ttl(a)) + ' color">Reset</button>' : '') + '</div>';
@@ -1926,10 +1926,10 @@ function vSet() {
         <div class="settings-group-title">Interface size</div>
         <div class="d" style="margin:4px 0 10px">Change text size without changing the layout.</div>
         <div class="appearance-choice">
-          \${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
+          ${[90,100,110,120].map(v => '<button class="pill ' + (S.scale===v?'':'o') + '" data-a="set_scale" data-v="' + v + '">' + v + '%</button>').join('')}
         </div>
       </div>
-    \`;
+    `;
   }  } else if (settingsTab === 1) {
     const st = S.config.settings || { 
       default_arch: 'arm64-v8a', 
