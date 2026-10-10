@@ -27,7 +27,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791564213
+    "updated_at": 1791602818
   },
   "apk_acquisition": {
     "status": "downloaded",
