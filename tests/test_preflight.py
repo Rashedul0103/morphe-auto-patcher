@@ -13,33 +13,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PreflightTests(unittest.TestCase):
-    def test_config_apps_have_generic_acquisition_fields(self):
+    def test_fresh_config_has_no_bundled_apps_or_patch_sources(self):
         config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
-        apps = config.get("apps", [])
-        self.assertGreater(len(apps), 0)
+        self.assertEqual(config.get("apps"), [])
+        self.assertEqual(config.get("sources"), [])
+        self.assertFalse((ROOT / "patches-1.39.1.mpp").exists())
 
-        seen_ids = set()
-        seen_packages = set()
-        for app in apps:
-            app_id = str(app.get("id") or "").strip()
-            package = str(app.get("android_package") or "").strip()
-            self.assertRegex(app_id, r"^[a-z0-9][a-z0-9_-]*$")
-            self.assertRegex(
-                package,
-                r"^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$",
-            )
-            self.assertNotIn(app_id, seen_ids)
-            self.assertNotIn(package, seen_packages)
-            seen_ids.add(app_id)
-            seen_packages.add(package)
-
-            providers = app.get("apk_providers")
-            self.assertIsInstance(providers, list)
-            self.assertGreater(len(providers), 0)
-            self.assertEqual(
-                len(providers),
-                len({str(provider).lower() for provider in providers}),
-            )
+        for info_path in (ROOT / "docs" / "catalog").glob("*.info.json"):
+            info = json.loads(info_path.read_text(encoding="utf-8"))
+            self.assertNotIn("patch_source", info)
+            self.assertNotIn("patch_filter", info)
+            self.assertNotIn("patch_source_candidates", info)
 
     def test_provider_order_is_deterministic_and_deduplicated(self):
         config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))

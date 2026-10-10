@@ -5,13 +5,7 @@
     "3.23.1"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=bunpo%203.23.1",
-  "patch_source": "hoo-dles/morphe-patches",
-  "patch_filter": "Bunpo",
   "android_package": "com.bunpoapp",
-  "patch_source_attempts": [],
-  "patch_source_candidates": [
-    "hoo-dles/morphe-patches"
-  ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/bunpo.png",
   "icon_source": "cache",

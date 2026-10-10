@@ -5,13 +5,7 @@
     "6.98.4"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=duolingo%206.98.4",
-  "patch_source": "hoo-dles/morphe-patches",
-  "patch_filter": "Duolingo",
   "android_package": "com.duolingo",
-  "patch_source_attempts": [],
-  "patch_source_candidates": [
-    "hoo-dles/morphe-patches"
-  ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/duolingo.png",
   "icon_source": "cache",

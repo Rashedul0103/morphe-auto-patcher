@@ -467,12 +467,7 @@ def parse_patches(output):
     def push_option():
         nonlocal current_option
         if current_option and "key" in current_option:
-            current_patch.setdefault("options", []).append({
-                "key": current_option.get("key", ""),
-                "title": current_option.get("title", ""),
-                "description": current_option.get("description", ""),
-                "default": current_option.get("default", "")
-            })
+            current_patch.setdefault("options", []).append(dict(current_option))
         current_option = {}
 
     def push_patch():
@@ -518,9 +513,37 @@ def parse_patches(output):
                 current_option['description'] = option_line.split(':', 1)[1].strip().rstrip('.')
             elif option_line.startswith("Default:"):
                 current_option['default'] = option_line.split(':', 1)[1].strip().rstrip('.')
+            elif option_line.startswith("Type:"):
+                current_option['type'] = option_line.split(':', 1)[1].strip().rstrip('.')
+            elif option_line.startswith("Required:"):
+                current_option['required'] = option_line.split(':', 1)[1].strip().rstrip('.').lower() == 'true'
+            elif option_line.startswith("Values:"):
+                raw_values = option_line.split(':', 1)[1].strip().rstrip('.')
+                try:
+                    parsed_values = json.loads(raw_values)
+                    if isinstance(parsed_values, (dict, list)):
+                        current_option['values'] = parsed_values
+                except (TypeError, ValueError):
+                    pass
 
     push_patch()
     return patches
+
+
+def build_patch_option_args(options):
+    """Convert saved per-patch option values to Morphe CLI -O arguments."""
+    args = []
+    if not isinstance(options, dict):
+        return args
+    for patch_name, values in options.items():
+        if not isinstance(values, dict):
+            continue
+        for key, value in values.items():
+            if value is None:
+                continue
+            value_text = str(value).lower() if isinstance(value, bool) else str(value)
+            args.extend(["-O", f"{patch_name}:{key}={value_text}"])
+    return args
 
 def _clean_app_workspace(app_id):
     root = os.path.join(".work", app_id)
@@ -1596,10 +1619,7 @@ def main():
         for p_name in app.get('enable', []): patch_cmd.extend(["-e", p_name])
         for p_name in app.get('disable', []): patch_cmd.extend(["-d", p_name])
 
-        for p_name, opts in app.get('options', {}).items():
-            for key, val in opts.items():
-                val_str = str(val).lower() if isinstance(val, bool) else str(val)
-                patch_cmd.extend(["-O", f"{p_name}:{key}={val_str}"])
+        patch_cmd.extend(build_patch_option_args(app.get('options', {})))
 
         patch_cmd.append(apk_path)
 

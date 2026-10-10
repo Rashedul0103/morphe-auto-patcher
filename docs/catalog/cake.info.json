@@ -5,13 +5,7 @@
     "6.4.0"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=cake%206.4.0",
-  "patch_source": "hoo-dles/morphe-patches",
-  "patch_filter": "Cake",
   "android_package": "me.mycake",
-  "patch_source_attempts": [],
-  "patch_source_candidates": [
-    "hoo-dles/morphe-patches"
-  ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/cake.png",
   "icon_source": "google_play",

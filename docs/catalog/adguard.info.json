@@ -5,13 +5,7 @@
     "4.14.2"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=adguard%204.14.2",
-  "patch_source": "hoo-dles/morphe-patches",
-  "patch_filter": "AdGuard",
   "android_package": "com.adguard.android",
-  "patch_source_attempts": [],
-  "patch_source_candidates": [
-    "hoo-dles/morphe-patches"
-  ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/adguard.png",
   "icon_source": "google_play",

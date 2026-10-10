@@ -854,7 +854,18 @@ function openPatchOptions(id, pName) {
     <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
       ${patch.options.map(o => {
         const val = currentOpts[o.key] !== undefined ? currentOpts[o.key] : (o.default ?? '');
-        const isBool = /^(true|false)$/i.test(String(o.default));
+        const type = String(o.type || '').toLowerCase();
+        const isBool = typeof o.default === 'boolean' || /boolean|bool/.test(type) || /^(true|false)$/i.test(String(o.default));
+        const values = Array.isArray(o.values)
+          ? o.values.map(v => [String(v), v])
+          : (o.values && typeof o.values === 'object' ? Object.entries(o.values) : []);
+        const controlType = String(o.control || o.display || '').toLowerCase();
+        const isNumber = /int|long|float|double|number/.test(type);
+        const isColor = /color/.test(type) || /color/i.test(o.key || '') || /^#[0-9a-f]{6}$/i.test(String(o.default || ''));
+        const inputAttrs = `data-c="dlg_opt_val" data-type="${isNumber ? 'number' : 'string'}" data-id="${esc(id)}" data-p="${esc(pName)}" data-k="${esc(o.key)}"`;
+        const optionControl = values.length
+          ? (controlType === 'radio' ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${values.map(([label, value]) => `<label class="pill o"><input type="radio" name="opt_${esc(id)}_${esc(pName)}_${esc(o.key)}" ${inputAttrs} value="${esc(value)}" ${String(val) === String(value) ? 'checked' : ''}> ${esc(label)}</label>`).join('')}</div>` : `<select ${inputAttrs} style="margin-top:6px">${values.map(([label, value]) => `<option value="${esc(value)}" ${String(val) === String(value) ? 'selected' : ''}>${esc(label)}</option>`).join('')}</select>`)
+          : `<input ${inputAttrs} type="${isColor ? 'color' : isNumber ? 'number' : 'text'}" value="${esc(val)}" placeholder="Default: ${esc(o.default ?? '')}" ${o.min !== undefined ? `min="${esc(o.min)}"` : ''} ${o.max !== undefined ? `max="${esc(o.max)}"` : ''} ${o.step !== undefined ? `step="${esc(o.step)}"` : ''} style="margin-top:6px">`;
         return `
           <div class="card" style="background:var(--card-high);margin:0">
             <b style="font-size:0.9rem">${esc(o.title || o.key)}</b>
@@ -865,7 +876,7 @@ function openPatchOptions(id, pName) {
                 ${sw(String(val).toLowerCase() === 'true', `data-a="dlg_opt_sw" data-id="${esc(id)}" data-p="${esc(pName)}" data-k="${esc(o.key)}"`)}
               </div>
             ` : `
-              <input type="text" data-c="dlg_opt_text" data-id="${esc(id)}" data-p="${esc(pName)}" data-k="${esc(o.key)}" value="${esc(val)}" placeholder="Default: ${esc(o.default ?? '')}" style="margin-top:6px">
+              ${optionControl}
             `}
           </div>
         `;
@@ -2507,11 +2518,12 @@ Object.assign(C, {
     S.config.settings[e.dataset.k] = e.value;
     dirty();
   },
-  dlg_opt_text: e => {
+  dlg_opt_val: e => {
     const a = app(e.dataset.id); if (!a) return;
     a.options = a.options || {};
     a.options[e.dataset.p] = a.options[e.dataset.p] || {};
-    a.options[e.dataset.p][e.dataset.k] = e.value.trim();
+    const value = e.dataset.type === 'number' && e.value !== '' ? Number(e.value) : e.value;
+    a.options[e.dataset.p][e.dataset.k] = value;
     dirty();
   }
 });
