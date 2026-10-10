@@ -1202,6 +1202,49 @@ def resolve_stock_apk(app_id, package, app_version, app_config, expected_signer_
         "workspace": root,
     }
 
+def patched_apk_filename(app_id, patch_version, app_version):
+    """Build a descriptive, filesystem-safe APK name from verified build versions."""
+    def safe_part(value):
+        cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", str(value or "").strip())
+        return cleaned.strip("._-") or "unknown"
+
+    return (
+        f"{safe_part(app_id)}-patch-{safe_part(patch_version)}"
+        f"_app-{safe_part(app_version)}.apk"
+    )
+
+
+def compare_version_numbers(left, right):
+    """Compare numeric version components; return None when either is unparseable."""
+    left_parts = re.findall(r"\d+", str(left or ""))
+    right_parts = re.findall(r"\d+", str(right or ""))
+    if not left_parts or not right_parts:
+        return None
+    for index in range(max(len(left_parts), len(right_parts))):
+        left_part = int(left_parts[index]) if index < len(left_parts) else 0
+        right_part = int(right_parts[index]) if index < len(right_parts) else 0
+        if left_part != right_part:
+            return 1 if left_part > right_part else -1
+    return 0
+
+
+def release_app_version(tag):
+    """Read the app version recorded in a published release's notes."""
+    ok, out = run_cmd(["gh", "release", "view", tag, "--json", "body"], silent=True)
+    if not ok:
+        return ""
+    try:
+        body = json.loads(out).get("body") or ""
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        return ""
+    match = re.search(
+        r"^\s*-\s*\*\*App Version:\*\*\s*([^\r\n]+)",
+        body,
+        re.MULTILINE | re.IGNORECASE,
+    )
+    return match.group(1).strip() if match else ""
+
+
 def main():
     print("Starting Auto-Patcher Build...")
     pre_flight_checks()
@@ -1437,17 +1480,33 @@ def main():
             continue
 
         release_tag = f"{app_id}-{tag_name}"
-        if release_exists(release_tag) and not force:
-            print(f"Release {release_tag} already exists. Skipping.")
-            continue
-        elif release_exists(release_tag) and force:
-            print(f"Force flag active. Deleting existing release {release_tag}...")
+        app_version = app.get('version', '') or (compatible_versions[0] if compatible_versions else '')
+        release_is_present = release_exists(release_tag)
+        if release_is_present and not force:
+            current_release_version = release_app_version(release_tag)
+            if compare_version_numbers(app_version, current_release_version) != 1:
+                with open(os.path.join(catalog_dir, f"{app_id}.json"), 'w') as f:
+                    json.dump(patches_list, f, indent=2)
+                _update_info_metadata(
+                    info_path,
+                    patch_tag=tag_name,
+                    recommended_version=app_version,
+                    compatible_versions=compatible_versions,
+                    patch_source=patches_repo,
+                    patch_filter=selected_patch_filter,
+                    patch_source_attempts=source_attempts,
+                    patch_source_candidates=source_repos,
+                )
+                print(f"Release {release_tag} is current for app version {current_release_version or 'unknown'}; refreshed supported-version metadata.")
+                continue
+            print(f"A newer supported app version is available for {release_tag}; rebuilding.")
+        if release_is_present:
+            print(f"Deleting existing release {release_tag} before publishing the updated APK...")
             run_cmd(["gh", "release", "delete", release_tag, "--yes", "--cleanup-tag"])
-            
+
         with open(os.path.join(catalog_dir, f"{app_id}.json"), 'w') as f:
             json.dump(patches_list, f, indent=2)
 
-        app_version = app.get('version', '') or (compatible_versions[0] if compatible_versions else '')
         query = f"{app_id} {app_version}".strip()
         apkmirror_url = f"https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s={urllib.parse.quote(query)}"
         
@@ -1679,6 +1738,15 @@ def main():
             )
             has_errors = True
             continue
+
+        output_filename = patched_apk_filename(
+            app_id, tag_name, patched_info.version_name or app_version
+        )
+        named_output = os.path.join(os.path.dirname(output_apk), output_filename)
+        if named_output != output_apk:
+            os.replace(output_apk, named_output)
+            output_apk = named_output
+            patched_info.path = output_apk
 
         try:
             _update_info_metadata(info_path, patched_apk=patched_info.to_dict())

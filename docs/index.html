@@ -174,15 +174,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .manager-home-card .ico img { padding:0; border-radius:16px; object-fit:contain; }
 .manager-app-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:7px; }
 .manager-app-name { font-size:clamp(1.12rem,4vw,1.5rem); font-weight:700; line-height:1.2; color:#fff; overflow-wrap:anywhere; text-shadow:0 1px 2px #0004; }
-.manager-app-version { color:#e5e3ed; font-size:1rem; line-height:1.3; overflow-wrap:anywhere; }
+.manager-app-version { color:#e5e3ed; font-size:.88rem; line-height:1.35; overflow-wrap:anywhere; }
 .manager-app-status { flex:none; max-width:42%; border-radius:24px; padding:9px 12px; background:#ffffff38; color:#fff; display:inline-flex; align-items:center; gap:5px; font-weight:600; font-size:.78rem; text-align:center; }
 .manager-app-status .ms { font-size:17px; }
 .manager-select-apps { width:100%; min-height:58px; margin:16px 0 18px; border:1px solid #686a78; border-radius:23px; background:#242530; color:var(--on); font:500 1rem Roboto,system-ui,sans-serif; }
 .manager-select-apps:active { background:var(--card-high); }
-#dock { left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); width:min(680px,calc(100% - 28px)); justify-content:space-between; gap:10px; padding:6px; border-radius:28px; background:color-mix(in srgb,#242530 94%,transparent); box-shadow:0 5px 22px #0005; backdrop-filter:blur(12px); }
-#dock .bb { flex:1; min-width:0; width:25%; min-height:62px; padding:8px 6px; border:1px solid #77798866; border-radius:22px; font-size:.69rem; }
+#dock { left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:stretch; width:min(680px,calc(100% - 28px)); gap:7px; padding:7px; border-radius:28px; background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:0 5px 22px #0005; backdrop-filter:blur(12px); }
+#dock .bb { width:100%; min-width:0; min-height:64px; padding:8px 4px; border:1px solid color-mix(in srgb,var(--out) 38%,transparent); border-radius:21px; font-size:.69rem; gap:3px; justify-content:center; }
 #dock .bb .ms { font-size:25px; }
-#dock .bb.hl { background:#393b48; color:var(--on); border-color:#a8aaba88; }
+#dock .bb.hl { background:var(--pc); color:var(--primary); border-color:color-mix(in srgb,var(--primary) 55%,var(--out)); }
 #main { padding-bottom:calc(164px + env(safe-area-inset-bottom)); max-width:760px; }
 .manager-extra-menu { position:relative; flex:none; }
 .manager-extra-menu .menu-pop { top:calc(100% + 5px); }
@@ -216,7 +216,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .manager-detail-actions .pill { width:100%; min-height:52px; justify-content:center; white-space:normal; }
 .manager-patch-footer { position:sticky; bottom:calc(148px + env(safe-area-inset-bottom)); z-index:4; background:var(--bg); padding:12px 0 5px; }
 @media (min-width:900px) {
- #dock { width:82px; left:14px; top:50%; bottom:auto; transform:translateY(-50%); flex-direction:column; border-radius:28px; }
+ #dock { display:flex; width:82px; left:14px; top:50%; bottom:auto; transform:translateY(-50%); flex-direction:column; border-radius:28px; }
  #dock .bb { width:100%; min-height:70px; }
  #main { margin-left:max(104px,calc(50vw - 380px + 52px)); }
  .manager-home-card { min-height:120px; }
@@ -232,6 +232,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 #dock .bb span { display:none; }
+#dock .bb.hl span { display:block; }
 .manager-home-card .ico { background:transparent; }
 @media (min-width:900px) { #dock .bb span { display:block; } }
 </style>
@@ -396,6 +397,38 @@ function latestPatchedAsset(a) {
   if (!rel) return null;
   const asset = (rel.assets || []).find(x => /\.apk$/i.test(x.name));
   return asset ? { ...asset, release: rel } : null;
+}
+
+function patchedAppVersion(asset) {
+  if (!asset) return '';
+  const body = asset.release && asset.release.body || '';
+  const fromNotes = body.match(/^\s*-\s*\*\*App Version:\*\*\s*([^\r\n]+)/im);
+  if (fromNotes && !/^(auto|latest)$/i.test(fromNotes[1].trim())) return fromNotes[1].trim();
+  const fromName = String(asset.name || '').match(/_app-(.+)\.apk$/i);
+  return fromName ? fromName[1] : '';
+}
+
+function compareVersionNumbers(left, right) {
+  const a = String(left || '').match(/\d+/g);
+  const b = String(right || '').match(/\d+/g);
+  if (!a || !b) return null;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const av = Number(a[i] || 0), bv = Number(b[i] || 0);
+    if (av !== bv) return av > bv ? 1 : -1;
+  }
+  return 0;
+}
+
+function updateAvailability(a, info, asset) {
+  info = info || {};
+  const sourceRepo = info.patch_source || (Array.isArray(a.patch_sources) && a.patch_sources[0]) || a.patches_repo || '';
+  const sourceTag = sourceRepo && S.upstreamTags[sourceRepo] || '';
+  const patchUpdate = !!(asset && info.patch_tag && sourceTag && sourceTag !== info.patch_tag);
+  const builtVersion = patchedAppVersion(asset) || a.version || '';
+  const supportedVersion = info.recommended_version || '';
+  const versionOrder = compareVersionNumbers(supportedVersion, builtVersion);
+  const appVersionUpdate = !!(asset && supportedVersion && builtVersion && versionOrder > 0);
+  return { patchUpdate, appVersionUpdate, hasUpdate: patchUpdate || appVersionUpdate };
 }
 
 function renderBuildTimeline(stage, status) {
@@ -1070,9 +1103,11 @@ function appCard(a) {
   const rels = relsFor(a.id);
   const latestRel = rels[0];
   const asset = latestPatchedAsset(a);
-  const sourceTag = S.upstreamTags[a.patches_repo] || info.patch_tag || '';
-  const update = !!(asset && info.patch_tag && sourceTag && sourceTag !== info.patch_tag);
-  const version = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : '';
+  const updates = updateAvailability(a, info, asset);
+  const update = updates.hasUpdate;
+  const patchVersion = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : '';
+  const appVersion = patchedAppVersion(asset) || (asset ? a.version || '' : '');
+  const version = asset ? [appVersion && 'App v' + appVersion, patchVersion && 'Patch ' + patchVersion].filter(Boolean).join(' · ') : '';
   const configuredRepos = Array.isArray(a.patch_sources) && a.patch_sources.length ? a.patch_sources : (a.patches_repo ? [a.patches_repo] : []);
   const hasConfiguredSource = configuredRepos.some(repo => configuredSourceForRepo(repo));
   const readiness = apkReadiness(a, info);
@@ -1088,7 +1123,7 @@ function appCard(a) {
       appIconHtml(a) +
       '<div class="manager-app-copy">' +
         '<div class="manager-app-name">' + esc(ttl(a)) + '</div>' +
-        '<div class="manager-app-version">' + (version && version !== 'Auto' ? 'v' + esc(version) : 'Not patched yet') + '</div>' +
+        '<div class="manager-app-version">' + (version ? esc(version) : 'Not patched yet') + '</div>' +
       '</div>' +
       '<span class="manager-app-status"><i class="ms">' + statusIcon + '</i>' + status + '</span>' +
     '</div>' +
@@ -1412,9 +1447,11 @@ function vApp(r) {
   const selectedCount = patches.filter(p => eff(a,p)).length;
   const asset = latestPatchedAsset(a);
   const latestRel = asset ? asset.release : null;
-  const sourceTag = S.upstreamTags[a.patches_repo] || info.patch_tag || '';
-  const patchUpdate = !!(asset && info.patch_tag && sourceTag && sourceTag !== info.patch_tag);
-  const version = asset && latestRel ? latestRel.tag_name.replace(a.id + '-', '') : targetVersionFor(a, info);
+  const updates = updateAvailability(a, info, asset);
+  const patchUpdate = updates.patchUpdate;
+  const appVersionUpdate = updates.appVersionUpdate;
+  const hasUpdate = updates.hasUpdate;
+  const version = asset && latestRel ? (patchedAppVersion(asset) || targetVersionFor(a, info)) : targetVersionFor(a, info);
   const compatibleRaw = Array.isArray(info.compatible_versions) ? info.compatible_versions : (Array.isArray(info.supported_versions) ? info.supported_versions : []);
   const versions = compatibleRaw.map(v => typeof v === 'object' && v ? String(v.version || v.version_name || v.name || '') : String(v || '')).filter(Boolean);
   const recommended = String(info.recommended_version || versions[0] || a.version || '');
@@ -1464,13 +1501,13 @@ function vApp(r) {
   const packageName = a.android_package || a.package || 'Not recorded';
   return hdr(ttl(a), 'v' + version, 1) +
     '<div class="manager-detail-hero"><div class="app-hero">' + icon + '<div class="hero-copy"><div class="manager-detail-title">' + esc(ttl(a)) + '</div><div class="manager-detail-meta">v' + esc(version) + '</div><div style="margin-top:10px"><span class="chip ok"><i class="ms" style="font-size:14px">verified</i> Patched APK</span><span class="chip">' + esc(ago(latestRel.published_at || latestRel.created_at)) + '</span></div></div></div></div>' +
-    (patchUpdate ?
-      '<div class="manager-update-panel"><div class="status-title" style="justify-content:center"><i class="ms">update</i><b>Patch update available</b></div><div class="d" style="margin:10px 0">A newer version of the patch source is available. Review the changes and rebuild for the latest improvements.</div><button class="pill" data-a="go_patcher" data-id="' + esc(a.id) + '"><i class="ms">auto_fix_high</i> Patch</button><button class="pill o" data-a="whats_new" data-id="' + esc(a.id) + '"><i class="ms">history</i> What\'s new</button></div>' :
+    (hasUpdate ?
+      '<div class="manager-update-panel"><div class="status-title" style="justify-content:center"><i class="ms">update</i><b>' + (patchUpdate && appVersionUpdate ? 'Patch and app update available' : patchUpdate ? 'Patch update available' : 'App version update available') + '</b></div><div class="d" style="margin:10px 0">' + (patchUpdate && appVersionUpdate ? 'A newer patch and supported app version are available.' : patchUpdate ? 'A newer version of the patch source is available.' : 'A newer supported app version is available.') + ' Rebuild to get the latest improvements.</div><button class="pill" data-a="go_patcher" data-id="' + esc(a.id) + '"><i class="ms">auto_fix_high</i> Update</button><button class="pill o" data-a="whats_new" data-id="' + esc(a.id) + '"><i class="ms">history</i> What\'s new</button></div>' :
       '<div class="manager-update-panel"><div class="status-title" style="justify-content:center"><i class="ms">verified</i><b>Patched APK available</b></div><div class="d" style="margin:10px 0">Download your latest published build, or open patch selection to change features and rebuild.</div><button class="pill" data-a="go_patcher" data-id="' + esc(a.id) + '"><i class="ms">auto_fix_high</i> Patch / Rebuild</button><button class="pill o" data-a="whats_new" data-id="' + esc(a.id) + '"><i class="ms">history</i> What\'s new</button></div>') +
     '<div class="manager-page-card">' +
       '<div class="manager-detail-row"><i class="ms">inventory_2</i><div><div class="detail-label">Package name</div><div class="detail-value">' + esc(packageName) + '</div></div></div>' +
       '<div class="manager-detail-row"><i class="ms">update</i><div><div class="detail-label">Built APK version</div><div class="detail-value">v' + esc(version) + '</div></div></div>' +
-      '<div class="manager-detail-row"><i class="ms">schedule</i><div><div class="detail-label">Newest supported version</div><div class="detail-value">v' + esc(info.recommended_version || version) + '</div></div></div>' +
+      '<div class="manager-detail-row"><i class="ms">schedule</i><div><div class="detail-label">Newest supported version</div><div class="detail-value">v' + esc(info.recommended_version || version) + (appVersionUpdate ? ' · Update available' : '') + '</div></div></div>' +
       '<div class="manager-detail-row"><i class="ms">sd_storage</i><div><div class="detail-label">APK size</div><div class="detail-value">' + esc(size) + '</div></div></div>' +
       '<div class="manager-detail-row"><i class="ms">memory</i><div><div class="detail-label">Output architecture</div><div class="detail-value">' + esc(architectures) + '</div></div></div>' +
       '<div class="manager-detail-row"><i class="ms">done_all</i><div style="flex:1"><div class="detail-label">Selected patches</div><div class="detail-value">' + selectedCount + ' of ' + patches.length + ' available patches selected</div></div><button class="pill" data-a="go_patcher" data-id="' + esc(a.id) + '" style="padding:8px 12px"><i class="ms">list</i> Edit</button></div>' +
