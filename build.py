@@ -576,7 +576,7 @@ ICON_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".avif")
 
 
 def _looks_like_android_package(value):
-    return bool(re.match(r"^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$", str(value or "").strip(), re.I))
+    return bool(re.match(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$", str(value or "").strip(), re.I))
 
 
 def _icon_safe_id(app_id):
