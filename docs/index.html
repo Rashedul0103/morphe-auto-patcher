@@ -344,6 +344,7 @@ function appIconHtml(a) {
 const ARCH = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
 const EXT = /\.(apk|apkm|apks|xapk|axapk)$/i;
 let deferredInstallPrompt = null;
+let pendingUploadRetry = null;
 
 let S = {
   owner: '', repo: '', branch: 'main', token: '', wf: 'build.yml',
@@ -918,6 +919,21 @@ function openUploadApkDialog(id) {
     </div>
     <div class="d" style="margin-top:10px">After upload, GitHub performs the authoritative APK verification before patching.</div>
     <button class="pill t" data-a="close">Cancel</button>
+  `);
+}
+
+function openUploadFailureDialog(id, file, error) {
+  pendingUploadRetry = { id, file };
+  const size = file && Number.isFinite(file.size) ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '';
+  dlg(`
+    <h2>Upload interrupted</h2>
+    <p>${esc(error && error.message || 'The upload could not be completed.')}</p>
+    <div class="card" style="background:var(--card-high)"><b>${esc(file && file.name || 'Selected file')}</b>${size ? `<div class="d" style="margin-top:4px">${esc(size)}</div>` : ''}</div>
+    <p>The selected file is kept while this page stays open. Retry it here, or choose another file.</p>
+    <div class="dlg-actions">
+      <button class="pill t" data-a="dlg_upload_apk" data-id="${esc(id)}">Choose another file</button>
+      <button class="pill" data-a="upload_retry_file"><i class="ms">refresh</i> Retry upload</button>
+    </div>
   `);
 }
 
@@ -2550,6 +2566,16 @@ Object.assign(A, {
   dlg_upload_apk: t => openUploadApkDialog(t.dataset.id),
   choose_apk_file: t => { const f=$('#stock_apk_file'); if(f) f.click(); },
   upload_retry_build: t => dispatchBuild(t.dataset.id, true),
+  upload_retry_file: async () => {
+    const retry = pendingUploadRetry;
+    if (!retry) return;
+    try {
+      await uploadStockApk(retry.id, retry.file);
+      pendingUploadRetry = null;
+    } catch (error) {
+      openUploadFailureDialog(retry.id, retry.file, error);
+    }
+  },
   dlg_have_apk: t => { closeDlg(); location.hash = '#/app/' + encodeURIComponent(t.dataset.id); },
   open_opts: t => openPatchOptions(t.dataset.id, t.dataset.p),
   dispatch_app: t => dispatchBuild(t.dataset.id, true),
@@ -2847,10 +2873,12 @@ document.addEventListener('change', e => {
   if (e.target && e.target.id === 'stock_apk_file') {
     const id = e.target.dataset.appId;
     const file = e.target.files && e.target.files[0];
-    if (id && file) uploadStockApk(id, file).catch(err => {
-      toast(err.message, 1);
-      openUploadApkDialog(id);
-    });
+    if (id && file) {
+      pendingUploadRetry = { id, file };
+      uploadStockApk(id, file).then(() => {
+        pendingUploadRetry = null;
+      }).catch(error => openUploadFailureDialog(id, file, error));
+    }
   }
 });
 $('#dbg').addEventListener('click', e => { if (e.target.id === 'dbg') closeDlg(); });
