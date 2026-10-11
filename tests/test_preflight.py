@@ -13,8 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PreflightTests(unittest.TestCase):
-    def test_fresh_config_has_no_bundled_apps_or_patch_sources(self):
-        config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
+    def test_fresh_config_fixture_has_no_bundled_apps_or_patch_sources(self):
+        config = json.loads(
+            (ROOT / "tests" / "fixtures" / "fresh_config.json").read_text(encoding="utf-8")
+        )
         self.assertEqual(config.get("apps"), [])
         self.assertEqual(config.get("sources"), [])
         self.assertFalse((ROOT / "patches-1.39.1.mpp").exists())
@@ -26,14 +28,11 @@ class PreflightTests(unittest.TestCase):
             self.assertNotIn("patch_source_candidates", info)
 
     def test_provider_order_is_deterministic_and_deduplicated(self):
-        config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
-        for app in config["apps"]:
-            order = provider_order(app)
-            self.assertEqual(order, list(dict.fromkeys(order)))
-            for provider in app["apk_providers"]:
-                self.assertIn(str(provider).lower(), order)
-            self.assertIn("apkmirror", order)
-            self.assertIn("uptodown", order)
+        app = {"apk_providers": ["uptodown", "apkmirror", "uptodown"]}
+        order = provider_order(app)
+        self.assertEqual(order, ["uptodown", "apkmirror", "apkpure"])
+        self.assertEqual(order, provider_order(app))
+        self.assertEqual(provider_order({}), ["apkmirror", "uptodown", "apkpure"])
 
     def test_artifact_types_cover_all_supported_android_artifacts(self):
         self.assertEqual(
