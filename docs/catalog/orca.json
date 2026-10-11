@@ -1,0 +1,299 @@
+[
+  {
+    "options": [
+      {
+        "key": "cloneAppName",
+        "title": "App name",
+        "description": "The name under the copy's home screen icon. Up to 40 letters, numbers, spaces and simple punctuation.",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "Messenger Clone",
+        "values": {}
+      },
+      {
+        "key": "clonePackageName",
+        "title": "Package name",
+        "description": "The copy's package name, such as com.facebook.orca.hush. It can't be Messenger's own or another Meta app's.",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "com.facebook.orca.hush",
+        "values": {}
+      }
+    ],
+    "name": "Clone install under another package name",
+    "description": "The name under the copy's home screen icon. Up to 40 letters, numbers, spaces and simple punctuation",
+    "enabled": false
+  },
+  {
+    "options": [],
+    "name": "Install beside Meta apps",
+    "description": "Renames two shared permissions so a re-signed Messenger can install beside Meta apps. Checked 580 builds only. Earlier clean installs stopped at a blank first-run screen",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Restore screens on re-signed builds",
+    "description": "Answers Messenger's own signer lookup, and a Facebook signed with your key calling Messenger, with the original Meta certificate. Always on",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Material You theme",
+    "description": "Gives Messenger's dark mode the colors of your wallpaper on Android 12 and newer, and a fixed blue palette on Android 11. Light mode stays as it is. Turn on dark mode in Messenger first",
+    "enabled": false
+  },
+  {
+    "options": [],
+    "name": "Hide inbox ads",
+    "description": "Filters typed inbox ad items, in case Meta brings back the inbox ads it stopped selling in November 2025. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide People You May Know",
+    "description": "Hides suggested people in chats, search and stories, and on the People and Notifications tabs. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide friend request cards",
+    "description": "Hides friend request cards inside the inbox. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide joined community chats",
+    "description": "Hides joined community-chat rows from the main inbox on its next render. Keeps Search, community folders, delivery and unread counts unchanged. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide growth prompts",
+    "description": "Hides the inbox's add-more-people promotion unit. Also hides the tip sheets in notes, like Make my notes public, and the Share your own story card after someone else's stories. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide inbox promotions",
+    "description": "Hides Messenger quick-promotion banners in the chat list. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide stories and notes",
+    "description": "Hides the horizontal tray above chats. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide inbox tabs",
+    "description": "Hides the Home and Channels subtabs. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Facebook shortcuts",
+    "description": "Hides Facebook toolbar, profile and sharing shortcuts, and Also from Meta in the Menu tab. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Meta AI",
+    "description": "Hides the floating button, toolbar button, Meta AI tab, menu entries and search AI. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Chat Moments",
+    "description": "Hides the Chat Moments entry in the menu. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Reels badge",
+    "description": "Hides the Reels notification badge. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide AI sticker tools",
+    "description": "Hides the Generate AI sticker buttons, generated-sticker tab and AI sticker suggestions. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide avatar stickers",
+    "description": "Hides the avatar tab in the sticker keyboard. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Restore old emoji drawer",
+    "description": "Turns off Meta's redesigned emoji drawer, so the emoji keyboard keeps its earlier layout. Changes apply after Restart Messenger. Accounts Meta never moved to the redesign see no difference. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Keep emoji search on emoji",
+    "description": "Typing while the emoji keyboard is open no longer switches it to sticker search. The keyboard stays on emoji. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide chat promotions",
+    "description": "Hides Messenger quick-promotion banners inside conversations. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide business reply suggestions",
+    "description": "Hides suggested replies in business conversations. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide business typing suggestions",
+    "description": "Hides business suggestions as you type. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide event prompts",
+    "description": "Hides event quick-promotion prompts inside chats. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide typing indicator",
+    "description": "Suppresses your outgoing active-typing signal, including in end-to-end encrypted chats. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Open web links externally",
+    "description": "Uses Messenger's external-browser branch for HTTP and HTTPS links. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Allow chat bubbles",
+    "description": "Offers Stock, Chat Heads and Native Bubbles on verified Messenger routes on Android 11 and newer. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Use system emoji",
+    "description": "Renders emoji with the phone's own font instead of Messenger's. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Send photos at original quality",
+    "description": "With HD on, sends a JPEG photo's own image data instead of a re-encoded copy, without its metadata except the rotation tag. Videos and photos over 20 MB are still compressed. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Send videos without re-encoding",
+    "description": "Sends a video file as it is when Messenger's own passthrough can take it, instead of a re-encoded copy. Videos over 25 MB are still compressed, and so are trimmed or edited videos and formats Messenger won't pass through. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Keep a message log",
+    "description": "Keeps a copy of each message as its notification arrives, so an unsend can't take it back. This is the only way that reaches end-to-end encrypted chats. The log stays on your phone, encrypted with a key that never leaves it, and holds only messages that raised a notification. Read it or clear it from the log in settings. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Use the phone's camera app",
+    "description": "The camera button in a chat opens your phone's own camera app instead of Messenger's camera. The photo you take opens in Messenger's editor for that chat, ready to send. Photos only. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Stop analytics uploads",
+    "description": "Stops the background services Messenger's analytics logger uploads through. Messenger still records those events on your phone, and they can upload after you turn this off. Doesn't stop other logging. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Allow screenshots",
+    "description": "Lets you screenshot protected chat media, including view-once media and Quicksnap, and stops screenshot notices. This doesn't add replay or saving. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide read receipts",
+    "description": "Stops sending read receipts. Opened encrypted chats can stay unread on this phone. Replying or switching this off may notify the sender. Group coverage isn't verified. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Keep unsent messages",
+    "description": "Preserves messages on verified legacy unsend routes. End-to-end encrypted chats are unsupported, and group coverage is unverified. Activity records intercepted legacy unsends, not chat support. Your own unsend may be limited. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Unlock app icons",
+    "description": "Makes every icon in Messenger's App icon setting selectable without a subscription. Messenger applies the icon with its own launcher switch. Messenger still decides whether that setting shows on your account, and switching this off can bring its default icon back. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "View stories anonymously",
+    "description": "Opens other people's stories without adding you to their viewer list. Stories you open this way are marked as seen on your side. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Save any story",
+    "description": "Adds Save to the More options menu on other people's stories. The photo or video goes to your phone the same way Messenger saves your own. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Slide chats in and out",
+    "description": "Slides a chat in from the side when you open it and back out when you go back, while the screen underneath holds still. Chat heads and bubbles keep their own animations. Long-press Messenger's home screen icon > Patch controls. Starts off",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Open settings from menu",
+    "description": "Adds a HushMessenger entry to the Menu tab and side menu. Always on",
+    "enabled": true
+  },
+  {
+    "options": [
+      {
+        "key": "soundFile",
+        "title": "Sound file",
+        "description": "An .ogg, .mp3, .m4a or .wav file of 1 MB (1,048,576 bytes) or less. Leave it empty to keep Messenger's sound.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": {}
+      }
+    ],
+    "name": "Custom new-message sound",
+    "description": "An .ogg, .mp3, .m4a or .wav file of 1 MB (1,048,576 bytes) or less. Leave it empty to keep Messenger's sound",
+    "enabled": false
+  },
+  {
+    "options": [
+      {
+        "key": "versionCode",
+        "title": "Version code",
+        "description": "A whole number from 1 to 2147483647. It has to be higher than the Play Store's Messenger to stop update offers. The default is the highest Android allows.",
+        "required": true,
+        "type": "kotlin.Int",
+        "default": 2147483647,
+        "values": {}
+      }
+    ],
+    "name": "Spoof package version",
+    "description": "A whole number from 1 to 2147483647. It has to be higher than the Play Store's Messenger to stop update offers. The default is the highest Android allows",
+    "enabled": false
+  }
+]

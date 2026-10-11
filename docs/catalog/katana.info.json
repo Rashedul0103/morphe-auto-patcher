@@ -1,0 +1,23 @@
+{
+  "build_status": {
+    "status": "failed",
+    "stage": "patch_source",
+    "reason": "No compatible patch source found.",
+    "updated_at": 1791705751
+  },
+  "icon_url": "catalog/icons/katana.png",
+  "icon_source": "google_play",
+  "patch_source_attempts": [
+    {
+      "repo": "SysAdminDoc/Hushfacebook",
+      "status": "incompatible",
+      "tag": "v0.10.0",
+      "filters_tried": [
+        "com.facebook.katana"
+      ]
+    }
+  ],
+  "patch_source_candidates": [
+    "SysAdminDoc/Hushfacebook"
+  ]
+}

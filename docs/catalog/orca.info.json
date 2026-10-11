@@ -1,0 +1,75 @@
+{
+  "patch_tag": "v0.22.0",
+  "recommended_version": "580.0.0.49.91",
+  "compatible_versions": [
+    "580.0.0.49.91",
+    "581.0.0.49.91"
+  ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=orca%20580.0.0.49.91",
+  "patch_source": "SysAdminDoc/HushMessenger",
+  "patch_filter": "com.facebook.orca",
+  "android_package": "com.facebook.orca",
+  "patch_source_attempts": [],
+  "patch_source_candidates": [
+    "SysAdminDoc/HushMessenger"
+  ],
+  "stock_signer_sha256": [],
+  "icon_url": "catalog/icons/orca.png",
+  "icon_source": "google_play",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791705751
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "580.0.0.49.91",
+    "package": "com.facebook.orca",
+    "apk_arch": "auto",
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/"
+    ],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "580.0.0.49.91",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/",
+        "error": "HTTP 403: https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "580.0.0.49.91",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Exact APKMirror version page not found for 580.0.0.49.91",
+        "app_query": "com.facebook.orca",
+        "expected_package": "com.facebook.orca"
+      },
+      {
+        "provider": "uptodown",
+        "version": "580.0.0.49.91",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 526; search HTTP 526)",
+        "app_query": "com.facebook.orca",
+        "expected_package": "com.facebook.orca"
+      },
+      {
+        "provider": "apkpure",
+        "version": "580.0.0.49.91",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "APKPure app discovery failed for com.facebook.orca",
+        "app_query": "com.facebook.orca",
+        "expected_package": "com.facebook.orca"
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/orca"
+  },
+  "stock_apk": null
+}

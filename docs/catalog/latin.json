@@ -1,0 +1,260 @@
+[
+  {
+    "options": [],
+    "name": "English QWERTY Up-Flick Uppercase",
+    "description": "\u82f1\u6587 QWERTY \u9375\u76e4\u4e0a\u6ed1\u5927\u5c0f\u5beb",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Long-Press Editing Shortcuts",
+    "description": "\u5728\u82f1\u6587 QWERTY \u8207\u6ce8\u97f3\u9375\u76e4\u52a0\u5165\u5168\u9078\u3001\u5fa9\u539f\u3001\u8907\u88fd\u3001\u526a\u4e0b\u3001\u8cbc\u4e0a\u8207\u91cd\u505a\u9577\u6309\u5feb\u6377\u9375",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "G Logo on Spacebar",
+    "description": "\u5728\u7a7a\u767d\u9375\u986f\u793a G Logo\uff0c\u4e26\u96b1\u85cf\u8a9e\u8a00\u540d\u7a31",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Incognito Mode Toggle",
+    "description": "\u5728 Access Point \u5de5\u5177\u5217\u65b0\u589e\u7121\u75d5\u6a21\u5f0f\u5207\u63db\u6309\u9215\uff0c\u4e26\u53ef\u8a2d\u5b9a\u7121\u75d5\u6a21\u5f0f\u4e0b\u662f\u5426\u555f\u7528\u526a\u8cbc\u7c3f\u8207\u8a9e\u97f3\u8f38\u5165",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Toolbar Editing Buttons",
+    "description": "\u5c07\u5168\u9078\u3001\u8907\u88fd\u3001\u526a\u4e0b\u8207\u8cbc\u4e0a\u52a0\u5165\u9078\u55ae\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Floating Web Search",
+    "description": "\u76f4\u63a5\u5f9e Gboard \u958b\u555f\u61f8\u6d6e\u7db2\u9801\uff0c\u5feb\u901f\u641c\u5c0b\u9700\u8981\u7684\u8cc7\u8a0a\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Simple Calculator",
+    "description": "\u76f4\u63a5\u8f38\u5165\u7b97\u5f0f\uff0c\u5728 Gboard \u63a8\u85a6\u5217\u986f\u793a\u53ef\u6372\u52d5\u7b97\u5f0f\u8207\u7b54\u6848\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Advanced Voice Typing",
+    "description": "\u555f\u7528\u9032\u968e\u8a9e\u97f3\u8f38\u5165\uff08\u5305\u542b\u81ea\u52d5\u6a19\u9ede\u529f\u80fd\uff09\uff0c\u4e26\u53e6\u5916\u70ba\u4e0d\u652f\u63f4\u9032\u968e\u8a9e\u97f3\u8f38\u5165\u7684\u7e41\u9ad4\u4e2d\u6587\u8a9e\u97f3\u555f\u7528\u81ea\u52d5\u6a19\u9ede",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Use Bluetooth Microphone",
+    "description": "\u555f\u7528 \u8a9e\u97f3\u8f38\u5165 -> \u4f7f\u7528\u85cd\u82bd\u9ea5\u514b\u98a8",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Change emoji size",
+    "description": "\u8b8a\u66f4\u8868\u60c5\u7b26\u865f\u5927\u5c0f",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Enable cursor trackpad mode",
+    "description": "\u9577\u6309\u7a7a\u767d\u9375\u958b\u555f\u6e38\u6a19\u89f8\u63a7\u677f\u8207\u9396\u5b9a\u6a21\u5f0f",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Access Points menu style",
+    "description": "\u5207\u63db\u65b0\u7248\u6216\u820a\u7248 Access Points \u9078\u55ae\u6a23\u5f0f",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Enable split keyboard",
+    "description": "\u555f\u7528\u5206\u96e2\u5f0f\u9375\u76e4",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Enable accessibility layout",
+    "description": "\u555f\u7528\u7121\u969c\u7919\u9375\u76e4\u914d\u7f6e",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Rounded Keyboard Panel",
+    "description": "\u81ea\u8a02\u9375\u76e4\u9762\u677f\u54ea\u4e9b\u89d2\u843d\u5448\u73fe\u5713\u89d2\uff0c\u4e26\u5206\u5225\u8a2d\u5b9a\u4e0a\u65b9\u8207\u4e0b\u65b9\u534a\u5f91\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Frosted Glass",
+    "description": "\u70ba\u9375\u76e4\u52a0\u5165\u5373\u6642\u80cc\u666f\u6a21\u7cca\u8207\u81ea\u8a02\u4e3b\u984c\u900f\u660e\u5ea6\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Top Toolbar Item Count",
+    "description": "\u81ea\u8a02 Gboard \u9802\u7aef\u5de5\u5177\u5217\u9805\u76ee\u6578\u91cf",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Close Proactive Suggestions",
+    "description": "\u5728\u4e3b\u52d5\u5efa\u8b70\u5217\u986f\u793a\u95dc\u9589\u6309\u9215",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hyperspeed Typing Animation",
+    "description": "\u6301\u7e8c\u5feb\u901f\u8f38\u5165\u6642\u986f\u793a\u52d5\u756b\uff0c\u4e26\u652f\u63f4\u6240\u6709\u9375\u76e4",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Custom Theme",
+    "description": "\u652f\u63f4\u532f\u5165\u81ea\u8a02 ZIP \u4e3b\u984c\uff0c\u4e26\u652f\u63f4\u5f9e Rboard \u5b98\u65b9\u5132\u5b58\u5eab\u532f\u5165\u7cbe\u7f8e\u4e3b\u984c\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Quick Insert",
+    "description": "\u555f\u7528\u5feb\u901f\u63d2\u5165\u9762\u677f\u8207\u5de5\u5177\u5217\u5165\u53e3",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Zhuyin Quick Traditional/Simplified Toggle",
+    "description": "\u6ce8\u97f3 \u3125 \u4e0a\u6ed1\u5feb\u901f\u5207\u63db\u7e41\u7c21",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Custom Symbols",
+    "description": "\u65b0\u589e\u7368\u7acb\u7684\u7279\u6b8a\u7b26\u865f\u5206\u9801\uff0c\u9577\u6309\u9017\u865f->\u611b\u5fc3",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Swipeable Custom Top Row",
+    "description": "\u6ed1\u52d5\u9375\u76e4\u7b2c\u4e00\u6392\uff0c\u5728\u539f\u751f\u5217\u8207\u53ef\u81ea\u8a02\u6587\u5b57/JavaScript \u5217\u4e4b\u9593\u5207\u63db",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Developer options",
+    "description": "\u555f\u7528 \u958b\u767c\u4eba\u54e1\u9078\u9805 \u8207 Flag \u7de8\u8f2f\u5668\uff0c\u4f60\u53ef\u4ee5\u81ea\u5df1\u4fee\u6539Flag\u7684\u503c",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Backup & Restore",
+    "description": "\u532f\u51fa\u6216\u9084\u539f\u5168\u90e8 Patches \u8a2d\u5b9a\uff0c\u4e26\u5099\u4efd\u3001\u6bd4\u8f03\u53ca\u9084\u539f Gboard PB/XML flag store",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Emojis, stickers & GIFs Tab Order",
+    "description": "\u81ea\u8a02 Gboard\u300cEmojis, stickers & GIFs\u300d\u5e95\u90e8 tabs \u7684\u6392\u5e8f\uff0c\u652f\u63f4\u62d6\u66f3\u8abf\u6574",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Clipboard Enhancements",
+    "description": "\u589e\u5f37\u526a\u8cbc\u7c3f\u7684\u4fdd\u7559\u6642\u9593\u3001\u6578\u91cf\u4e0a\u9650\u3001\u9810\u89bd\u884c\u6578\u3001\u5012\u6578/\u5efa\u7acb\u6642\u9593\u3001\u9806\u5e8f\u7de8\u865f\u8207\u6b04\u6578",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Clipboard Custom Character Limit",
+    "description": "\u81ea\u8a02\u6bcf\u500b\u6587\u5b57\u526a\u8cbc\u7c3f\u9805\u76ee\u7684\u6700\u5927\u5b57\u5143\u6578",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Web Clipboard",
+    "description": "\u65b0\u589e\u624b\u6a5f\u81ea\u67b6\u7684 Web Clipboard\uff0c\u652f\u63f4\u700f\u89bd\u5668\u540c\u6b65\u3001\u914d\u5c0d\u78bc\u8207\u5feb\u901f\u8a2d\u5b9a\u958b\u95dc",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "FTP Server",
+    "description": "\u65b0\u589e\u5340\u57df\u7db2\u8def FTP \u4f3a\u670d\u5668\uff0c\u652f\u63f4\u6a94\u6848\u700f\u89bd\u3001\u50b3\u8f38\u8207\u4e0b\u8f09\u7e8c\u50b3",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Enable Inline Autofill Suggestions",
+    "description": "\u555f\u7528\u5167\u5d4c\u81ea\u52d5\u586b\u5165\u5efa\u8b70",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Grammar Checker",
+    "description": "\u555f\u7528 \u4fee\u6b63\u548c\u5efa\u8b70 > \u6587\u6cd5\u6aa2\u67e5",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Inline Suggestions",
+    "description": "\u555f\u7528 \u4fee\u6b63\u548c\u5efa\u8b70 > \u667a\u6167\u64b0\u5beb",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Key Shape Selection",
+    "description": "\u555f\u7528\u5713\u89d2\u6309\u9375\uff0c\u4e3b\u984c\u8a73\u60c5 > \u6309\u9375\u5f62\u72c0",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "AI Writing Tools",
+    "description": "\u555f\u7528 AI \u64b0\u5beb\u5de5\u5177\uff0c\u652f\u63f4\u6240\u6709\u8a9e\u8a00",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Enable OCR / Scan Text",
+    "description": "\u555f\u7528 OCR / \u6383\u63cf\u6587\u5b57\u529f\u80fd\uff0c\u652f\u63f4 \u62c9\u4e01\u3001\u4e2d\u6587\u3001\u65e5\u6587\u3001\u97d3\u6587 \u8207 \u5929\u57ce\u6587 \u8fa8\u8b58\u5f8c\u7aef",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Settings Homepage Override",
+    "description": "\u5141\u8a31\u5207\u63db\u65b0\u7248\u6216\u820a\u7248 Gboard \u8a2d\u5b9a\u9801\u9762",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Latin Globe Key Ignore Interval",
+    "description": "\u65b0\u589e\u82f1\u6587\u9375\u76e4\u5730\u7403\u9375\u5ffd\u7565\u6642\u9593\u8986\u5beb\uff0c\u53ef\u7368\u7acb\u63a7\u5236\u8f38\u5165\u5f8c\u5207\u8a9e\u8a00\u5ef6\u9072",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Zhuyin Bottom Row Key Sizes",
+    "description": "\u8abf\u6574\u6ce8\u97f3\u9375\u76e4\u5e95\u6392\u6309\u9375\u5927\u5c0f",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Package Rename",
+    "description": "",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Add Gboard Signature Bypass",
+    "description": "\u6514\u622a Gboard \u7684\u7c3d\u7ae0\u767d\u540d\u55ae\u6aa2\u67e5\u4e26\u5f37\u5236\u901a\u904e",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Zhuyin Slide Input",
+    "description": "\u6ce8\u97f3\u9375\u76e4\u652f\u6301\u4e0a\u4e0b\u6ed1\u8f38\u5165",
+    "enabled": true
+  }
+]

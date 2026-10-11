@@ -1,0 +1,74 @@
+{
+  "patch_tag": "v3.12.0",
+  "recommended_version": "18.0.3.954559732-release-arm64-v8a",
+  "compatible_versions": [
+    "18.0.3.954559732-release-arm64-v8a"
+  ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=latin%2018.0.3.954559732-release-arm64-v8a",
+  "patch_source": "jasonwu1994/Gboard-patches",
+  "patch_filter": "com.google.android.inputmethod.latin",
+  "android_package": "com.google.android.inputmethod.latin",
+  "patch_source_attempts": [],
+  "patch_source_candidates": [
+    "jasonwu1994/Gboard-patches"
+  ],
+  "stock_signer_sha256": [],
+  "icon_url": "catalog/icons/latin.png",
+  "icon_source": "google_play",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791705751
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "18.0.3.954559732-release-arm64-v8a",
+    "package": "com.google.android.inputmethod.latin",
+    "apk_arch": "auto",
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-18-0-3-954559732-release/gboard-the-google-keyboard-18-0-3-954559732-release-arm64-v8a-4-android-apk-download/"
+    ],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-18-0-3-954559732-release/gboard-the-google-keyboard-18-0-3-954559732-release-arm64-v8a-4-android-apk-download/",
+        "error": "HTTP 403: https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-18-0-3-954559732-release/gboard-the-google-keyboard-18-0-3-954559732-release-arm64-v8a-4-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Exact APKMirror version page not found for 18.0.3.954559732-release-arm64-v8a",
+        "app_query": "com.google.android.inputmethod.latin",
+        "expected_package": "com.google.android.inputmethod.latin"
+      },
+      {
+        "provider": "uptodown",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 526; search HTTP 526)",
+        "app_query": "com.google.android.inputmethod.latin",
+        "expected_package": "com.google.android.inputmethod.latin"
+      },
+      {
+        "provider": "apkpure",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "APKPure app discovery failed for com.google.android.inputmethod.latin",
+        "app_query": "com.google.android.inputmethod.latin",
+        "expected_package": "com.google.android.inputmethod.latin"
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/latin"
+  },
+  "stock_apk": null
+}

@@ -14,9 +14,9 @@
   "icon_source": "cache",
   "build_status": {
     "status": "failed",
-    "stage": "apk_acquisition",
-    "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791627413
+    "stage": "patch_source",
+    "reason": "No compatible patch source found.",
+    "updated_at": 1791705751
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -86,5 +86,14 @@
     "error": "All automatic APK providers failed for the exact requested version.",
     "workspace": ".work/youtube"
   },
-  "stock_apk": null
+  "stock_apk": null,
+  "patch_source_attempts": [
+    {
+      "repo": "MorpheApp/morphe-patches",
+      "status": "no_release"
+    }
+  ],
+  "patch_source_candidates": [
+    "MorpheApp/morphe-patches"
+  ]
 }
