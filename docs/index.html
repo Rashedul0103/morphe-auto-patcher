@@ -2111,8 +2111,8 @@ function dlgAddApp() {
 }
 
 function inspectAppEntry() {
-  const name = (($('n_app_name') || {}).value || '').trim();
-  const raw = (($('n_app_play') || {}).value || '').trim();
+  const name = (($('#n_app_name') || {}).value || '').trim();
+  const raw = (($('#n_app_play') || {}).value || '').trim();
   const androidPackage = extractPlayPackage(raw);
   const matches = matchConfiguredPatchApps(name, androidPackage);
   const result = $('#app_inspect_result');

@@ -8,6 +8,7 @@ from apk_providers import (
     provider_order,
     morphe_manual_search_url,
 )
+from build import _looks_like_android_package
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,6 +34,24 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(order, ["uptodown", "apkmirror", "apkpure"])
         self.assertEqual(order, provider_order(app))
         self.assertEqual(provider_order({}), ["apkmirror", "uptodown", "apkpure"])
+
+    def test_android_package_matcher_accepts_valid_package_ids(self):
+        self.assertTrue(_looks_like_android_package("com.example.app"))
+        self.assertTrue(_looks_like_android_package("org.example_2.client"))
+        self.assertTrue(_looks_like_android_package(" com.Example.App "))
+
+        for invalid in ("", "com", ".com.example", "com.example.", "https://example.com"):
+            with self.subTest(value=invalid):
+                self.assertFalse(_looks_like_android_package(invalid))
+
+    def test_add_app_inputs_use_id_selectors(self):
+        ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("id=\"n_app_name\"", ui)
+        self.assertIn("id=\"n_app_play\"", ui)
+        self.assertIn("$('%s')" % "#n_app_name", ui)
+        self.assertIn("$('%s')" % "#n_app_play", ui)
+        self.assertNotIn("$('n_app_name')", ui)
+        self.assertNotIn("$('n_app_play')", ui)
 
     def test_artifact_types_cover_all_supported_android_artifacts(self):
         self.assertEqual(
