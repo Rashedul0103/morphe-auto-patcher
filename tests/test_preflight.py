@@ -48,11 +48,10 @@ class PreflightTests(unittest.TestCase):
         ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
         self.assertIn("id=\"n_app_name\"", ui)
         self.assertIn("id=\"n_app_play\"", ui)
-        inspect = ui.split("function inspectAppEntry()", 1)[1].split("\\nfunction ", 1)[0]
-        self.assertIn("$('%s')" % "#n_app_name", inspect)
-        self.assertIn("$('%s')" % "#n_app_play", inspect)
-        self.assertNotIn("$('n_app_name')", inspect)
-        self.assertNotIn("$('n_app_play')", inspect)
+        self.assertIn("$('%s')" % "#n_app_name", ui)
+        self.assertIn("$('%s')" % "#n_app_play", ui)
+        self.assertNotIn("$('n_app_name')", ui)
+        self.assertNotIn("$('n_app_play')", ui)
 
     def test_artifact_types_cover_all_supported_android_artifacts(self):
         self.assertEqual(

@@ -2188,7 +2188,7 @@ function doAddApp() {
     apk_arch: 'auto',
     apk_providers: ['apkmirror','uptodown'],
     apk_sources: {},
-    play_store_url: /^https?:\/\/play\.google\.com\//i.test((($('n_app_play') || {}).value || '').trim()) ? (($('n_app_play') || {}).value || '').trim() : '',
+    play_store_url: /^https?:\/\/play\.google\.com\//i.test((($('#n_app_play') || {}).value || '').trim()) ? (($('#n_app_play') || {}).value || '').trim() : '',
     version: '',
     force: false,
     auto_patch: true,
