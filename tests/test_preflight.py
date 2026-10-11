@@ -91,7 +91,7 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("data.version || source.tag", ui)
         self.assertIn("xhr.ontimeout", ui)
         self.assertNotIn("xhr.setRequestHeader('X-GitHub-Api-Version'", ui)
-        self.assertIn("bottom:calc(96px + env(safe-area-inset-bottom))", ui)
+        self.assertIn("bottom:calc(10px + env(safe-area-inset-bottom))", ui)
         self.assertIn(".apk,.apkm,.apks,.xapk", ui)
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
@@ -128,6 +128,21 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("#/upload/", build)
         self.assertIn("Upload through Patch Manager", build)
         self.assertIn("GitHub Release fallback", build)
+
+    def test_patcher_ui_exposes_known_names_options_and_safe_footer(self):
+        ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+        for package, name in (
+            ("com.google.android.inputmethod.latin", "Gboard"),
+            ("com.facebook.katana", "Facebook"),
+        ):
+            self.assertIn(package, ui)
+            self.assertIn(name, ui)
+        self.assertIn("patch-options-button", ui)
+        self.assertIn("Configure patch options", ui)
+        self.assertIn("manager-patch-list-end", ui)
+        self.assertIn("bottom:calc(10px + env(safe-area-inset-bottom))", ui)
+        self.assertIn("upload_retry_file", ui)
+
 
 # Controlled E2E trigger marker: commits tagged [e2e] run the full build.
 
