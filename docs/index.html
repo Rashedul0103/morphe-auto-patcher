@@ -216,7 +216,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .manager-detail-row .detail-value { color:var(--on); font-size:.92rem; overflow-wrap:anywhere; }
 .manager-detail-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:14px 0; }
 .manager-detail-actions .pill { width:100%; min-height:52px; justify-content:center; white-space:normal; }
-.manager-patch-footer { position:sticky; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:4; background:var(--bg); padding:12px 0 5px; }
+.patch-options-button { flex:none; min-height:40px; padding:8px 11px; gap:5px; font-size:.72rem; }
+.patch-options-button .ms { font-size:18px; }
+.manager-patch-list-end { height:130px; pointer-events:none; }
+.manager-patch-footer { position:sticky; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:8; background:color-mix(in srgb,var(--bg) 96%,transparent); padding:10px 12px 8px; margin:0 -8px; border:1px solid #8883; border-radius:22px; box-shadow:0 6px 22px #0007; backdrop-filter:blur(12px); }
 @media (min-width:900px) {
  #dock { display:flex; width:82px; left:14px; top:50%; bottom:auto; transform:translateY(-50%); flex-direction:column; border-radius:28px; }
  #dock .bb { width:100%; min-height:70px; }
@@ -304,6 +307,20 @@ function getAppMeta(pkg) {
   const hue1 = Math.abs(hash) % 360;
   const hue2 = (hue1 + 150 + (Math.abs(hash >> 7) % 60)) % 360;
   return { name: name || 'App', color: 'hsl(' + hue1 + ' 76% 35%),hsl(' + hue2 + ' 72% 31%)' };
+}
+
+const KNOWN_APP_NAMES = {
+  'com.facebook.orca': { name: 'Messenger', aliases: ['orca', 'messenger'] },
+  'com.google.android.inputmethod.latin': { name: 'Gboard', aliases: ['latin', 'gboard', 'google keyboard'] },
+  'com.facebook.katana': { name: 'Facebook', aliases: ['katana', 'facebook'] },
+  'com.google.android.youtube': { name: 'YouTube', aliases: ['youtube'] },
+  'com.google.android.apps.youtube.music': { name: 'YouTube Music', aliases: ['music', 'youtube music'] }
+};
+function appNameForPackage(pkg, preferredName = '') {
+  const preferred = String(preferredName || '').trim();
+  const known = KNOWN_APP_NAMES[String(pkg || '').trim().toLowerCase()];
+  if (known && (!preferred || known.aliases.includes(preferred.toLowerCase()))) return known.name;
+  return preferred || getAppMeta(pkg).name || 'App';
 }
 
 function officialIconUrl(a) {
@@ -531,17 +548,15 @@ function buildStatusView(a, info) {
 }
 const app = id => (S.config.apps || []).find(a => a.id === id);
 const ttl = a => {
+  const pkg = String(a && (a.android_package || a.package) || '').trim().toLowerCase();
   const explicit = String(a && a.name || '').trim();
-  if (explicit) return explicit;
   const info = (a && S.cats[a.id] && S.cats[a.id].info) || {};
   const catalogName = String(info.display_name || info.app_name || info.title || '').trim();
-  if (catalogName) return catalogName;
   const sourceName = (S.config.sources || [])
     .flatMap(source => source.apps || [])
     .find(item => item && typeof item === 'object' &&
-      String(item.package || '').toLowerCase() === String(a && a.package || '').toLowerCase() &&
-      String(item.name || '').trim());
-  return sourceName ? String(sourceName.name).trim() : (getAppMeta(a && a.package).name || (a && a.id) || 'App');
+      String(item.package || '').toLowerCase() === pkg && String(item.name || '').trim());
+  return appNameForPackage(pkg, explicit || catalogName || (sourceName && sourceName.name)) || (a && a.id) || 'App';
 };
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
 const hue = a => getAppMeta(a.package).color;
@@ -937,7 +952,7 @@ async function uploadReleaseAsset(release, file, onProgress, uploadName = file.n
         reject(new Error('Upload failed (' + xhr.status + ')' + (m ? ': ' + m : '')));
       }
     };
-    xhr.onerror = () => reject(new Error('The upload connection was blocked or interrupted. Check your connection and repository write access, then retry.'));
+    xhr.onerror = () => reject(new Error('The browser could not complete the connection to GitHub’s upload server. This can happen when the network interrupts or blocks large uploads. Your selected file can be retried without choosing it again.'));
     xhr.ontimeout = () => reject(new Error('The APK upload timed out. Check your connection and retry.'));
     xhr.onabort = () => reject(new Error('The APK upload was cancelled.'));
     xhr.send(file);
@@ -1424,6 +1439,7 @@ function vPatcher(r) {
     </div>
 
     <div id="plist">${renderPatchesList(a, patches)}</div>
+    <div class="manager-patch-list-end" aria-hidden="true"></div>
     <div class="manager-patch-footer">
       <button class="pill manager-full-action primary" data-a="dispatch_app" data-id="${esc(a.id)}"><i class="ms">auto_fix_high</i> Patch / Rebuild</button>
       <div class="manager-detail-actions">
@@ -1458,8 +1474,8 @@ function renderPatchesList(a, patches) {
             <div class="d">${esc(p.description || '')}</div>
           </div>
           ${hasOpts ? `
-            <button class="ib" title="Patch Options" data-a="open_opts" data-id="${esc(a.id)}" data-p="${esc(p.name)}">
-              <i class="ms" style="color:var(--primary)">settings</i>
+            <button class="pill o patch-options-button" title="Configure patch options" aria-label="Configure ${esc(p.name)} options" data-a="open_opts" data-id="${esc(a.id)}" data-p="${esc(p.name)}">
+              <i class="ms" aria-hidden="true">tune</i><span>Options</span>${p.options.length > 1 ? `<span>(${p.options.length})</span>` : ''}
             </button>
           ` : ''}
           ${sw(on, `data-a="pt" data-id="${esc(a.id)}" data-n="${esc(p.name)}"`)}
@@ -2624,7 +2640,7 @@ Object.assign(A, {
     let a = S.config.apps.find(x => x.id === id);
     if (!a) {
       a = {
-        id, name: newSourceInspection.packageNames[pkg] || getAppMeta(pkg).name,
+        id, name: appNameForPackage(pkg, newSourceInspection.packageNames[pkg]),
         package: pkg, patches_repo: newSourceInspection.repo,
         patch_sources: [newSourceInspection.repo],
         prerelease: newSourceInspection.prerelease,
