@@ -216,7 +216,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .manager-detail-row .detail-value { color:var(--on); font-size:.92rem; overflow-wrap:anywhere; }
 .manager-detail-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:14px 0; }
 .manager-detail-actions .pill { width:100%; min-height:52px; justify-content:center; white-space:normal; }
-.manager-patch-footer { position:sticky; bottom:calc(148px + env(safe-area-inset-bottom)); z-index:4; background:var(--bg); padding:12px 0 5px; }
+.manager-patch-footer { position:sticky; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:4; background:var(--bg); padding:12px 0 5px; }
 @media (min-width:900px) {
  #dock { display:flex; width:82px; left:14px; top:50%; bottom:auto; transform:translateY(-50%); flex-direction:column; border-radius:28px; }
  #dock .bb { width:100%; min-height:70px; }
@@ -530,7 +530,19 @@ function buildStatusView(a, info) {
     </div>`;
 }
 const app = id => (S.config.apps || []).find(a => a.id === id);
-const ttl = a => a.name || getAppMeta(a.package).name || a.id;
+const ttl = a => {
+  const explicit = String(a && a.name || '').trim();
+  if (explicit) return explicit;
+  const info = (a && S.cats[a.id] && S.cats[a.id].info) || {};
+  const catalogName = String(info.display_name || info.app_name || info.title || '').trim();
+  if (catalogName) return catalogName;
+  const sourceName = (S.config.sources || [])
+    .flatMap(source => source.apps || [])
+    .find(item => item && typeof item === 'object' &&
+      String(item.package || '').toLowerCase() === String(a && a.package || '').toLowerCase() &&
+      String(item.name || '').trim());
+  return sourceName ? String(sourceName.name).trim() : (getAppMeta(a && a.package).name || (a && a.id) || 'App');
+};
 const dirty = () => { S.dirty = true; $('#fab').style.display = 'block'; };
 const hue = a => getAppMeta(a.package).color;
 const eff = (a, p) => (a.enable || []).includes(p.name) ? true : (a.disable || []).includes(p.name) ? false : !!p.enabled;
@@ -601,6 +613,69 @@ async function checkLocalApks() {
   } catch(e) { S.localApks = {}; }
 }
 
+function sourcePatchPackages(patch) {
+  const compatible = patch && (patch.compatiblePackages || patch.compatibility);
+  if (Array.isArray(compatible)) return compatible.filter(x => x && typeof x === 'object');
+  if (compatible && typeof compatible === 'object') {
+    return Object.entries(compatible).map(([packageName, value]) => ({
+      ...(value && typeof value === 'object' ? value : {}),
+      packageName
+    }));
+  }
+  return [];
+}
+
+async function refreshPatchMetadataFromSources() {
+  for (const a of (S.config.apps || [])) {
+    const packageName = String(a.android_package || a.package || '').trim().toLowerCase();
+    const repoOrder = Array.isArray(a.patch_sources) && a.patch_sources.length
+      ? a.patch_sources
+      : (a.patches_repo ? [a.patches_repo] : []);
+    const source = repoOrder
+      .map(repo => (S.config.sources || []).find(item => item.repo === repo && item.enabled !== false))
+      .find(Boolean);
+    if (!packageName || !source || !source.tag) continue;
+
+    try {
+      const rawUrl = 'https://raw.githubusercontent.com/' + source.repo + '/' +
+        encodeURIComponent(source.tag) + '/patches-list.json';
+      const response = await fetch(rawUrl);
+      if (!response.ok) continue;
+      const data = await response.json();
+      const entries = Array.isArray(data) ? data : (Array.isArray(data.patches) ? data.patches : []);
+      const patches = [];
+      let displayName = '';
+      for (const entry of entries) {
+        const match = sourcePatchPackages(entry).find(item =>
+          String(item.packageName || item.package || '').trim().toLowerCase() === packageName
+        );
+        if (!match) continue;
+        if (!displayName && match.name) displayName = String(match.name).trim();
+        if (!entry.name) continue;
+        patches.push({
+          name: String(entry.name),
+          description: String(entry.description || ''),
+          enabled: entry.default !== false,
+          options: Array.isArray(entry.options) ? entry.options : []
+        });
+      }
+      if (!patches.length) continue;
+      const previous = S.cats[a.id] || { patches: [], info: {} };
+      S.cats[a.id] = {
+        ...previous,
+        patches,
+        info: {
+          ...(previous.info || {}),
+          ...(displayName ? { display_name: displayName } : {}),
+          patch_tag: data.version || source.tag
+        }
+      };
+    } catch(e) {
+      console.warn('Patch source metadata refresh failed for', a.id, e);
+    }
+  }
+}
+
 async function loadLocalCatalogs() {
   for (const a of (S.config.apps || [])) {
     try {
@@ -630,6 +705,7 @@ async function loadLocalCatalogs() {
       console.warn('Catalog load error for', a.id, e);
     }
   }
+  await refreshPatchMetadataFromSources();
 }
 
 async function checkUpstreamUpdates() {
@@ -850,8 +926,8 @@ async function uploadReleaseAsset(release, file, onProgress, uploadName = file.n
     xhr.open('POST', base + '?name=' + encodeURIComponent(uploadName), true);
     xhr.setRequestHeader('Authorization','Bearer ' + S.token);
     xhr.setRequestHeader('Accept','application/vnd.github+json');
-    xhr.setRequestHeader('X-GitHub-Api-Version','2022-11-28');
     xhr.setRequestHeader('Content-Type', /\.apk$/i.test(file.name) ? 'application/vnd.android.package-archive' : 'application/octet-stream');
+    xhr.timeout = 20 * 60 * 1000;
     xhr.upload.onprogress = e => { if(e.lengthComputable && onProgress) onProgress(Math.round(e.loaded/e.total*100)); };
     xhr.onload = () => {
       if(xhr.status >= 200 && xhr.status < 300) {
@@ -861,7 +937,9 @@ async function uploadReleaseAsset(release, file, onProgress, uploadName = file.n
         reject(new Error('Upload failed (' + xhr.status + ')' + (m ? ': ' + m : '')));
       }
     };
-    xhr.onerror = () => reject(new Error('Network error during APK upload.'));
+    xhr.onerror = () => reject(new Error('The upload connection was blocked or interrupted. Check your connection and repository write access, then retry.'));
+    xhr.ontimeout = () => reject(new Error('The APK upload timed out. Check your connection and retry.'));
+    xhr.onabort = () => reject(new Error('The APK upload was cancelled.'));
     xhr.send(file);
   });
 }
@@ -2316,7 +2394,8 @@ async function inspectEnteredSource() {
 
     const discoveredPkgs = new Set();
     const discoveredVersions = {};
-    const addCompatibility = (pkg, versions) => {
+    const discoveredNames = {};
+    const addCompatibility = (pkg, versions, displayName = '') => {
       if (!pkg) return;
       const vals = Array.isArray(versions)
         ? versions
@@ -2324,6 +2403,7 @@ async function inspectEnteredSource() {
           ? Object.values(versions).flatMap(v => Array.isArray(v) ? v : [v])
           : (versions == null ? [] : [versions]));
       discoveredPkgs.add(pkg);
+      if (displayName && !discoveredNames[pkg]) discoveredNames[pkg] = String(displayName).trim();
       discoveredVersions[pkg] = Array.from(new Set([
         ...(discoveredVersions[pkg] || []),
         ...vals.map(v => typeof v === 'object' && v ? (v.version || '') : String(v || '')).filter(Boolean)
@@ -2334,7 +2414,7 @@ async function inspectEnteredSource() {
       if (Array.isArray(cp)) {
         cp.forEach(x => {
           if (typeof x === 'string') addCompatibility(x, []);
-          else if (x && typeof x === 'object') addCompatibility(x.packageName || x.package || x.name || '', x.versions || x.targets || []);
+          else if (x && typeof x === 'object') addCompatibility(x.packageName || x.package || '', x.versions || x.targets || [], x.name || '');
         });
       } else if (cp && typeof cp === 'object') {
         Object.entries(cp).forEach(([pkg, versions]) => addCompatibility(pkg, versions));
@@ -2343,8 +2423,9 @@ async function inspectEnteredSource() {
       const compat = p && p.compatibility;
       if (Array.isArray(compat)) {
         compat.forEach(x => addCompatibility(
-          x && (x.packageName || x.package || x.name),
-          x && Array.isArray(x.targets) ? x.targets.map(t => t && t.version).filter(Boolean) : []
+          x && (x.packageName || x.package || ''),
+          x && Array.isArray(x.targets) ? x.targets.map(t => t && t.version).filter(Boolean) : [],
+          x && x.name || ''
         ));
       } else if (compat && typeof compat === 'object') {
         Object.entries(compat).forEach(([pkg, data]) => addCompatibility(pkg, data));
@@ -2357,6 +2438,7 @@ async function inspectEnteredSource() {
     newSourceInspection = {
       repo, tag, prerelease: pre,
       packages: pkgList,
+      packageNames: discoveredNames,
       versions: discoveredVersions,
       iconUrl: sourceIconUrl,
       selectedPkg: pkgList[0] || '',
@@ -2374,9 +2456,10 @@ async function inspectEnteredSource() {
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${pkgList.map((pkg, idx) => {
           const meta = getAppMeta(pkg);
+          const displayName = newSourceInspection.packageNames[pkg] || meta.name;
           return `
             <span class="chip ${idx===0?'p':''}" style="padding:7px 12px;cursor:pointer" data-a="select_inspected_pkg" data-pkg="${esc(pkg)}">
-              ${esc(meta.name)} (${esc(pkg)})
+              ${esc(displayName)} (${esc(pkg)})
             </span>
           `;
         }).join('')}
@@ -2531,7 +2614,7 @@ Object.assign(A, {
       release_name: newSourceInspection.releaseName || newSourceInspection.tag,
       patch_count: newSourceInspection.patchCount,
       icon_url: newSourceInspection.iconUrl || '',
-      apps: newSourceInspection.packages.map(p => ({ package: p, name: getAppMeta(p).name })),
+      apps: newSourceInspection.packages.map(p => ({ package: p, name: newSourceInspection.packageNames[p] || getAppMeta(p).name })),
       last_inspected: new Date().toISOString()
     };
     if (existingSource) Object.assign(existingSource, sourceRecord);
@@ -2541,7 +2624,8 @@ Object.assign(A, {
     let a = S.config.apps.find(x => x.id === id);
     if (!a) {
       a = {
-        id, package: pkg, patches_repo: newSourceInspection.repo,
+        id, name: newSourceInspection.packageNames[pkg] || getAppMeta(pkg).name,
+        package: pkg, patches_repo: newSourceInspection.repo,
         patch_sources: [newSourceInspection.repo],
         prerelease: newSourceInspection.prerelease,
         arch: defArch, apk_arch: 'auto', version: (((newSourceInspection.versions || {})[pkg] || [])[0] || ''), force: false,
@@ -2549,6 +2633,7 @@ Object.assign(A, {
       };
       S.config.apps.push(a);
     } else {
+      if (!a.name && newSourceInspection.packageNames[pkg]) a.name = newSourceInspection.packageNames[pkg];
       a.patch_sources = Array.isArray(a.patch_sources) ? a.patch_sources : [];
       if (!a.patch_sources.includes(newSourceInspection.repo)) a.patch_sources.push(newSourceInspection.repo);
       if (!a.patches_repo) a.patches_repo = newSourceInspection.repo;
