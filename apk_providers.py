@@ -2341,7 +2341,8 @@ def get_provider_urls(app_id: str, app_config: dict) -> dict:
 
 def provider_order(app_config: dict) -> list[str]:
     configured = app_config.get("apk_providers")
-    order = [str(x).lower() for x in configured] if isinstance(configured, list) and configured else []
+    configured_order = [str(x).lower() for x in configured] if isinstance(configured, list) and configured else []
+    order = list(dict.fromkeys(configured_order))
     for provider_name in ("apkmirror", "uptodown", "apkpure"):
         if provider_name not in order:
             order.append(provider_name)
