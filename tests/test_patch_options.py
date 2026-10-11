@@ -1,6 +1,10 @@
 import unittest
 
-from build import build_patch_option_args, parse_patches
+from build import (
+    build_patch_option_args,
+    merge_patch_option_metadata,
+    parse_patches,
+)
 
 
 class PatchOptionTests(unittest.TestCase):
@@ -39,6 +43,28 @@ Options:
             ],
         )
 
+    def test_source_manifest_fills_patch_options_missing_from_cli_listing(self):
+        primary = [
+            {"name": "Theme", "description": "Theme colors", "enabled": True, "options": []},
+            {"name": "Other", "description": "Other patch", "enabled": True, "options": []},
+        ]
+        manifest = [
+            {
+                "name": "Theme",
+                "options": [{
+                    "key": "darkThemeColor",
+                    "default": "in-app",
+                    "type": "kotlin.String",
+                    "values": {"Material You": "@android:color/system_neutral1_900"}
+                }]
+            }
+        ]
 
+        merged = merge_patch_option_metadata(primary, manifest)
+        self.assertEqual(merged[0]["options"], manifest[0]["options"])
+        self.assertEqual(merged[1]["options"], [])
+        self.assertEqual(primary[0]["options"], [])
+
+ 
 if __name__ == "__main__":
     unittest.main()

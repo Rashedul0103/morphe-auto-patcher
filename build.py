@@ -444,6 +444,28 @@ def load_patch_metadata_fallback(repo, tag, filter_candidates):
     return None
 
 
+def merge_patch_option_metadata(primary_patches, source_patches):
+    """Enrich CLI patch entries with option metadata from the source release manifest."""
+    source_by_name = {
+        str(patch.get("name") or "").strip().casefold(): patch
+        for patch in source_patches or []
+        if isinstance(patch, dict) and patch.get("name")
+    }
+    enriched = []
+    for patch in primary_patches or []:
+        if not isinstance(patch, dict):
+            continue
+        result = dict(patch)
+        source_patch = source_by_name.get(str(patch.get("name") or "").strip().casefold())
+        source_options = source_patch.get("options") if source_patch else None
+        if isinstance(source_options, list) and source_options:
+            result["options"] = source_options
+        if source_patch and not result.get("description"):
+            result["description"] = source_patch.get("description", "")
+        enriched.append(result)
+    return enriched
+
+
 def parse_versions(output, package_name):
     versions = []
     capture = False
@@ -1454,15 +1476,19 @@ def main():
                     successful_filter = filter_value
                     break
 
-            if not compatible_for_filter or not patches_for_filter:
-                fallback = load_patch_metadata_fallback(candidate_repo, candidate_tag, filter_candidates)
-                if fallback:
+            fallback = load_patch_metadata_fallback(candidate_repo, candidate_tag, filter_candidates)
+            if fallback:
+                if not compatible_for_filter or not patches_for_filter:
                     compatible_for_filter = fallback["versions"]
                     patches_for_filter = fallback["patches"]
                     successful_filter = fallback["filter"]
                     print(
                         f"CLI package listing unavailable for {app_id}; "
                         f"using {candidate_repo} patches-list.json metadata for '{successful_filter}'."
+                    )
+                else:
+                    patches_for_filter = merge_patch_option_metadata(
+                        patches_for_filter, fallback["patches"]
                     )
 
             if not compatible_for_filter or not patches_for_filter:

@@ -85,6 +85,13 @@ class PreflightTests(unittest.TestCase):
 
     def test_ui_accepts_all_supported_artifact_extensions(self):
         ui = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("async function refreshPatchMetadataFromSources()", ui)
+        self.assertIn("packageNames: discoveredNames", ui)
+        self.assertIn("info.display_name", ui)
+        self.assertIn("data.version || source.tag", ui)
+        self.assertIn("xhr.ontimeout", ui)
+        self.assertNotIn("xhr.setRequestHeader('X-GitHub-Api-Version'", ui)
+        self.assertIn("bottom:calc(96px + env(safe-area-inset-bottom))", ui)
         self.assertIn(".apk,.apkm,.apks,.xapk", ui)
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
