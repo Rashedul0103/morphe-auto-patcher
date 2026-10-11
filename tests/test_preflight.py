@@ -91,7 +91,7 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("data.version || source.tag", ui)
         self.assertIn("xhr.ontimeout", ui)
         self.assertNotIn("xhr.setRequestHeader('X-GitHub-Api-Version'", ui)
-        self.assertIn("bottom:calc(96px + env(safe-area-inset-bottom))", ui)
+        self.assertIn("bottom:calc(10px + env(safe-area-inset-bottom))", ui)
         self.assertIn(".apk,.apkm,.apks,.xapk", ui)
         self.assertNotIn("const PK_REGISTRY", ui)
         self.assertIn("function getAppMeta(pkg)", ui)
