@@ -1,4 +1,4 @@
-const CACHE_NAME = 'morphe-patcher-shell-v1';
+const CACHE_NAME = 'morphe-patcher-shell-v2';
 const SCOPE_URL = self.registration.scope;
 const SCOPE_PATH = new URL(SCOPE_URL).pathname;
 const SHELL_URL = new URL('./', SCOPE_URL).href;
