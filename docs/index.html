@@ -2903,7 +2903,9 @@ window.addEventListener('appinstalled', () => {
 
 theme(); render();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Service worker registration failed:', error));
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+    .then(registration => registration.update())
+    .catch(error => console.warn('Service worker update check failed:', error));
 }
 if (S.token && S.owner && S.repo) connect(1); else if (!S.token) setTimeout(dlgConnect, 300);
 </script>
