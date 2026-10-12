@@ -25,6 +25,16 @@ on:
         required: false
         default: false
         type: boolean
+      diagnose_apkmirror:
+        description: 'Run a browser-only APKMirror diagnostic instead of building APKs'
+        required: false
+        default: false
+        type: boolean
+      apkmirror_url:
+        description: 'APKMirror URL to test in ordinary Chromium'
+        required: false
+        default: 'https://www.apkmirror.com/apk/google-inc/youtube-music/youtube-music-9-20-53-release/youtube-music-9-20-53-4-android-apk-download/'
+        type: string
 
 concurrency:
   group: build-${{ github.ref }}
@@ -57,13 +67,41 @@ jobs:
           node --check /tmp/patch-manager-ui.js
 
       - name: Validate Python sources
-        run: python3 -m py_compile apk_providers.py apk_validator.py build.py
+        run: python3 -m py_compile apk_providers.py apk_validator.py build.py scripts/diagnose_apkmirror_playwright.py
 
       - name: Run provider regression tests
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
 
+  diagnose-apkmirror:
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnose_apkmirror
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Playwright
+        run: python3 -m pip install --disable-pip-version-check 'playwright==1.55.0'
+
+      - name: Install Chromium
+        run: python3 -m playwright install --with-deps chromium
+
+      - name: Test APKMirror page and ordinary download flow
+        env:
+          APKMIRROR_DIAGNOSTIC_URL: ${{ inputs.apkmirror_url }}
+        run: python3 scripts/diagnose_apkmirror_playwright.py
+
   build:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]'))
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.diagnose_apkmirror != true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]'))
     needs: test
     runs-on: ubuntu-latest
     permissions:
