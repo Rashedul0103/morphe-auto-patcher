@@ -925,11 +925,18 @@ function openUploadApkDialog(id) {
 function openUploadFailureDialog(id, file, error) {
   pendingUploadRetry = { id, file };
   const size = file && Number.isFinite(file.size) ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '';
+  const releaseUrl = 'https://github.com/' + encodeURIComponent(S.owner) + '/' +
+    encodeURIComponent(S.repo) + '/releases/tag/' + encodeURIComponent('stock-' + id);
   dlg(`
     <h2>Upload interrupted</h2>
     <p>${esc(error && error.message || 'The upload could not be completed.')}</p>
     <div class="card" style="background:var(--card-high)"><b>${esc(file && file.name || 'Selected file')}</b>${size ? `<div class="d" style="margin-top:4px">${esc(size)}</div>` : ''}</div>
-    <p>The selected file is kept while this page stays open. Retry it here, or choose another file.</p>
+    <p>The file is still selected while this page stays open. If retrying fails, the browser or network may be blocking GitHub's large-file upload connection. You can upload the same untouched file from GitHub's release page instead.</p>
+    <div class="card" style="background:var(--card-high)">
+      <b>Fallback upload</b>
+      <div class="d" style="margin-top:5px">Open the stock release below, edit the release, attach this file under Assets, and save. Return here and reload the page before starting verification.</div>
+      <a class="pill o" style="text-decoration:none;justify-content:center;margin-top:10px" href="${esc(releaseUrl)}" target="_blank" rel="noopener"><i class="ms">open_in_new</i> Open stock release</a>
+    </div>
     <div class="dlg-actions">
       <button class="pill t" data-a="dlg_upload_apk" data-id="${esc(id)}">Choose another file</button>
       <button class="pill" data-a="upload_retry_file"><i class="ms">refresh</i> Retry upload</button>
