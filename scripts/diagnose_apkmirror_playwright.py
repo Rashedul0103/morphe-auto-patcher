@@ -196,23 +196,12 @@ async def main() -> int:
                 selected = controls[0]
                 try:
                     locator = page.locator("a[href], button").nth(selected["index"])
-                    async with context.expect_event("page", timeout=3500) as new_page_event:
-                        try:
-                            await locator.click(timeout=7000)
-                        except PlaywrightTimeoutError:
-                            pass
-                    try:
-                        next_page = await new_page_event.value
-                        page = next_page
-                        page.on("download", lambda item: downloads.append((page, item)))
+                    page_count_before = len(all_pages)
+                    await locator.click(timeout=7000)
+                    await page.wait_for_timeout(2500)
+                    if len(all_pages) > page_count_before:
+                        page = all_pages[-1]
                         await page.wait_for_load_state("domcontentloaded", timeout=15000)
-                    except PlaywrightTimeoutError:
-                        pass
-                except PlaywrightTimeoutError:
-                    try:
-                        await locator.click(timeout=5000)
-                    except Exception as exc:
-                        emit("control_click_error", detail=str(exc)[:250])
                 except Exception as exc:
                     emit("control_click_error", detail=str(exc)[:250])
 
