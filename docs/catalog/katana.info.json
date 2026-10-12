@@ -1,8 +1,9 @@
 {
   "build_status": {
-    "status": "running",
+    "status": "failed",
     "stage": "patch_source",
-    "updated_at": 1791804044
+    "reason": "No compatible patch source found.",
+    "updated_at": 1791833493
   },
   "icon_url": "catalog/icons/katana.png",
   "icon_source": "cache",

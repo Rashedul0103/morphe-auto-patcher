@@ -19,9 +19,10 @@
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791804044
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791833493
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -30,8 +31,7 @@
     "package": "com.google.android.youtube",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-3-android-apk-download/",
-      "https://youtube.en.uptodown.com/android/download/1225941246"
+      "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-3-android-apk-download/"
     ],
     "attempts": [
       {
@@ -60,23 +60,11 @@
       {
         "provider": "uptodown",
         "version": "21.40.161",
-        "status": "download_failed",
-        "via": "provider",
-        "candidate": {
-          "page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
-          "download_page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
-          "download_url": "",
-          "architecture": "",
-          "dpi": "",
-          "is_bundle": false,
-          "artifact_type": "apk",
-          "details": {
-            "version_page_error": "Uptodown direct download URL not found",
-            "package": "com.google.android.youtube",
-            "page_download_error": "Uptodown direct download URL not found"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 526; search HTTP 526)",
+        "app_query": "com.google.android.youtube",
+        "expected_package": "com.google.android.youtube"
       },
       {
         "provider": "apkpure",
@@ -86,6 +74,60 @@
         "error": "APKPure app discovery failed for com.google.android.youtube",
         "app_query": "com.google.android.youtube",
         "expected_package": "com.google.android.youtube"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "youtube",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "youtube",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "android-youtube",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "android-youtube",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-youtube",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-youtube",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",

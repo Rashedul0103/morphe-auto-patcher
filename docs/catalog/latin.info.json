@@ -16,9 +16,10 @@
   "icon_url": "catalog/icons/latin.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791804044
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791833493
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -64,6 +65,60 @@
         "error": "APKPure app discovery failed for com.google.android.inputmethod.latin",
         "app_query": "com.google.android.inputmethod.latin",
         "expected_package": "com.google.android.inputmethod.latin"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "latin",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "latin",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "inputmethod-latin",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "inputmethod-latin",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-inputmethod-latin",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "18.0.3.954559732-release-arm64-v8a",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-inputmethod-latin",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",

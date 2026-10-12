@@ -16,9 +16,10 @@
   "icon_url": "catalog/icons/orca.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "running",
-    "stage": "patch_source",
-    "updated_at": 1791804044
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791833493
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -56,6 +57,60 @@
         "error": "APKPure app discovery failed for com.facebook.orca",
         "app_query": "com.facebook.orca",
         "expected_package": "com.facebook.orca"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "orca",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "orca",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "facebook-orca",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "facebook-orca",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-facebook-orca",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "580.0.0.49.91",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-facebook-orca",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
