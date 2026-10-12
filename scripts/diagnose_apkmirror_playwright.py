@@ -119,8 +119,6 @@ async def main() -> int:
 
             context.on("page", on_page)
             page = await context.new_page()
-            all_pages.append(page)
-            page.on("download", lambda item: downloads.append((page, item)))
             page.on(
                 "response",
                 lambda response: observed_errors.append({
