@@ -11,6 +11,7 @@ on:
       - 'apk_validator.py'
       - 'requirements.txt'
       - 'tests/**'
+      - 'scripts/**'
       - 'docs/**'
       - '.github/workflows/**'
   workflow_dispatch:
@@ -84,13 +85,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
 
       - name: Install Playwright
-        run: python3 -m pip install --disable-pip-version-check 'playwright==1.55.0'
+        run: python3 -m pip install --disable-pip-version-check 'playwright==1.63.0'
 
       - name: Install Chromium
         run: python3 -m playwright install --with-deps chromium
