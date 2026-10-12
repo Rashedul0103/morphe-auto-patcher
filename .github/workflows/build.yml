@@ -100,6 +100,14 @@ jobs:
       - name: Install Python dependencies
         run: python3 -m pip install --disable-pip-version-check -r requirements.txt
 
+      - name: Setup Bun for APKCombo fallback
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.4
+
+      - name: Install APKCombo fallback downloader
+        run: bun install --global @nirewen/apkcombo-downloader@1.0.3
+
       - name: Restore Keystore
         run: |
           if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
