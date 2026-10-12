@@ -8,6 +8,8 @@ import base64
 import hashlib
 import os
 import re
+import shutil
+import subprocess
 import time
 import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
@@ -2551,6 +2553,97 @@ def acquire_from_providers(
                 "app_query": app_query,
                 "expected_package": expected_package,
             })
+
+    # APKCombo is an independent fallback for cases where APKMirror is blocked
+    # by Cloudflare and other catalogs cannot be reached from GitHub-hosted runners.
+    # The CLI is installed by the GitHub Actions workflow; every result is still
+    # validated locally for exact package, version, and architecture before use.
+    apkcombo_cli = shutil.which("apkmd")
+    if apkcombo_cli and target_version and expected_package:
+        os.makedirs(destination_dir, exist_ok=True)
+        package_parts = expected_package.split(".")
+        org_candidates = [
+            _slugify(app_config.get("name", "")),
+            _slugify(app_id),
+            _slugify("-".join(package_parts[-2:])),
+            _slugify(package_parts[-1] if package_parts else ""),
+            _slugify(app_query),
+        ]
+        org_candidates = list(dict.fromkeys(value for value in org_candidates if value))
+        for org in org_candidates:
+            for artifact_kind in ("apk", "bundle"):
+                output_prefix = f"apkcombo-{app_id}"
+                for stale in Path(destination_dir).glob(output_prefix + "*"):
+                    try:
+                        stale.unlink()
+                    except OSError:
+                        pass
+                command = [
+                    apkcombo_cli, "download", org, expected_package,
+                    "--version", target_version,
+                    "--arch", preferred_arch if preferred_arch and preferred_arch not in ("auto", "automatic") else "universal",
+                    "--dpi", "nodpi",
+                    "--type", artifact_kind,
+                    "--outdir", destination_dir,
+                    "--outfile", output_prefix,
+                    "--overwrite",
+                ]
+                try:
+                    completed = subprocess.run(
+                        command, capture_output=True, text=True, timeout=240,
+                        check=False,
+                    )
+                    outputs = sorted(
+                        path for path in Path(destination_dir).glob(output_prefix + "*")
+                        if path.is_file() and path.stat().st_size > 1024
+                    )
+                    validation_errors = []
+                    for output in outputs:
+                        try:
+                            validate_artifact(
+                                str(output), expected_package=expected_package,
+                                expected_version=target_version,
+                                expected_arch=preferred_arch or "auto",
+                            )
+                            candidate = ApkCandidate(
+                                provider="apkcombo", version=target_version,
+                                page_url=f"https://apkcombo.com/{org}/{expected_package}/download/apk",
+                                download_page_url=f"https://apkcombo.com/{org}/{expected_package}/download/apk",
+                                architecture=preferred_arch or "auto",
+                                is_bundle=output.suffix.lower() in (".xapk", ".apks", ".apkm"),
+                                artifact_type=output.suffix.lower().lstrip(".") or artifact_kind,
+                                filename_hint=output.name,
+                                details={"via": "apkcombo_cli", "org": org, "kind": artifact_kind},
+                            )
+                            attempts.append({
+                                "provider": "apkcombo", "version": target_version,
+                                "status": "downloaded", "via": "apkcombo_cli",
+                                "org": org, "artifact_type": candidate.artifact_type,
+                            })
+                            return AcquisitionResult(
+                                status="downloaded", path=str(output), candidate=candidate,
+                                attempts=attempts, manual_urls=manual_urls,
+                            )
+                        except Exception as exc:
+                            validation_errors.append(f"{output.name}: {exc}")
+                            try:
+                                output.unlink()
+                            except OSError:
+                                pass
+                    detail = (completed.stderr or completed.stdout or "").strip()[-1200:]
+                    attempts.append({
+                        "provider": "apkcombo", "version": target_version,
+                        "status": "download_failed", "via": "apkcombo_cli",
+                        "org": org, "artifact_type": artifact_kind,
+                        "exit_code": completed.returncode,
+                        "error": "; ".join(validation_errors) or detail or "No output artifact was produced",
+                    })
+                except Exception as exc:
+                    attempts.append({
+                        "provider": "apkcombo", "version": target_version,
+                        "status": "download_failed", "via": "apkcombo_cli",
+                        "org": org, "artifact_type": artifact_kind, "error": str(exc),
+                    })
 
     # A resolver can occasionally point to a provider not enabled in the config.
     # Surface it as a manual destination rather than silently discarding it.
