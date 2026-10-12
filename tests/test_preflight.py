@@ -77,7 +77,7 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("needs: test", workflow)
         self.assertIn("github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.diagnose_apkmirror != true)", workflow)
         self.assertIn("diagnose-apkmirror:", workflow)
-        self.assertIn("playwright==1.55.0", workflow)
+        self.assertIn("playwright==1.63.0", workflow)
         self.assertIn("inputs.apkmirror_url", workflow)
         self.assertIn("python3 -m playwright install --with-deps chromium", workflow)
         self.assertIn("github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]')", workflow)
