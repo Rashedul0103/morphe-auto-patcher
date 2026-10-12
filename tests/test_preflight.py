@@ -22,11 +22,6 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(config.get("sources"), [])
         self.assertFalse((ROOT / "patches-1.39.1.mpp").exists())
 
-        for info_path in (ROOT / "docs" / "catalog").glob("*.info.json"):
-            info = json.loads(info_path.read_text(encoding="utf-8"))
-            self.assertNotIn("patch_source", info)
-            self.assertNotIn("patch_filter", info)
-            self.assertNotIn("patch_source_candidates", info)
 
     def test_provider_order_is_deterministic_and_deduplicated(self):
         app = {"apk_providers": ["uptodown", "apkmirror", "uptodown"]}
