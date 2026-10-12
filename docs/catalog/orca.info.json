@@ -1,9 +1,8 @@
 {
-  "patch_tag": "v0.22.0",
+  "patch_tag": "v0.23.0",
   "recommended_version": "580.0.0.49.91",
   "compatible_versions": [
-    "580.0.0.49.91",
-    "581.0.0.49.91"
+    "582.0.0.61.92"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=orca%20580.0.0.49.91",
   "patch_source": "SysAdminDoc/HushMessenger",
@@ -15,12 +14,12 @@
   ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/orca.png",
-  "icon_source": "google_play",
+  "icon_source": "cache",
   "build_status": {
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791705751
+    "updated_at": 1791793130
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -29,17 +28,9 @@
     "package": "com.facebook.orca",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/"
+      "https://google.com/search?q=%22com.facebook.orca%22+%22580.0.0.49.91%22+nodpi+%28site%3Aapkmirror.com+OR+site%3Auptodown.com+OR+site%3Aapkpure.com+OR+site%3Aapkcombo.com%29"
     ],
     "attempts": [
-      {
-        "provider": "apkmirror",
-        "version": "580.0.0.49.91",
-        "status": "seed_resolve_failed",
-        "via": "morphe_api:arm64-v8a",
-        "seed_url": "https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/",
-        "error": "HTTP 403: https://www.apkmirror.com/apk/facebook-2/messenger/facebook-messenger-580-0-0-49-91-release/facebook-messenger-580-0-0-49-91-19-android-apk-download/"
-      },
       {
         "provider": "apkmirror",
         "version": "580.0.0.49.91",

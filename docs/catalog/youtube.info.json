@@ -1,99 +1,96 @@
 {
-  "patch_tag": "v1.47.0-dev.17",
-  "recommended_version": "21.20.405",
+  "patch_tag": "v1.47.0",
+  "recommended_version": "21.40.161",
   "compatible_versions": [
     "21.20.405",
     "21.16.256",
     "20.51.39",
     "20.21.37"
   ],
-  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.20.405",
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=youtube%2021.40.161",
+  "patch_source": "MorpheApp/morphe-patches",
+  "patch_filter": "com.google.android.youtube",
   "android_package": "com.google.android.youtube",
+  "patch_source_attempts": [],
+  "patch_source_candidates": [
+    "MorpheApp/morphe-patches"
+  ],
   "stock_signer_sha256": [],
   "icon_url": "catalog/icons/youtube.png",
   "icon_source": "cache",
   "build_status": {
     "status": "failed",
-    "stage": "patch_source",
-    "reason": "No compatible patch source found.",
-    "updated_at": 1791705751
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791793130
   },
   "apk_acquisition": {
     "status": "manual_required",
     "provider": "",
-    "target_version": "21.20.405",
+    "target_version": "21.40.161",
     "package": "com.google.android.youtube",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-20-405-release/youtube-21-20-405-4-android-apk-download/",
-      "https://youtube.en.uptodown.com/android/download/1174605092"
+      "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-3-android-apk-download/",
+      "https://youtube.en.uptodown.com/android/download/1225941246"
     ],
     "attempts": [
       {
         "provider": "stock_release",
         "status": "rejected",
         "file": "com_google_android_youtube_21_16_256_1561068412_minAPI28arm64_v8a.apk",
-        "error": "Wrong version: expected 21.20.405, found 21.16.256."
+        "error": "Wrong version: expected 21.40.161, found 21.16.256."
       },
       {
         "provider": "apkmirror",
-        "version": "21.20.405",
+        "version": "21.40.161",
         "status": "seed_resolve_failed",
         "via": "morphe_api:arm64-v8a",
-        "seed_url": "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-20-405-release/youtube-21-20-405-4-android-apk-download/",
-        "error": "HTTP 403: https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-20-405-release/youtube-21-20-405-4-android-apk-download/"
+        "seed_url": "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-3-android-apk-download/",
+        "error": "HTTP 403: https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-3-android-apk-download/"
       },
       {
         "provider": "apkmirror",
-        "version": "21.20.405",
+        "version": "21.40.161",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "Exact APKMirror version page not found for 21.20.405",
-        "app_query": "YouTube",
+        "error": "Exact APKMirror version page not found for 21.40.161",
+        "app_query": "com.google.android.youtube",
         "expected_package": "com.google.android.youtube"
       },
       {
         "provider": "uptodown",
-        "version": "21.20.405",
+        "version": "21.40.161",
         "status": "download_failed",
         "via": "provider",
         "candidate": {
-          "page_url": "https://youtube.en.uptodown.com/android/download/1174605092",
-          "download_page_url": "https://youtube.en.uptodown.com/android/download/1174605092",
+          "page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
+          "download_page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
           "download_url": "",
           "architecture": "",
           "dpi": "",
           "is_bundle": false,
           "artifact_type": "apk",
           "details": {
-            "version_page_error": "HTTP 410: https://youtube.en.uptodown.com/android/download/1174605092",
+            "version_page_error": "Uptodown direct download URL not found",
             "package": "com.google.android.youtube",
-            "page_download_error": "HTTP 410: https://youtube.en.uptodown.com/android/download/1174605092"
+            "page_download_error": "Uptodown direct download URL not found"
           }
         },
-        "error": "HTTP 410: https://youtube.en.uptodown.com/android/download/1174605092"
+        "error": "Uptodown direct download URL not found"
       },
       {
         "provider": "apkpure",
-        "version": "21.20.405",
+        "version": "21.40.161",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "APKPure app discovery failed for YouTube",
-        "app_query": "YouTube",
+        "error": "APKPure app discovery failed for com.google.android.youtube",
+        "app_query": "com.google.android.youtube",
         "expected_package": "com.google.android.youtube"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
     "workspace": ".work/youtube"
   },
-  "stock_apk": null,
-  "patch_source_attempts": [
-    {
-      "repo": "MorpheApp/morphe-patches",
-      "status": "no_release"
-    }
-  ],
-  "patch_source_candidates": [
-    "MorpheApp/morphe-patches"
-  ]
+  "stock_apk": null
 }

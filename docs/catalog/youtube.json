@@ -9,9 +9,8 @@
     "options": [
       {
         "key": "packageInstallerName",
-        "title": "",
-        "description": "",
-        "default": "com.android.vending"
+        "default": "com.android.vending",
+        "type": "kotlin.String"
       }
     ],
     "name": "Change installer source",
@@ -139,15 +138,62 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "customName",
+        "title": "App name",
+        "description": "Custom app name.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      },
+      {
+        "key": "customIcon",
+        "title": "Custom icon",
+        "description": "\n            Folder with images to use as a custom icon.\n            \n            The folder must contain one or more of the following folders, depending on the DPI of the device:\n            - mipmap-mdpi\n- mipmap-hdpi\n- mipmap-xhdpi\n- mipmap-xxhdpi\n- mipmap-xxxhdpi\n            \n            Each of the folders must contain all of the following files:\n            morphe_adaptive_background_custom.png\nmorphe_adaptive_foreground_custom.png\n            \n            The image dimensions must be as follows:\n            - mipmap-mdpi: 108x108 px\n- mipmap-hdpi: 162x162 px\n- mipmap-xhdpi: 216x216 px\n- mipmap-xxhdpi: 324x324 px\n- mipmap-xxxhdpi: 432x432 px\n\n            Optionally, the path contains a 'drawable' folder with a monochrome icon file:\n            morphe_adaptive_monochrome_custom.xml\n\n            Optionally, the path contains a notification icon in one of the following formats:\n            - XML vector drawable placed in 'drawable':\n              morphe_notification_icon_custom.xml\n            - PNG raster images placed in the matching 'drawable-<dpi>' folders:\n              - drawable-mdpi/morphe_notification_icon_custom.png (24x24 px)\n- drawable-hdpi/morphe_notification_icon_custom.png (36x36 px)\n- drawable-xhdpi/morphe_notification_icon_custom.png (48x48 px)\n- drawable-xxhdpi/morphe_notification_icon_custom.png (72x72 px)\n- drawable-xxxhdpi/morphe_notification_icon_custom.png (96x96 px)\n        ",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      },
+      {
+        "key": "appIcon",
+        "title": "App icon",
+        "description": "\n            The app icon to use, including the notification icon.\n\n            'Automatic' uses the custom icon if one is provided, and otherwise 'Black'.\n            Select 'Original' to keep the icon of the unpatched app.\n\n            The icon can be changed later in the app settings, but only for the launcher.\n            Android Auto, the app list of the system settings and the apk file always show\n            the icon chosen here, and a mounted (root) installation can only change it by\n            patching again.\n        ",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": {
+          "Automatic": null,
+          "Original": "original",
+          "Black": "black",
+          "Dark": "dark",
+          "Light": "light",
+          "Play": "play",
+          "Play black": "play_black",
+          "Custom": "custom"
+        }
+      }
+    ],
     "name": "Custom branding",
-    "description": "",
+    "description": "Adds options to change the app icon and app name. For mounted (root) installations the branding is applied while patching, because it cannot be changed from the app settings.",
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "custom",
+        "title": "Custom header logo",
+        "description": "\n            Folder with images to use as a custom header logo.\n\n            The folder must contain one or more of the following folders, depending on the DPI of the device:\n            - drawable-hdpi\n- drawable-xhdpi\n- drawable-xxhdpi\n- drawable-xxxhdpi\n\n            Each of the folders must contain the following file(s):\n            - morphe_header_custom_light.png\n- morphe_header_custom_dark.png\n\n            Required dimensions:\n            - drawable-hdpi: 194x72 px\n- drawable-xhdpi: 258x96 px\n- drawable-xxhdpi: 387x144 px\n- drawable-xxxhdpi: 512x192 px\n        ",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      }
+    ],
     "name": "Change header",
-    "description": "",
+    "description": "Adds an option to change the header logo in the top left corner of the app.",
     "enabled": true
   },
   {
@@ -157,7 +203,26 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "hideSearchAppShortcut",
+        "title": "Hide Search app shortcut",
+        "description": "Permanently hides the shortcut to open Search when long pressing the app icon in your launcher.",
+        "required": false,
+        "type": "kotlin.Boolean",
+        "default": false,
+        "values": null
+      },
+      {
+        "key": "hideSubscriptionsAppShortcut",
+        "title": "Hide Subscriptions app shortcut",
+        "description": "Permanently hides the shortcut to open Subscriptions when long pressing the app icon in your launcher.",
+        "required": false,
+        "type": "kotlin.Boolean",
+        "default": false,
+        "values": null
+      }
+    ],
     "name": "Navigation bar",
     "description": "Permanently hides the shortcut to open Subscriptions when long pressing the app icon in your launcher",
     "enabled": true
@@ -196,6 +261,12 @@
     "options": [],
     "name": "Add to queue",
     "description": "Overrides the feed flyout 'Play next in queue' with the Morphe video queue",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Force system font",
+    "description": "Adds an option to show the app with the device system font instead of YouTube Sans",
     "enabled": true
   },
   {
@@ -277,7 +348,26 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "hideShortsAppShortcut",
+        "title": "Hide Shorts app shortcut",
+        "description": "Permanently hides the shortcut to open Shorts when long pressing the app icon in your launcher.",
+        "required": false,
+        "type": "kotlin.Boolean",
+        "default": false,
+        "values": null
+      },
+      {
+        "key": "hideShortsWidget",
+        "title": "Hide Shorts widget",
+        "description": "Permanently hides the launcher widget Shorts button.",
+        "required": false,
+        "type": "kotlin.Boolean",
+        "default": false,
+        "values": null
+      }
+    ],
     "name": "Hide Shorts components",
     "description": "Permanently hides the launcher widget Shorts button",
     "enabled": true
@@ -361,9 +451,19 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "customIcons",
+        "title": "Custom icons",
+        "description": "\n    Zip file with icons to use as the 'Custom' icon style.\n\n    Each icon is named after the icon it replaces, such as 'morphe_yt_copy.xml'.\n    An icon is a vector drawable (.xml), or a white square PNG image (.png, 96x96 pixels is recommended).\n    Icons missing from the file keep the 'Automatic' style.\n",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      }
+    ],
     "name": "Player icon style",
-    "description": "",
+    "description": "Adds an option to change the style of the player button icons.",
     "enabled": true
   },
   {
@@ -403,9 +503,19 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "customIcons",
+        "title": "Custom icons",
+        "description": "\n    Zip file with icons to use as the 'Custom' icon style.\n\n    Each icon is named after the icon it replaces, such as 'morphe_shorts_heart.xml'.\n    An icon is a vector drawable (.xml), or a white square PNG image (.png, 96x96 pixels is recommended).\n    Icons missing from the file keep the 'Automatic' style.\n",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      }
+    ],
     "name": "Shorts icon style",
-    "description": "",
+    "description": "Adds an option to change the style of the Shorts action button icons.",
     "enabled": true
   },
   {
@@ -439,7 +549,56 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "darkThemeColor",
+        "title": "Dark theme color",
+        "description": "Can be a hex color (#RRGGBB) or a color resource reference. Setting a color of either theme applies both while patching and removes the in-app theme color settings.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": "in-app",
+        "values": {
+          "Change in the app": "in-app",
+          "Pure black": "@android:color/black",
+          "Material You (Neutral)": "@android:color/system_neutral1_900",
+          "Material You (Primary)": "@android:color/system_accent1_800",
+          "Material You (Secondary)": "@android:color/system_accent2_800",
+          "Material You (Tertiary)": "@android:color/system_accent3_800",
+          "Modern YouTube": "#0F0F0F",
+          "Classic YouTube": "#212121",
+          "Catppuccin (Mocha)": "#181825",
+          "Dark pink": "#290025",
+          "Dark blue": "#001029",
+          "Dark green": "#002905",
+          "Dark yellow": "#282900",
+          "Dark orange": "#291800",
+          "Dark red": "#290000"
+        }
+      },
+      {
+        "key": "lightThemeColor",
+        "title": "Light theme color",
+        "description": "Can be a hex color (#RRGGBB) or a color resource reference. Setting a color of either theme applies both while patching and removes the in-app theme color settings.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": "in-app",
+        "values": {
+          "Change in the app": "in-app",
+          "White": "@android:color/white",
+          "Material You (Neutral)": "@android:color/system_neutral1_100",
+          "Material You (Primary)": "@android:color/system_accent1_200",
+          "Material You (Secondary)": "@android:color/system_accent2_200",
+          "Material You (Tertiary)": "@android:color/system_accent3_200",
+          "Catppuccin (Latte)": "#E6E9EF",
+          "Light pink": "#FCCFF3",
+          "Light blue": "#D1E0FF",
+          "Light green": "#CCFFCC",
+          "Light yellow": "#FDFFCC",
+          "Light orange": "#FFE6CC",
+          "Light red": "#FFD6D6"
+        }
+      }
+    ],
     "name": "Theme",
     "description": "Can be a hex color (#RRGGBB) or a color resource reference. Setting a color of either theme applies both while patching and removes the in-app theme color settings",
     "enabled": true
