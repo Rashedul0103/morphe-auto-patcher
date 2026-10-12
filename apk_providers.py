@@ -2569,7 +2569,7 @@ def acquire_from_providers(
             _slugify(package_parts[-1] if package_parts else ""),
             _slugify(app_query),
         ]
-        org_candidates = list(dict.fromkeys(value for value in org_candidates if value))
+        org_candidates = list(dict.fromkeys(value for value in org_candidates if value))[:3]
         for org in org_candidates:
             for artifact_kind in ("apk", "bundle"):
                 output_prefix = f"apkcombo-{app_id}"
@@ -2590,7 +2590,7 @@ def acquire_from_providers(
                 ]
                 try:
                     completed = subprocess.run(
-                        command, capture_output=True, text=True, timeout=240,
+                        command, capture_output=True, text=True, timeout=60,
                         check=False,
                     )
                     outputs = sorted(
