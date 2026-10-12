@@ -75,7 +75,11 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("test:", workflow)
         self.assertIn("build:", workflow)
         self.assertIn("needs: test", workflow)
-        self.assertIn("github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'", workflow)
+        self.assertIn("github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.diagnose_apkmirror != true)", workflow)
+        self.assertIn("diagnose-apkmirror:", workflow)
+        self.assertIn("playwright==1.55.0", workflow)
+        self.assertIn("inputs.apkmirror_url", workflow)
+        self.assertIn("python3 -m playwright install --with-deps chromium", workflow)
         self.assertIn("github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]')", workflow)
         self.assertIn("python3 -m unittest discover", workflow)
 
@@ -103,6 +107,16 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("function openUploadApkDialog(id)", ui)
         self.assertIn("function uploadStockApk(id, file)", ui)
         self.assertIn("Verify & Start Patch", ui)
+
+    def test_apkmirror_playwright_is_an_isolated_non_bypass_diagnostic(self):
+        script = (ROOT / "scripts" / "diagnose_apkmirror_playwright.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+        self.assertIn("no challenge bypass", script)
+        self.assertIn("CHALLENGE_MARKERS", script)
+        self.assertIn("contains_android_manifest", script)
+        self.assertIn("diagnose_apkmirror", workflow)
+        self.assertIn("inputs.diagnose_apkmirror != true", workflow)
+        self.assertIn("APKMIRROR_DIAGNOSTIC_URL", script)
 
     def test_morphe_manual_fallback_search_is_exact_version_and_catalog_scoped(self):
         url = morphe_manual_search_url(
