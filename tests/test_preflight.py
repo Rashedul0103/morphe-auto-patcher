@@ -23,6 +23,15 @@ class PreflightTests(unittest.TestCase):
         self.assertFalse((ROOT / "patches-1.39.1.mpp").exists())
 
 
+    def test_apkcombo_fallback_is_installed_and_identity_validated(self):
+        workflow = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+        providers = (ROOT / "apk_providers.py").read_text(encoding="utf-8")
+        self.assertIn("apkcombo-downloader@1.0.3", workflow)
+        self.assertIn('shutil.which("apkmd")', providers)
+        self.assertIn('"via": "apkcombo_cli"', providers)
+        self.assertIn("expected_version=target_version", providers)
+        self.assertIn('("apk", "bundle")', providers)
+
     def test_provider_order_is_deterministic_and_deduplicated(self):
         app = {"apk_providers": ["uptodown", "apkmirror", "uptodown"]}
         order = provider_order(app)
