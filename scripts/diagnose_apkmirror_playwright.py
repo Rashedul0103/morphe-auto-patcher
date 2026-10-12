@@ -64,7 +64,7 @@ async def inspect_download_controls(page) -> list[dict]:
                 );
                 return {index, tag: el.tagName.toLowerCase(), text: text.slice(0, 180),
                     href, id, visible, score};
-            }).filter(x => x.visible && x.score > 0 && x.href &&
+            }).filter(x => x.visible && x.score > 0 && (x.href || x.tag === 'button') &&
                 !x.href.startsWith('javascript:'))
               .sort((a, b) => b.score - a.score).slice(0, 12)"""
         )
@@ -82,7 +82,9 @@ async def main() -> int:
     args = parser.parse_args()
 
     parsed = urlparse(args.url)
-    if parsed.scheme != "https" or not parsed.hostname or not parsed.hostname.endswith("apkmirror.com"):
+    if parsed.scheme != "https" or not parsed.hostname or not (
+        parsed.hostname == "apkmirror.com" or parsed.hostname.endswith(".apkmirror.com")
+    ):
         emit("invalid_input", message="URL must be HTTPS and hosted on apkmirror.com", url=args.url)
         return 2
 
