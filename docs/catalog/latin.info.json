@@ -16,10 +16,9 @@
   "icon_url": "catalog/icons/latin.png",
   "icon_source": "cache",
   "build_status": {
-    "status": "failed",
-    "stage": "apk_acquisition",
-    "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791793130
+    "status": "running",
+    "stage": "patch_source",
+    "updated_at": 1791804044
   },
   "apk_acquisition": {
     "status": "manual_required",

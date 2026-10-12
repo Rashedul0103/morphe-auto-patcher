@@ -20,7 +20,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791793130
+    "updated_at": 1791804044
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -66,6 +66,60 @@
         "error": "APKPure app discovery failed for com.google.android.apps.youtube.music",
         "app_query": "com.google.android.apps.youtube.music",
         "expected_package": "com.google.android.apps.youtube.music"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "music",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "music",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "youtube-music",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "youtube-music",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-apps-youtube-music",
+        "artifact_type": "apk",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "9.20.53",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-google-android-apps-youtube-music",
+        "artifact_type": "bundle",
+        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
