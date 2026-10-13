@@ -107,7 +107,6 @@ async def main() -> int:
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(
                 accept_downloads=True,
-                downloads_path=str(download_dir),
                 viewport={"width": 1365, "height": 900},
                 locale="en-US",
                 timezone_id="UTC",
