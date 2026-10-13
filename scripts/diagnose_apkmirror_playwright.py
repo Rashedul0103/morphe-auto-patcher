@@ -104,7 +104,7 @@ async def main() -> int:
         all_pages = []
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=True, downloads_path=str(download_dir))
             context = await browser.new_context(
                 accept_downloads=True,
                 viewport={"width": 1365, "height": 900},
