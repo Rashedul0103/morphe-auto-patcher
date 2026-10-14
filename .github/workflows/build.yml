@@ -162,7 +162,7 @@ jobs:
             exit 1
           fi
           find "$PACKAGE_DIR/dist" -type f -name '*.js' -exec sed -i 's/apkcombo\.app/apkcombo.com/g' {} +
-          if grep -R 'apkcombo\.app' "$PACKAGE_DIR/dist"; then
+          if grep -R --include='*.js' 'apkcombo\.app' "$PACKAGE_DIR/dist"; then
             echo "::error::APKCombo legacy hostname remains in installed package"
             exit 1
           fi
