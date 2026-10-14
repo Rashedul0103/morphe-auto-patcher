@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791946049
+    "updated_at": 1791948837
   },
   "icon_url": "catalog/icons/katana.png",
   "icon_source": "cache",

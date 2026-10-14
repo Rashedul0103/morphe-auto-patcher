@@ -20,7 +20,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791946049
+    "updated_at": 1791948837
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -74,7 +74,8 @@
         "via": "apkcombo_cli",
         "org": "music",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -83,7 +84,8 @@
         "via": "apkcombo_cli",
         "org": "music",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -92,7 +94,8 @@
         "via": "apkcombo_cli",
         "org": "youtube-music",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/youtube-music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -101,7 +104,8 @@
         "via": "apkcombo_cli",
         "org": "youtube-music",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/youtube-music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -110,7 +114,8 @@
         "via": "apkcombo_cli",
         "org": "com-google-android-apps-youtube-music",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/com-google-android-apps-youtube-music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -119,7 +124,8 @@
         "via": "apkcombo_cli",
         "org": "com-google-android-apps-youtube-music",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/com-google-android-apps-youtube-music/com.google.android.apps.youtube.music/download/phone-9.20.53-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",

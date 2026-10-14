@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1791946049
+    "updated_at": 1791948837
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -65,7 +65,8 @@
         "via": "apkcombo_cli",
         "org": "orca",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -74,7 +75,8 @@
         "via": "apkcombo_cli",
         "org": "orca",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -83,7 +85,8 @@
         "via": "apkcombo_cli",
         "org": "facebook-orca",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/facebook-orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -92,7 +95,8 @@
         "via": "apkcombo_cli",
         "org": "facebook-orca",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/facebook-orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -101,7 +105,8 @@
         "via": "apkcombo_cli",
         "org": "com-facebook-orca",
         "artifact_type": "apk",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/com-facebook-orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       },
       {
         "provider": "apkcombo",
@@ -110,7 +115,8 @@
         "via": "apkcombo_cli",
         "org": "com-facebook-orca",
         "artifact_type": "bundle",
-        "error": "[Errno 8] Exec format error: '/home/runner/.bun/bin/apkmd'"
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.app/com-facebook-orca/com.facebook.orca/download/phone-580.0.0.49.91-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
