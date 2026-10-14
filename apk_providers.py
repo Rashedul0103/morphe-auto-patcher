@@ -2362,6 +2362,17 @@ def _candidate_extension(candidate: ApkCandidate) -> str:
     return ".apk"
 
 
+def _apkcombo_command(cli_path: str, arguments: list[str]) -> list[str]:
+    """Run the package's JavaScript CLI through Bun instead of execve.
+
+    @nirewen/apkcombo-downloader publishes dist/cli.js as its bin entrypoint,
+    but that generated JavaScript file has no POSIX shebang. Executing the
+    Bun-installed apkmd shim directly raises errno 8 (Exec format error).
+    """
+    bun_executable = shutil.which("bun") or "bun"
+    return [bun_executable, cli_path, *arguments]
+
+
 def acquire_from_providers(
     app_id: str,
     target_version: str,
@@ -2578,8 +2589,8 @@ def acquire_from_providers(
                         stale.unlink()
                     except OSError:
                         pass
-                command = [
-                    apkcombo_cli, "download", org, expected_package,
+                command = _apkcombo_command(apkcombo_cli, [
+                    "download", org, expected_package,
                     "--version", target_version,
                     "--arch", preferred_arch if preferred_arch and preferred_arch not in ("auto", "automatic") else "universal",
                     "--dpi", "nodpi",
@@ -2587,7 +2598,7 @@ def acquire_from_providers(
                     "--outdir", destination_dir,
                     "--outfile", output_prefix,
                     "--overwrite",
-                ]
+                ])
                 try:
                     completed = subprocess.run(
                         command, capture_output=True, text=True, timeout=60,
