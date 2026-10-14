@@ -374,7 +374,7 @@ def prune_old_releases(app_id, keep_count=3):
         print(f"Warning: Failed to prune old releases: {e}")
 
 def load_patch_metadata_fallback(repo, tag, filter_candidates):
-    """Read the published patches-list.json when CLI listing cannot enumerate a package."""
+    """Read patch metadata in both legacy and current Morphe source formats."""
     candidates = [
         f"https://raw.githubusercontent.com/{repo}/{tag}/patches-list.json",
         f"https://raw.githubusercontent.com/{repo}/{tag}/patches-bundle.json",
@@ -395,11 +395,41 @@ def load_patch_metadata_fallback(repo, tag, filter_candidates):
     if not data:
         return None
 
-    normalized_filters = {
-        str(value or "").strip().lower()
-        for value in (filter_candidates or [])
-        if str(value or "").strip()
-    }
+    app_names = data.get("appNames", {})
+    if not isinstance(app_names, dict):
+        app_names = {}
+
+    def compatible_targets(compatible):
+        """Normalize compatiblePackages across legacy list and current package->versions map."""
+        normalized = []
+        if isinstance(compatible, dict):
+            for package_key, value in compatible.items():
+                package_name = str(package_key or "").strip()
+                package_title = str(app_names.get(package_name) or "").strip()
+                targets = []
+                if isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, str) and item.strip():
+                            targets.append({"version": item.strip()})
+                        elif isinstance(item, dict):
+                            targets.append(item)
+                elif isinstance(value, dict):
+                    nested_targets = value.get("targets")
+                    if isinstance(nested_targets, list):
+                        targets.extend(item for item in nested_targets if isinstance(item, dict))
+                    elif value.get("version"):
+                        targets.append({"version": str(value.get("version")).strip()})
+                    package_name = str(value.get("packageName") or package_name).strip()
+                    package_title = str(value.get("name") or package_title).strip()
+                normalized.append({
+                    "packageName": package_name,
+                    "name": package_title,
+                    "targets": targets,
+                })
+        elif isinstance(compatible, list):
+            normalized.extend(item for item in compatible if isinstance(item, dict))
+        return normalized
+
     for filter_value in filter_candidates or []:
         wanted = str(filter_value or "").strip().lower()
         if not wanted:
@@ -412,16 +442,9 @@ def load_patch_metadata_fallback(repo, tag, filter_candidates):
         for patch in data.get("patches", []):
             if not isinstance(patch, dict):
                 continue
-            compatible = patch.get("compatiblePackages")
-            if isinstance(compatible, dict):
-                compatible = list(compatible.values())
-            if not isinstance(compatible, list):
-                continue
-
+            compatible = compatible_targets(patch.get("compatiblePackages"))
             matched_packages = []
             for package in compatible:
-                if not isinstance(package, dict):
-                    continue
                 package_name = str(package.get("packageName") or "").strip()
                 package_title = str(package.get("name") or "").strip()
                 if wanted in {package_name.lower(), package_title.lower()}:
@@ -433,7 +456,7 @@ def load_patch_metadata_fallback(repo, tag, filter_candidates):
             entry = {
                 "name": str(patch.get("name") or "").strip(),
                 "description": str(patch.get("description") or "").strip(),
-                "enabled": bool(patch.get("default", False)),
+                "enabled": bool(patch.get("default", patch.get("use", False))),
                 "options": patch.get("options") if isinstance(patch.get("options"), list) else [],
             }
             if not entry["name"]:
@@ -459,7 +482,6 @@ def load_patch_metadata_fallback(repo, tag, filter_candidates):
                 "patches": matched_patches,
             }
     return None
-
 
 def merge_patch_option_metadata(primary_patches, source_patches):
     """Enrich CLI patch entries with option metadata from the source release manifest."""
