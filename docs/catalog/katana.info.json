@@ -3,7 +3,7 @@
     "status": "failed",
     "stage": "patch_source",
     "reason": "No compatible patch source found.",
-    "updated_at": 1791911764
+    "updated_at": 1791946049
   },
   "icon_url": "catalog/icons/katana.png",
   "icon_source": "cache",
@@ -11,7 +11,7 @@
     {
       "repo": "SysAdminDoc/Hushfacebook",
       "status": "incompatible",
-      "tag": "v0.11.0",
+      "tag": "v0.12.0",
       "filters_tried": [
         "com.facebook.katana"
       ]
