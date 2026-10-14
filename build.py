@@ -23,7 +23,7 @@ def _morphe_cli_jar_version_key(path):
     """Sort Morphe CLI jar filenames by semantic version, preferring stable builds."""
     filename = os.path.basename(path)
     match = re.search(
-        r"morphe-[^-]+-(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?-all\\.jar$",
+        r"morphe-[^-]+-(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?-all\.jar$",
         filename,
     )
     if not match:
