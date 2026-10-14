@@ -151,7 +151,22 @@ jobs:
           bun-version: 1.2.4
 
       - name: Install APKCombo fallback downloader
-        run: bun install --global @nirewen/apkcombo-downloader@1.0.3
+        run: |
+          bun install --global @nirewen/apkcombo-downloader@1.0.3
+          # The pinned package still hardcodes apkcombo.app, which now refuses
+          # connections from the runner. The provider's current public website is
+          # apkcombo.com, so redirect the package's generic host references there.
+          PACKAGE_DIR="$(find "$HOME/.bun" -type f -path '*/@nirewen/apkcombo-downloader/dist/utils.js' -print -quit | sed 's#/dist/utils.js$##')"
+          if [ -z "$PACKAGE_DIR" ]; then
+            echo "::error::Could not locate the installed APKCombo downloader package"
+            exit 1
+          fi
+          find "$PACKAGE_DIR/dist" -type f -name '*.js' -exec sed -i 's/apkcombo\.app/apkcombo.com/g' {} +
+          if grep -R 'apkcombo\.app' "$PACKAGE_DIR/dist"; then
+            echo "::error::APKCombo legacy hostname remains in installed package"
+            exit 1
+          fi
+          echo "APKCombo downloader configured for the current apkcombo.com domain."
 
       - name: Restore Keystore
         run: |
