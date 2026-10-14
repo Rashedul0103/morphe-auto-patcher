@@ -1,0 +1,550 @@
+[
+  {
+    "name": "AMOLED black theme",
+    "description": "Makes Facebook's dark mode black, or a dark color you pick, instead of dark gray, which can save battery on OLED screens. Turn on dark mode in Facebook first. It isn't selected by default because undoing it means patching again. Turn on Expert mode in Manager to pick it.",
+    "enabled": false,
+    "options": [
+      {
+        "key": "backgroundColour",
+        "title": "Background color",
+        "description": "The color dark mode's backgrounds use, as a six-digit color code (#RRGGBB), like #0D1117. Leave it blank for black. Cards and inputs get a slightly lighter shade. Grays up to about #535353 work, and lighter colors are refused so text stays readable.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": "#000000",
+        "values": null
+      }
+    ]
+  },
+  {
+    "name": "Accent color",
+    "description": "Swaps Facebook's blue on links, buttons, switches and the selected tab for a color you like better. Nothing changes until you pick one. Pick a color in Hushfacebook settings > Appearance.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Allow screenshots",
+    "description": "Lets you take screenshots and screen recordings on the pages where Facebook blocks them, so you can keep a copy of what's on screen. Starts off. Turn it on in Hushfacebook settings > Privacy.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block Instant Games ads",
+    "description": "Games you play inside Facebook show no ads, so you can keep playing without breaks. A rewarded ad gives no reward unless you also turn on the switch that counts it as watched. On by default. Turn it off in Hushfacebook settings > Menu.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block ad telemetry",
+    "description": "Stops Facebook watching for screenshots of ads and reporting which apps you install after seeing ads, and stops several of the ways it sends your phone's advertising ID, so less of what you do feeds its ad tracking. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block background ad prefetch",
+    "description": "Stops Facebook downloading ads and ad data in the background before you ever see them, which saves mobile data and battery. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block background-return feed refresh",
+    "description": "Keeps your place in the feed when you come back to Facebook within ten minutes, or any time with No time limit on, so you don't lose what you were reading. Starts off. Turn it on in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block promotional notifications",
+    "description": "Blocks the kinds of notification you pick, such as trending videos, memories and birthdays, so you get fewer pings you don't care about. Messages, friend requests, comments and login alerts always come through. Starts off. Turn on the kinds you want in Hushfacebook settings > Notifications.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Block screenshot detection",
+    "description": "Stops Facebook noticing when you take a screenshot or record the screen, in the feed, Reels, chats and everywhere else, so it can't react to it. Starts off. Turn it on in Hushfacebook settings > Privacy.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Clean up Facebook's chat list",
+    "description": "Tidies Chats inside Facebook. One switch empties the row of notes and who's active above your chats, and another removes promotional banners like the one asking you to turn on notifications. Your chats stay. Starts off. Turn on the parts you want in Hushfacebook settings > Chats.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Clean up Reels",
+    "description": "Hides clutter on reels, such as the Follow button, comment previews, Remix and Use template buttons and Threads cards between reels, so more of the video shows, and can play each reel once instead of over and over. Starts off. Turn on the parts you want in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Comment sheet options",
+    "description": "Small fixes for comments. Stop a long press on Like from opening reactions, hide the GIF and sticker buttons, show every reply without tapping View replies, hide Related groups under group posts, and hide comments with shop links or your words. Starts off. Turn on the parts you want in Hushfacebook settings > Comments.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Default comment order",
+    "description": "Opens comments in the order you choose, Most relevant, Newest or All comments, instead of the one Facebook picks. Handy if you always want the newest first. Starts off. Turn it on and pick an order in Hushfacebook settings > Comments.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Default playback quality",
+    "description": "Plays videos, reels and video stories at the quality you choose, such as Data saver or up to 720p, instead of what Facebook picks. Lower saves data, higher looks sharper. Starts off. Turn it on and pick a quality in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Disable Audience Network",
+    "description": "Stops Facebook serving its ads inside other apps on your phone. Those apps show their own ads or none, and their rewarded ads may fail. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Disable Play Store updates",
+    "description": "Stops Google Play offering Facebook updates, which a patched app can't take anyway. It isn't selected by default because once it's installed, a build without it can't install over it. It doesn't work on a Root Mount install. Turn on Expert mode in Manager to pick it.",
+    "enabled": false,
+    "options": []
+  },
+  {
+    "name": "Don't send reel watch history",
+    "description": "Stops sending Facebook the list of reels you've watched, so it learns less about what you watch. Reels you've already seen may come back. Starts off. Turn it on in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Download any photo",
+    "description": "Shows Save photo on every photo you open, even where the poster turned saving off, and saves the largest size so you get the best copy. On by default. Turn it off in Hushfacebook settings > Downloads.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Download any reel",
+    "description": "Adds a Download button beside every reel and a Download row to its More menu, so you can keep reels on your phone. Videos save at the quality you set, best by default. On by default. Turn it off in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Download any story",
+    "description": "Adds Save to the menu of any story, including stories with music, so you can keep the ones you like. Videos save at the quality you set, best by default. On by default. Turn it off in Hushfacebook settings > Stories.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Download any video",
+    "description": "Adds Download to phone to the menu of videos in the feed and in Watch, so you can save them to watch later. Videos save at the quality you set, best by default. Starts off. Turn it on in Hushfacebook settings > Downloads.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Following feed on Home",
+    "description": "Makes Home show the newest posts from the friends, groups and Pages you follow instead of Facebook's ranked feed, so you see what they posted rather than what Facebook picks. Home shows, right below it, narrows Home to one of the Feeds tab's filters (Friends, Favorites, Groups or Pages). Starts off. Turn it on in Hushfacebook settings > Opening Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Force dark mode",
+    "description": "Keeps Facebook in dark mode whatever its own setting says. Useful on tablets, where Facebook's settings have no Dark mode. Starts off. Turn it on in Hushfacebook settings > Appearance, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Frame step",
+    "description": "With a reel or video paused, a tap on its right side steps one frame forward and a tap on its left side one frame back, so you can stop on the exact moment you want. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide AI-detected posts",
+    "description": "Removes posts and reels Facebook marked as made with AI, posts creators labeled as AI, posts with Meta's AI characters and Meta AI cards in the feed. Only the Meta AI cards switch starts on. Change them in Hushfacebook settings > News feed and Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Menu promotions",
+    "description": "Hides the Upgrades and Also from Meta sections and the Muse card in Facebook's Menu, so the Menu has fewer ads for Meta's products. Settings, Help and your shortcuts stay. On by default. Turn it off in Hushfacebook settings > Menu.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Meta AI comment summaries",
+    "description": "Removes Meta AI's summary of the comments from the top of the comment sheet and from under posts, so you read what people actually wrote. Starts off. Turn it on in Hushfacebook settings > Comments.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Meta AI in search",
+    "description": "Removes the Meta AI answer and Ask Meta AI prompts from search results, and stops suggestions from sending your search to Meta AI. You get plain results for people, groups, Pages and posts. On by default. Turn it off in Hushfacebook settings > Search.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Meta AI questions under posts",
+    "description": "Removes the row of Meta AI questions Facebook adds under some posts, for a cleaner feed. The post and its buttons stay. On by default. Turn it off in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Meta upsells",
+    "description": "Hides Meta's pushes for its other products, such as Edits, Threads cross-posting, Meta Verified, avatar stickers and Meta AI's Imagine, so you see fewer sales pitches. Starts off. Turn on the parts you want in Hushfacebook settings > Meta's other products.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Reels in the feed",
+    "description": "Removes the rows of reels between posts and the reels Facebook adds where your feed ends, so the feed sticks to posts. A reel a friend posts stays. Starts off. Turn it on in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide Stories tray",
+    "description": "Hides the row of stories at the top of the feed, the stories between posts, or the \"What's on your mind?\" row at the top of Home, so you reach posts sooner. Starts off. Turn on the parts you want in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide affiliate product links",
+    "description": "Removes the shopping cards that affiliate links add to reels, feed posts and comments, plus Shop now cards on reels, so you see fewer sales pitches while you scroll. On by default. Turn it off in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide post prompts",
+    "description": "Removes the strip Facebook adds to some posts, like \"Are you interested in this post?\", \"Show less\" or follow suggestions, so posts look less cluttered. No gap is left. On by default. Turn it off in Hushfacebook settings > News feed. A second switch there, Hide the Follow link on posts, starts off.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide posts by words",
+    "description": "Hides feed posts with words you list, or from people, Pages or sites you list, so you skip topics you're tired of. Photo, video, link and colored background posts can go too. Starts off. Turn it on in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide read receipts",
+    "description": "People you chat with in chats that open inside Facebook don't see that you've read their messages, so you can read now and reply later. Replying may still show you've read it. Starts off. Turn it on in Hushfacebook settings > Privacy.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide reel interest prompts",
+    "description": "Removes the \"Are you interested in this reel?\" prompt, so reels play without the interruption. On by default. Turn it off in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide seen posts",
+    "description": "Keeps posts you've already scrolled past out of the feed when it loads again, for 1, 3, 7 or 30 days, so you see something new. The list stays on your phone. Starts off. Turn it on in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored Marketplace listings",
+    "description": "Removes ads and boosted listings from Marketplace's feed and search results, so you see more of what people are selling. Listings people post stay. On by default. Turn it off in Hushfacebook settings > Marketplace.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored posts",
+    "description": "Removes sponsored and promoted posts from the news feed, with no gap left behind, so you see fewer ads. It also keeps the floating ad button off an ad's comments. On by default. Turn it off in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored profile posts",
+    "description": "Removes the ads between posts on someone's profile or a Page, so you only see what they posted. On by default. Turn it off in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored reels",
+    "description": "Removes ads from Reels and Watch, including product banners over reels and ads in the middle of videos, so you can watch without interruptions. On by default. Turn it off in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored search results",
+    "description": "Removes the ads from Facebook's search results, so you see the people, Pages and posts you searched for. On by default. Turn it off in Hushfacebook settings > Search.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide sponsored stories",
+    "description": "Removes ad cards from the story viewer, so swiping through stories shows only what people posted. On by default. Turn it off in Hushfacebook settings > Stories.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide suggested and promoted posts",
+    "description": "Removes what Facebook adds to the feed besides ads, like \"Suggested for you\" posts, \"People you may know\" and suggested groups, so you see more from people you follow. Most of its switches are on by default. Change them in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide suggested stories",
+    "description": "Removes stories Facebook suggests from people and Pages you don't follow, and the \"Find friends from contacts\" card, so the Stories tray sticks to people you know. On by default. Turn it off in Hushfacebook settings > Stories.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide tab badges",
+    "description": "Takes the dot and count off the tabs you pick, and Facebook's count off its app icon, so the app nags you less. Notifications still arrive and still show in the Notifications tab. Starts off. Turn on the ones you want in Hushfacebook settings > Appearance.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide tabs",
+    "description": "Takes the tabs you pick off the tab bar, such as Friends, Marketplace, Groups, Gaming or Events, so the bar only has what you use. Each page stays in the Menu. Starts off. Turn on the ones you want in Hushfacebook settings > Appearance, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide the Feeds header",
+    "description": "Takes the title row and the All, Favorites, Friends, Groups and Pages filters off the top of the Feeds tab, so it opens straight on posts. Starts off. Turn it on in Hushfacebook settings > News feed, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide the Get Messenger card",
+    "description": "Hides the \"Get the Messenger app\" card at the top of Chats when Messenger is already installed. A patched Facebook may not see that Messenger is there, so it keeps showing the card. On by default. Turn it off in Hushfacebook settings > Chats.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide the Reels tab",
+    "description": "Takes the Reels tab, called Video on some accounts, off the tab bar, so Reels isn't one tap away. Reels in your feed and reel links still open. Starts off. Turn it on in Hushfacebook settings > Reels and Watch, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide the Reels tab dot",
+    "description": "Takes the new-item dot and count off the Reels tab, called Video on some accounts, so it stops calling for your attention. Other tabs keep theirs. On by default. Turn it off in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hide typing indicator",
+    "description": "Others don't see that you're typing, in chats that open inside Facebook and in comment boxes, so you can write without anyone watching. Your messages send as usual. Starts off. Turn on the parts you want in Hushfacebook settings > Privacy.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hold a reel for 2x",
+    "description": "Hold a reel to play it at double speed, and let go to go back to normal. Handy for skimming. The reel's more button still opens Facebook's long-press menu. Starts off. Turn it on in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hold back analytics uploads",
+    "description": "Stops Facebook sending its usage reports in the background and skips the learning jobs it runs on your phone, so less about how you use the app leaves it. A second switch holds back the camera roll processing that uploads your photos and details about them for sharing suggestions. Both start off. Turn them on in Hushfacebook settings > Privacy, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hushfacebook in the Menu",
+    "description": "Adds a Hushfacebook settings row to Facebook's Menu, at the end of Settings and privacy, so the settings are easy to find. A Saved row joins it while the Saved shortcut switch is on, and a Watch history row while the Watch history shortcut switch is. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Hushfacebook settings",
+    "description": "Adds Hushfacebook settings to Facebook, where you turn features on or off, pause Hushfacebook and back up your choices. To open them, long-press the Facebook logo at the top of your feed or Facebook's app icon. Its App name option shows a name you pick under the icon. Other patches need it, so keep it selected.",
+    "enabled": true,
+    "options": [
+      {
+        "key": "appName",
+        "title": "App name",
+        "description": "A name to show under the app icon, in App info and in recent apps instead of Facebook, up to 50 characters, so this copy is easy to tell apart. Leave it empty to keep Facebook's name. It only changes the name. Clone app is what lets a copy install next to the official Facebook.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": null
+      }
+    ]
+  },
+  {
+    "name": "Install beside Meta's apps",
+    "description": "Lets the official Messenger, Facebook Lite, Business Suite and Workplace install next to your patched Facebook. Without it, Android refuses them because they share two permissions with Facebook. Root Mount installs don't need it. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Keep post dates",
+    "description": "Keeps the date under the poster's name, so you can always tell how old a post is. Facebook's newer header can swap it for rotating details, and on some phones the line goes blank. On by default. Turn it off in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Keep the progress bar",
+    "description": "Keeps every reel's progress bar full size and moving smoothly, with the time above it, so you can drag it without tapping first. Also keeps a full-screen video's controls on screen until you tap, and another switch lets a tap anywhere on the bar jump there. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Keep the reel speed",
+    "description": "A speed you pick in a reel's menu stays for the next reels until Facebook restarts, so you don't set it every time. On by default. A second switch for feed and Watch videos starts off. Both are in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Marketplace only",
+    "description": "Turns Facebook into a Marketplace app for buying and selling without the feed. The tab bar keeps only Marketplace, Notifications and your profile or Menu, and Facebook opens on Marketplace. Starts off. Turn it on in Hushfacebook settings > Opening Facebook, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Material You theme",
+    "description": "Gives Facebook's dark mode the colors of your wallpaper on Android 12 and newer, so it matches your phone. Turn on dark mode in Facebook first. It isn't selected by default because undoing it means patching again. Turn on Expert mode in Manager to pick it.",
+    "enabled": false,
+    "options": []
+  },
+  {
+    "name": "Open Messenger from the top bar",
+    "description": "Makes the Messenger icon at the top of Facebook open the Messenger app instead of Facebook's own Chats, if you'd rather chat in Messenger. Without Messenger installed, Chats opens as before. Starts off. Turn it on in Hushfacebook settings > Chats. Also carries Leave calls and chats to Messenger, a separate switch that starts off and leaves ringing and chat notifications to Messenger while it's installed and enabled.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Open links in external browser",
+    "description": "Opens web links in your own browser instead of Facebook's built-in one, without Facebook tracking the click. Facebook pages still open in the app. On by default. Turn it off in Hushfacebook settings > Links. A second switch, on by default under Privacy, stops Facebook's browser keeping a history of the links you open in it.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Open on a chosen tab",
+    "description": "Opens Facebook on the tab you pick when you start it from its icon, so you can skip the feed. It's Marketplace unless you change it. Starts off. Turn it on in Hushfacebook settings > Opening Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Picture-in-picture",
+    "description": "Keeps reels and videos from the Reels and Video tabs, or full screen, playing in a small window when you leave Facebook, so you can watch while using another app. Needs Android 12 or later. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Restore screens on re-signed builds",
+    "description": "Fixes profiles, photos, posts and some Settings pages that won't open on a patched Facebook, and lets a Messenger or Facebook Lite patched in the same Manager sign in through it. Root Mount installs don't need it. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Resume long videos",
+    "description": "A video longer than two minutes picks up where you left off the next time it plays, in the feed or full screen, so you don't lose your place. Reels, live videos and ads start as usual. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Sanitize sharing links",
+    "description": "Takes Facebook's tracking tags off links you share or copy, so you share a clean link. A facebook.com/share/ link is made for one share, so Facebook can still trace that kind back to you, and a switch that starts off shares the post's own link in its place. On by default. Both are in Hushfacebook settings > Links.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Send chat photos and videos at original quality",
+    "description": "Photos and videos you send from chats that open inside Facebook go out as the originals instead of smaller copies, so they arrive sharp. Very large files are still shrunk. Starts off. Turn it on in Hushfacebook settings > Chats.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Share sheet items",
+    "description": "Lets you hide items you never use from Facebook's share sheet, such as WhatsApp, Meta AI or Copy link, so the ones you want are easier to reach. Nothing is hidden until you pick. Choose them in Hushfacebook settings > Links, where a switch that starts off also takes away the buttons that send to the people you picked as a new group chat.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Show View profile on Marketplace sellers",
+    "description": "Adds View profile to every seller's Marketplace page. It opens their regular Facebook profile, so you can check who you're buying from. Facebook shows that button to only some accounts. On by default. Turn it off in Hushfacebook settings > Marketplace.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Start on x86 devices",
+    "description": "Stops Facebook crashing or freezing at start on x86 devices, such as computer emulators and x86 Chromebooks. Most phones and tablets don't need it, and it doesn't change how they start. Works as soon as you patch it in, with no switch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Stop Story auto-advance",
+    "description": "Keeps each story on screen until you tap or swipe, so you can take your time with it. A second switch replays a finished story from the start. Starts off. Turn it on in Hushfacebook settings > Stories.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Stop update prompts",
+    "description": "Stops Facebook asking you to update, since a patched app can't install Meta's updates anyway. Meta App Manager's update prompts and chat prompts aimed at older versions go too. On by default. Turn it off in Hushfacebook settings > Updates.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Tab bar at the bottom",
+    "description": "Moves Facebook's tab bar to the bottom of the screen on accounts that have it at the top, where it's easier to reach. A second switch lets it slide away as you scroll, and two more keep the tab bar or the top bar on screen instead. Starts off. Turn it on in Hushfacebook settings > Appearance, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Tag suggestions only after @",
+    "description": "Stops Facebook offering people to tag while you type ordinary words in posts and comments, so names don't pop up in your way. Typing @ still brings up the list. Starts off. Turn it on in Hushfacebook settings > Writing.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Tap to play",
+    "description": "Videos, reels, stories and music wait for your tap instead of starting by themselves, so nothing plays until you want it to. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Turn off HDR brightness",
+    "description": "Stops HDR videos and photos from turning your screen up to full brightness, which can be harsh in the dark. They keep their resolution. Starts off. Turn it on in Hushfacebook settings > Playback.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Turn off auto-translation",
+    "description": "Shows posts and reel captions in the language they were written in, instead of Facebook's automatic translation, so you read people's own words. See translation still works. Starts off. Turn it on in Hushfacebook settings > News feed.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Turn off double tap to like",
+    "description": "Stops a double tap on a reel or video from liking it, so you don't like things by accident. A single tap still plays or pauses, and the Like button still works. Starts off. Turn it on in Hushfacebook settings > Reels and Watch.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Turn off haptics",
+    "description": "Stops the short vibrations Facebook plays when you tap and swipe in it, if you find them distracting. Your keyboard and your phone's own vibrations stay. Starts off. Turn it on in Hushfacebook settings > Appearance.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Turn off screen transitions",
+    "description": "Shows Facebook's tabs, Menu and new screens at once, without the slide between them, so the app feels quicker. Swipes and animations inside a page stay. Starts off. Turn it on in Hushfacebook settings > Appearance.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Unlock app icons",
+    "description": "Lets you pick the app icons Facebook keeps for Facebook Plus on its App icon page (Menu > Settings and privacy > App icon), so your home screen icon can be any of them. Starts off. Turn it on in Hushfacebook settings > Appearance.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Use the phone's emoji",
+    "description": "Draws emoji with your phone's own emoji font instead of Meta's, so emoji in posts, comments and chats match your keyboard. Reactions and stickers stay as they are. Starts off. Turn it on in Hushfacebook settings > Appearance, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "Use the system font",
+    "description": "Draws Facebook's text in your phone's font instead of Meta's, or in a font file you pick, so Facebook matches the rest of your phone. Icons and emoji keep their own. Starts off. Turn it on in Hushfacebook settings > Appearance, then restart Facebook.",
+    "enabled": true,
+    "options": []
+  },
+  {
+    "name": "View stories anonymously",
+    "description": "Keeps you off the viewer list of stories you watch, because Facebook isn't told which ones you've seen. Replying or reacting still shows you, and watched stories still look new. Starts off. Turn it on in Hushfacebook settings > Stories.",
+    "enabled": true,
+    "options": []
+  }
+]

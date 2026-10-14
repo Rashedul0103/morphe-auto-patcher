@@ -1,23 +1,134 @@
 {
-  "build_status": {
-    "status": "failed",
-    "stage": "patch_source",
-    "reason": "No compatible patch source found.",
-    "updated_at": 1791948837
-  },
-  "icon_url": "catalog/icons/katana.png",
-  "icon_source": "cache",
-  "patch_source_attempts": [
-    {
-      "repo": "SysAdminDoc/Hushfacebook",
-      "status": "incompatible",
-      "tag": "v0.12.0",
-      "filters_tried": [
-        "com.facebook.katana"
-      ]
-    }
+  "patch_tag": "v0.12.0",
+  "recommended_version": "582.0.0.50.54",
+  "compatible_versions": [
+    "582.0.0.50.54"
   ],
+  "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=katana%20582.0.0.50.54",
+  "patch_source": "SysAdminDoc/Hushfacebook",
+  "patch_filter": "com.facebook.katana",
+  "android_package": "com.facebook.katana",
+  "patch_source_attempts": [],
   "patch_source_candidates": [
     "SysAdminDoc/Hushfacebook"
-  ]
+  ],
+  "stock_signer_sha256": [],
+  "icon_url": "catalog/icons/katana.png",
+  "icon_source": "cache",
+  "build_status": {
+    "status": "failed",
+    "stage": "apk_acquisition",
+    "reason": "All automatic APK providers failed for the exact requested version.",
+    "updated_at": 1791951040
+  },
+  "apk_acquisition": {
+    "status": "manual_required",
+    "provider": "",
+    "target_version": "582.0.0.50.54",
+    "package": "com.facebook.katana",
+    "apk_arch": "auto",
+    "manual_urls": [
+      "https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-13-android-apk-download/"
+    ],
+    "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "582.0.0.50.54",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-13-android-apk-download/",
+        "error": "HTTP 403: https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-13-android-apk-download/"
+      },
+      {
+        "provider": "apkmirror",
+        "version": "582.0.0.50.54",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Exact APKMirror version page not found for 582.0.0.50.54",
+        "app_query": "com.facebook.katana",
+        "expected_package": "com.facebook.katana"
+      },
+      {
+        "provider": "uptodown",
+        "version": "582.0.0.50.54",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 526; search HTTP 526)",
+        "app_query": "com.facebook.katana",
+        "expected_package": "com.facebook.katana"
+      },
+      {
+        "provider": "apkpure",
+        "version": "582.0.0.50.54",
+        "status": "resolve_failed",
+        "base_url": null,
+        "error": "APKPure app discovery failed for com.facebook.katana",
+        "app_query": "com.facebook.katana",
+        "expected_package": "com.facebook.katana"
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "katana",
+        "artifact_type": "apk",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "katana",
+        "artifact_type": "bundle",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "facebook-katana",
+        "artifact_type": "apk",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/facebook-katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "facebook-katana",
+        "artifact_type": "bundle",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/facebook-katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-facebook-katana",
+        "artifact_type": "apk",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/com-facebook-katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      },
+      {
+        "provider": "apkcombo",
+        "version": "582.0.0.50.54",
+        "status": "download_failed",
+        "via": "apkcombo_cli",
+        "org": "com-facebook-katana",
+        "artifact_type": "bundle",
+        "exit_code": 0,
+        "error": "error: Unable to connect. Is the computer able to access the url?\n  path: \"https://apkcombo.com/com-facebook-katana/com.facebook.katana/download/phone-582.0.0.50.54-apk\",\n errno: 0,\n  code: \"ConnectionRefused\""
+      }
+    ],
+    "error": "All automatic APK providers failed for the exact requested version.",
+    "workspace": ".work/katana"
+  },
+  "stock_apk": null
 }

@@ -240,9 +240,25 @@
     "enabled": true
   },
   {
-    "options": [],
+    "options": [
+      {
+        "key": "app_display_name",
+        "title": "App \u540d\u7a31 / App name",
+        "description": "",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "GboardWu",
+        "values": {
+          "Gboard": "Gboard",
+          "Gboard Dev": "Gboard Dev",
+          "Gboard Patches": "Gboard Patches",
+          "Gboard Mod": "Gboard Mod",
+          "GboardWu": "GboardWu"
+        }
+      }
+    ],
     "name": "Package Rename",
-    "description": "",
+    "description": "\u5c07\u5957\u4ef6\u540d\u7a31\u6539\u6210 dev.jason.com.google.android.inputmethod.latin\uff0c\u4e26\u53ef\u81ea\u8a02 App \u540d\u7a31\uff0c\u4ee5\u4fbf\u5171\u5b58\u5b89\u88dd\nRename the package to dev.jason.com.google.android.inputmethod.latin and allow a custom app name so it can be installed alongside the official Gboard.",
     "enabled": true
   },
   {
