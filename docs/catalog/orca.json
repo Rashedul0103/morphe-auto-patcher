@@ -92,8 +92,20 @@
   },
   {
     "options": [],
+    "name": "Hide Mark as read",
+    "description": "Hides Mark as read in the menu you get when you press and hold a chat in your chat list, so you can't mark a chat read by accident. Mark as unread stays. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Pin more chats",
+    "description": "Raises Messenger's limit of three pinned chats to 20, so you can keep more chats at the top of your chat list. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide Facebook shortcuts",
-    "description": "Hides Facebook buttons, profile and sharing shortcuts, and Also from Meta in the Menu tab. Handy if you only use Messenger. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Hides Facebook buttons, profile and sharing shortcuts, and the Also from Meta and Subscriptions sections in the Menu tab. Handy if you only use Messenger. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -112,6 +124,18 @@
     "options": [],
     "name": "Hide Reels badge",
     "description": "Hides the Reels notification badge. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide People tab",
+    "description": "Hides the People tab in the bar at the bottom. Restart Messenger to see the tab go. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Notifications tab",
+    "description": "Hides the Notifications tab in the bar at the bottom. Restart Messenger to see the tab go. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -254,6 +278,18 @@
   },
   {
     "options": [],
+    "name": "Stop MQTT logging",
+    "description": "Drops the health reports and push logging Messenger's MQTT client sends. Messenger sends most of its traffic another way, so there's often little for it to drop. Messages, calls and active status keep working. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Stop nearby scans",
+    "description": "Stops Messenger from reading the list of Wi-Fi networks around you, and hides the name and hardware address of the one you're connected to, the way Android does when Messenger can't see your location. Also stops the timer it can run while it's open to check your location and scan for Wi-Fi networks and Bluetooth devices. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Allow screenshots",
     "description": "Lets you screenshot protected chat media, such as view-once photos and Quicksnap, and stops screenshot notices. It doesn't add replay or saving. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -302,8 +338,14 @@
   },
   {
     "options": [],
+    "name": "Bold and italic text",
+    "description": "Adds Bold and Italic to the menu that shows when you select words you typed. They're special Unicode letters, so they show on any phone, but screen readers may read them oddly. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Open settings from menu",
-    "description": "Adds a HushMessenger entry to Messenger's Menu tab and side menu, so you can open these settings from inside Messenger. Works as soon as you patch it in, with no switch",
+    "description": "Adds a HushMessenger entry to Messenger's Menu tab and side menu, and makes a long press on the Messenger logo at the top of Chats or on the Menu tab's title open these settings too. Works as soon as you patch it in, with no switch",
     "enabled": true
   },
   {
