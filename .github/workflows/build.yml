@@ -139,6 +139,12 @@ jobs:
       - name: Install Python dependencies
         run: python3 -m pip install --disable-pip-version-check -r requirements.txt
 
+      - name: Verify selected Morphe CLI
+        run: |
+          CLI_JAR="$(python3 -c 'import build; print(build.find_cli_jar())')"
+          echo "Selected Morphe CLI jar: ${CLI_JAR}"
+          java -jar "${CLI_JAR}" --help >/dev/null
+
       - name: Setup Bun for APKCombo fallback
         uses: oven-sh/setup-bun@v2
         with:
