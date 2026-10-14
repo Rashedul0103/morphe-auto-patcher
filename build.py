@@ -19,11 +19,28 @@ import requests
 
 CONFIG_FILE = "config.json"
 
+def _morphe_cli_jar_version_key(path):
+    """Sort Morphe CLI jar filenames by semantic version, preferring stable builds."""
+    filename = os.path.basename(path)
+    match = re.search(
+        r"morphe-[^-]+-(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?-all\\.jar$",
+        filename,
+    )
+    if not match:
+        return (0, 0, 0, 0, "", filename)
+    major, minor, patch = (int(match.group(index)) for index in (1, 2, 3))
+    prerelease = match.group(4) or ""
+    stable_rank = 1 if not prerelease else 0
+    return (major, minor, patch, stable_rank, prerelease, filename)
+
+
 def find_cli_jar():
     jars = glob.glob("morphe-*-all.jar")
     if not jars:
         raise FileNotFoundError("Morphe CLI jar not found in working directory")
-    return jars[0]
+    # A stale development jar is tracked in the repository. Never let glob order
+    # select it ahead of the stable jar downloaded from the latest Morphe release.
+    return max(jars, key=_morphe_cli_jar_version_key)
 
 def run_cmd(cmd_list, silent=False):
     if not silent:
