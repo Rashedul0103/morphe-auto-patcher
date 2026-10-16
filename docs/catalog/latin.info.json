@@ -1,5 +1,5 @@
 {
-  "patch_tag": "v3.12.0",
+  "patch_tag": "v3.13.0",
   "recommended_version": "18.0.3.954559732-release-arm64-v8a",
   "compatible_versions": [
     "18.0.3.954559732-release-arm64-v8a"
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1792139860
+    "updated_at": 1792177758
   },
   "apk_acquisition": {
     "status": "manual_required",
