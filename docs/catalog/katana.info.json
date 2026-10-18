@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1792255544
+    "updated_at": 1792280365
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -45,7 +45,7 @@
         "version": "582.0.0.50.54",
         "status": "resolve_failed",
         "base_url": null,
-        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 404; search HTTP 404)",
+        "error": "Uptodown resolution failed; native API: Uptodown app ID lookup failed (package lookup HTTP 526; search HTTP 526)",
         "app_query": "com.facebook.katana",
         "expected_package": "com.facebook.katana"
       },
