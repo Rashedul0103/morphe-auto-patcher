@@ -33,7 +33,7 @@
   {
     "options": [],
     "name": "Restore screens on re-signed builds",
-    "description": "Patching and signing Messenger yourself can break some of its screens. This makes Messenger's signature check pass again, including for a Facebook you patched with the same key. Works as soon as you patch it in, with no switch",
+    "description": "Patching and signing Messenger yourself can break some of its screens. This makes Messenger's signature check pass again, including for a Facebook you patched with the same key, and lets Threads and Instagram video links open in a Threads or Instagram you patched yourself. Works as soon as you patch it in, with no switch",
     "enabled": true
   },
   {
@@ -99,7 +99,7 @@
   {
     "options": [],
     "name": "Pin more chats",
-    "description": "Raises Messenger's limit of three pinned chats to 20, so you can keep more chats at the top of your chat list. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Raises Messenger's limit of three pinned chats to 20, so you can keep more chats at the top of your chat list. Messenger's servers can still stop you sooner. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -136,6 +136,12 @@
     "options": [],
     "name": "Hide Notifications tab",
     "description": "Hides the Notifications tab in the bar at the bottom. Restart Messenger to see the tab go. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hold stories at the end",
+    "description": "Keeps a story on screen when it ends instead of moving on to the next one, so you go on with a tap or a swipe. Photos and videos both wait, and the last story stays open until you close it. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -219,7 +225,7 @@
   {
     "options": [],
     "name": "Send photos at original quality",
-    "description": "With HD on, sends a JPEG photo as the original image instead of Messenger's recompressed copy, so it stays sharper. Photos over 20 MB are still compressed. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "With HD on, sends a JPEG photo at its full size instead of Messenger's smaller copy, so it stays sharp. Location is still removed. Photos over 20 MB are still made smaller. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -230,8 +236,8 @@
   },
   {
     "options": [],
-    "name": "Fix shared videos with xHE-AAC sound",
-    "description": "Messenger can't send a video whose only sound is xHE-AAC, which Facebook and Instagram now use. When you share one into Messenger from another app, its sound is converted to regular AAC first, so it sends. The picture isn't touched. Starts off. Turn it on in HushMessenger settings > Controls",
+    "name": "Fix videos that won't send",
+    "description": "Messenger stops two kinds of video with \"Unable to send\". One is a video whose only sound is xHE-AAC, which Facebook and Instagram now use. The other is a Samsung screen recording whose recorder tag Messenger's media check rejects. Whether you share one into Messenger from another app or pick it in a chat, the sound is converted to regular AAC, or the tag is dropped, so it sends. The picture isn't touched. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -256,6 +262,12 @@
     "options": [],
     "name": "Use the phone's camera app",
     "description": "The camera button in a chat opens your phone's own camera app. The photo then opens in Messenger's editor, ready to send. Photos only. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Open your gallery app",
+    "description": "The gallery button in a chat opens your phone's own gallery app. What you pick then opens in Messenger's editor for that chat, ready to send. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -290,6 +302,12 @@
   },
   {
     "options": [],
+    "name": "Stop app list and device ID sharing",
+    "description": "Stops Messenger from going through the apps on your phone to find other Meta apps, and from asking them for the device ID Meta uses to link the apps on one phone. Messenger keeps the ID it already has. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Allow screenshots",
     "description": "Lets you screenshot protected chat media, such as view-once photos and Quicksnap, and stops screenshot notices. It doesn't add replay or saving. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -298,6 +316,12 @@
     "options": [],
     "name": "Hide read receipts",
     "description": "Opening a chat no longer tells people you read their message, and the chat stays unread on this phone. Marking it read yourself or replying in it marks it read and shows Seen, like Messenger does. Group chats aren't tested. Messenger's own Read receipts setting under Privacy & safety marks chats read without showing Seen. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Mark as read button",
+    "description": "Puts Messenger's Mark as read icon in a chat's top bar while Hide read receipts is on. Opening the chat still sends nothing, and a tap on the icon sends Seen and marks the chat read. It takes the place of the chat details button, since tapping the chat's name opens the same page, so the call buttons stay put. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
