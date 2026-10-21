@@ -20,7 +20,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1792573215
+    "updated_at": 1792612084
   },
   "apk_acquisition": {
     "status": "manual_required",
