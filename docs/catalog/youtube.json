@@ -10,7 +10,7 @@
       {
         "key": "packageInstallerName",
         "default": "com.android.vending",
-        "type": "kotlin.String"
+        "type": "String"
       }
     ],
     "name": "Change installer source",
@@ -39,6 +39,12 @@
     "options": [],
     "name": "Hide ads",
     "description": "Adds options to hide general ads, Premium promotions and video ads",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Ask flyout menu",
+    "description": "Adds a video menu entry that opens Ask for the video and summarizes the video. This patch works with YouTube 21.16.256 and newer",
     "enabled": true
   },
   {
@@ -86,7 +92,13 @@
   {
     "options": [],
     "name": "Downloads",
-    "description": "Adds support to download videos with an external downloader app using the in-app download button or a video player action button",
+    "description": "Adds support to download videos with an external downloader app using the in-app download button or a video player action button, and adds an option to download videos in-app",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Feed video actions",
+    "description": "Adds a Watch later button to video thumbnails in feeds, and opens the video menu by tapping and holding anywhere on a video",
     "enabled": true
   },
   {
@@ -133,8 +145,20 @@
   },
   {
     "options": [],
+    "name": "Skip live Shorts",
+    "description": "Automatically skips live streams that appear in the Shorts feed",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Swipe controls",
     "description": "Adds options to enable and configure volume and brightness swipe controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Force animations",
+    "description": "Adds an option to always turn on or off the app animations that YouTube can turn off, such as the player transitions",
     "enabled": true
   },
   {
@@ -236,7 +260,7 @@
   {
     "options": [],
     "name": "Captions",
-    "description": "Adds an option to disable captions from being automatically enabled or to set caption cookies",
+    "description": "Adds options to disable captions from being automatically enabled, select a preferred caption language, add more auto-translate languages, and show captions in picture-in-picture",
     "enabled": true
   },
   {
@@ -253,8 +277,20 @@
   },
   {
     "options": [],
+    "name": "Feed card layout",
+    "description": "Adds an option to show or hide the card layout of feed videos, which YouTube sends as an A/B test",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Disable auto feed refresh",
     "description": "Adds an option to stop feeds from refreshing automatically after they become outdated",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Feed view count",
+    "description": "Adds the view count to the bottom left of the thumbnails of feed videos",
     "enabled": true
   },
   {
@@ -265,8 +301,8 @@
   },
   {
     "options": [],
-    "name": "Force system font",
-    "description": "Adds an option to show the app with the device system font instead of YouTube Sans",
+    "name": "Custom font",
+    "description": "Adds an option to show the app with the device system font or a custom TTF or OTF font file instead of YouTube Sans",
     "enabled": true
   },
   {
@@ -278,7 +314,7 @@
   {
     "options": [],
     "name": "Ambient mode",
-    "description": "Adds options to bypass power saving restrictions for Ambient mode and disable it entirely or in fullscreen",
+    "description": "Forces Ambient mode on and adds options to bypass power saving restrictions for Ambient mode and disable it entirely or in fullscreen",
     "enabled": true
   },
   {
@@ -481,7 +517,7 @@
   {
     "options": [],
     "name": "Return YouTube Dislike",
-    "description": "Adds an option to show the dislike count of videos with Return YouTube Dislike",
+    "description": "Adds an option to show the dislike count of videos with Return YouTube Dislike, and the like count and like ratio on the thumbnails of feed videos",
     "enabled": true
   },
   {
@@ -744,7 +780,13 @@
   {
     "options": [],
     "name": "Disable video codecs",
-    "description": "Adds options to disable or force HDR, and to disable VP9 codecs",
+    "description": "Adds options to disable or force HDR, and to disable VP9 or AV1 codecs",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Video delay",
+    "description": "Adds an option to delay the video, to keep it in sync with laggy Bluetooth audio",
     "enabled": true
   },
   {
@@ -757,6 +799,12 @@
     "options": [],
     "name": "Video quality",
     "description": "Adds options to set default video qualities and always use the advanced video quality menu",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Series tracking",
+    "description": "Adds a series library to History with local progress and episode continuation. This patch works with YouTube 21.02 and newer",
     "enabled": true
   },
   {
