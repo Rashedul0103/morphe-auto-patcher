@@ -44,12 +44,6 @@
   },
   {
     "options": [],
-    "name": "Hide inbox ads",
-    "description": "Hides ad cards in your chat list. Meta stopped selling Messenger inbox ads in November 2025, so this is only a safeguard in case they come back. Starts off. Turn it on in HushMessenger settings > Controls",
-    "enabled": true
-  },
-  {
-    "options": [],
     "name": "Hide People You May Know",
     "description": "Hides suggested people in chats, search and stories, and on the People and Notifications tabs, so you only see people you know. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -140,6 +134,12 @@
   },
   {
     "options": [],
+    "name": "Hide tab badges",
+    "description": "Hides the red dots and counts on the tabs at the bottom and on the Facebook button at the top. Turn on Keep for any you still want. Restart Messenger to see the change. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hold stories at the end",
     "description": "Keeps a story on screen when it ends instead of moving on to the next one, so you go on with a tap or a swipe. Photos and videos both wait, and the last story stays open until you close it. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -147,7 +147,7 @@
   {
     "options": [],
     "name": "Hide AI sticker tools",
-    "description": "Hides the Generate AI sticker buttons, the AI sticker tab and AI sticker suggestions. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Hides the Generate and Generate AI sticker buttons, the AI sticker tab and AI sticker suggestions. Custom and music stickers in the Generate menu go with it. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -213,7 +213,7 @@
   {
     "options": [],
     "name": "Allow chat bubbles",
-    "description": "Lets you pick Stock, Chat heads or Native Bubbles for floating chats. Needs Android 11 or newer. Chat heads also needs Messenger's own Chat heads switch, and Native Bubbles needs Messenger's bubbles allowed in Android's notification settings. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Lets you pick Stock, Chat heads or Android bubbles for floating chats. Needs Android 11 or newer. Chat heads also needs Messenger's own Chat heads switch, and Android bubbles need Messenger's bubbles allowed in Android's notification settings. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -242,8 +242,14 @@
   },
   {
     "options": [],
-    "name": "Turn off the swipe up for disappearing messages",
+    "name": "Ignore the swipe up for disappearing messages",
     "description": "Swiping up at the bottom of a chat no longer turns on disappearing messages, so a scroll can't set the timer by accident. You can still change it in the chat's settings. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide the recent photo card",
+    "description": "Stops the card above the message box that offers to send the screenshot, photo or video you just took. You can still send it from the gallery. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -260,6 +266,12 @@
   },
   {
     "options": [],
+    "name": "Quiet incoming calls",
+    "description": "Calls still come in, but Messenger doesn't ring, vibrate or pop the call up over your screen. The call waits in the notification shade with Answer and Decline. A call you miss still shows in the chat. If the Facebook app is on your phone, it can still ring for the same call. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Use the phone's camera app",
     "description": "The camera button in a chat opens your phone's own camera app. The photo then opens in Messenger's editor, ready to send. Photos only. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -267,7 +279,7 @@
   {
     "options": [],
     "name": "Open your gallery app",
-    "description": "The gallery button in a chat opens your phone's own gallery app. What you pick then opens in Messenger's editor for that chat, ready to send. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "The gallery button in a chat opens your phone's own gallery app. One photo or video opens in Messenger's editor for that chat, ready to send. Pick several and Messenger's Send to sheet opens with all of them and that chat at the top. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -290,8 +302,8 @@
   },
   {
     "options": [],
-    "name": "Stop MQTT logging",
-    "description": "Drops the health reports and push logging Messenger's MQTT client sends. Messenger sends most of its traffic another way, so there's often little for it to drop. Messages, calls and active status keep working. Starts off. Turn it on in HushMessenger settings > Controls",
+    "name": "Stop live connection logging",
+    "description": "Drops the health reports and push logging Messenger sends over its live connection (MQTT). Messenger sends most of its traffic another way, so there's often little for it to drop. Messages, calls and active status keep working. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -369,7 +381,7 @@
   {
     "options": [],
     "name": "Open settings from menu",
-    "description": "Adds a HushMessenger entry to Messenger's Menu tab and side menu, and makes a long press on the Messenger logo at the top of Chats or on the Menu tab's title open these settings too. Works as soon as you patch it in, with no switch",
+    "description": "Adds a HushMessenger entry to Messenger's Menu tab and side menu, and makes a long press on the Messenger logo at the top of Chats or on the Menu tab's title open these settings too. Works as soon as you patch it in. The settings App tab can turn off each way in, as long as one stays on",
     "enabled": true
   },
   {
