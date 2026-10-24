@@ -1,5 +1,5 @@
 {
-  "patch_tag": "v0.17.0",
+  "patch_tag": "v0.18.0",
   "recommended_version": "582.0.0.50.54",
   "compatible_versions": [
     "584.0.0.51.56"
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1792830675
+    "updated_at": 1792861613
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,9 +28,17 @@
     "package": "com.facebook.katana",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://google.com/search?q=%22com.facebook.katana%22+%22582.0.0.50.54%22+nodpi+%28site%3Aapkmirror.com+OR+site%3Auptodown.com+OR+site%3Aapkpure.com+OR+site%3Aapkcombo.com%29"
+      "https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-22-android-apk-download/"
     ],
     "attempts": [
+      {
+        "provider": "apkmirror",
+        "version": "582.0.0.50.54",
+        "status": "seed_resolve_failed",
+        "via": "morphe_api:arm64-v8a",
+        "seed_url": "https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-22-android-apk-download/",
+        "error": "HTTP 403: https://www.apkmirror.com/apk/facebook-2/facebook/facebook-582-0-0-50-54-release/facebook-582-0-0-50-54-22-android-apk-download/"
+      },
       {
         "provider": "apkmirror",
         "version": "582.0.0.50.54",

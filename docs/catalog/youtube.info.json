@@ -22,7 +22,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1792830675
+    "updated_at": 1792861613
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -31,7 +31,8 @@
     "package": "com.google.android.youtube",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://google.com/search?q=%22com.google.android.youtube%22+%2221.40.161%22+nodpi+%28site%3Aapkmirror.com+OR+site%3Auptodown.com+OR+site%3Aapkpure.com+OR+site%3Aapkcombo.com%29"
+      "https://youtube.en.uptodown.com/android/download/1225941246-x",
+      "https://youtube.en.uptodown.com/android/download/1225941246"
     ],
     "attempts": [
       {
@@ -52,11 +53,44 @@
       {
         "provider": "uptodown",
         "version": "21.40.161",
-        "status": "resolve_failed",
-        "base_url": null,
-        "error": "Uptodown app discovery failed for com.google.android.youtube",
-        "app_query": "com.google.android.youtube",
-        "expected_package": "com.google.android.youtube"
+        "status": "download_failed",
+        "via": "morphe_api:arm64-v8a",
+        "candidate": {
+          "page_url": "https://youtube.en.uptodown.com/android/download/1225941246-x",
+          "download_page_url": "https://youtube.en.uptodown.com/android/download/1225941246-x",
+          "download_url": "",
+          "architecture": "arm64-v8a + armeabi-v7a + x86_64 + x86",
+          "dpi": "",
+          "is_bundle": true,
+          "artifact_type": "xapk",
+          "details": {
+            "via": "morphe_api",
+            "post_download_token": "",
+            "page_download_error": "Uptodown direct download URL not found"
+          }
+        },
+        "error": "Uptodown direct download URL not found"
+      },
+      {
+        "provider": "uptodown",
+        "version": "21.40.161",
+        "status": "download_failed",
+        "via": "provider",
+        "candidate": {
+          "page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
+          "download_page_url": "https://youtube.en.uptodown.com/android/download/1225941246",
+          "download_url": "",
+          "architecture": "",
+          "dpi": "",
+          "is_bundle": false,
+          "artifact_type": "apk",
+          "details": {
+            "version_page_error": "Uptodown direct download URL not found",
+            "package": "com.google.android.youtube",
+            "page_download_error": "Uptodown direct download URL not found"
+          }
+        },
+        "error": "Uptodown direct download URL not found"
       },
       {
         "provider": "apkpure",
