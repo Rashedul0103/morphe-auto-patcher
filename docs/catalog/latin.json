@@ -13,14 +13,14 @@
   },
   {
     "options": [],
-    "name": "G Logo on Spacebar",
-    "description": "\u5728\u7a7a\u767d\u9375\u986f\u793a G Logo\uff0c\u4e26\u96b1\u85cf\u8a9e\u8a00\u540d\u7a31",
+    "name": "Long-Press Editing Shortcuts",
+    "description": "\u5728\u82f1\u6587 QWERTY \u8207\u6ce8\u97f3\u9375\u76e4\u52a0\u5165\u5168\u9078\u3001\u5fa9\u539f\u3001\u8907\u88fd\u3001\u526a\u4e0b\u3001\u8cbc\u4e0a\u8207\u91cd\u505a\u9577\u6309\u5feb\u6377\u9375",
     "enabled": true
   },
   {
     "options": [],
-    "name": "Long-Press Editing Shortcuts",
-    "description": "\u5728\u82f1\u6587 QWERTY \u8207\u6ce8\u97f3\u9375\u76e4\u52a0\u5165\u5168\u9078\u3001\u5fa9\u539f\u3001\u8907\u88fd\u3001\u526a\u4e0b\u3001\u8cbc\u4e0a\u8207\u91cd\u505a\u9577\u6309\u5feb\u6377\u9375",
+    "name": "G Logo on Spacebar",
+    "description": "\u5728\u7a7a\u767d\u9375\u986f\u793a G Logo\uff0c\u4e26\u96b1\u85cf\u8a9e\u8a00\u540d\u7a31",
     "enabled": true
   },
   {

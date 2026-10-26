@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1793007060
+    "updated_at": 1793031839
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -28,7 +28,7 @@
     "package": "com.facebook.orca",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x"
+      "https://google.com/search?q=%22com.facebook.orca%22+%22580.0.0.49.91%22+nodpi+%28site%3Aapkmirror.com+OR+site%3Auptodown.com+OR+site%3Aapkpure.com+OR+site%3Aapkcombo.com%29"
     ],
     "attempts": [
       {
@@ -39,27 +39,6 @@
         "error": "Exact APKMirror version page not found for 580.0.0.49.91",
         "app_query": "com.facebook.orca",
         "expected_package": "com.facebook.orca"
-      },
-      {
-        "provider": "uptodown",
-        "version": "580.0.0.49.91",
-        "status": "download_failed",
-        "via": "morphe_api:arm64-v8a",
-        "candidate": {
-          "page_url": "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x",
-          "download_page_url": "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x",
-          "download_url": "",
-          "architecture": "arm64-v8a",
-          "dpi": "",
-          "is_bundle": true,
-          "artifact_type": "xapk",
-          "details": {
-            "via": "morphe_api",
-            "post_download_token": "",
-            "page_download_error": "Uptodown direct download URL not found"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
       },
       {
         "provider": "uptodown",
