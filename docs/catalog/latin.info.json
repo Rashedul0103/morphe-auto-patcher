@@ -1,8 +1,8 @@
 {
-  "patch_tag": "v3.13.0",
+  "patch_tag": "v4.0.0",
   "recommended_version": "18.0.3.954559732-release-arm64-v8a",
   "compatible_versions": [
-    "18.0.3.954559732-release-arm64-v8a"
+    "18.5.4.993608717-release-arm64-v8a"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=latin%2018.0.3.954559732-release-arm64-v8a",
   "patch_source": "jasonwu1994/Gboard-patches",
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1793031839
+    "updated_at": 1793069932
   },
   "apk_acquisition": {
     "status": "manual_required",

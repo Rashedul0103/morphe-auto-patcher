@@ -121,12 +121,6 @@
   },
   {
     "options": [],
-    "name": "Hyperspeed Typing Animation",
-    "description": "\u6301\u7e8c\u5feb\u901f\u8f38\u5165\u6642\u986f\u793a\u52d5\u756b\uff0c\u4e26\u652f\u63f4\u6240\u6709\u9375\u76e4",
-    "enabled": true
-  },
-  {
-    "options": [],
     "name": "Custom Theme",
     "description": "\u652f\u63f4\u532f\u5165\u81ea\u8a02 ZIP \u4e3b\u984c\uff0c\u4e26\u652f\u63f4\u5f9e Rboard \u5b98\u65b9\u5132\u5b58\u5eab\u532f\u5165\u7cbe\u7f8e\u4e3b\u984c\u3002",
     "enabled": true
