@@ -254,6 +254,12 @@
   },
   {
     "options": [],
+    "name": "Hide Your story when sharing",
+    "description": "When you share a photo, video or link into Messenger from another app, the Send to list no longer offers Your story, so a tap on Add can't post it by mistake. Your chats and groups are still there. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Keep a message log",
     "description": "Saves each message when its notification arrives, so you can still read it if it's unsent. Works in end-to-end encrypted chats too. Stays on your phone. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -350,6 +356,12 @@
   },
   {
     "options": [],
+    "name": "Square profile pictures",
+    "description": "Shows profile pictures as squares instead of circles, or as rounded squares with Round the corners on. Restart Messenger after changing it. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Use your own font",
     "description": "Shows Messenger's text in your phone's font instead of Meta's, or in a .ttf or .otf file you pick in HushMessenger settings. Emoji don't change. Restart Messenger after changing it. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -383,6 +395,25 @@
     "name": "Open settings from menu",
     "description": "Adds a HushMessenger entry to Messenger's Menu tab and side menu, and makes a long press on the Messenger logo at the top of Chats or on the Menu tab's title open these settings too. Works as soon as you patch it in. The settings App tab can turn off each way in, as long as one stays on",
     "enabled": true
+  },
+  {
+    "options": [
+      {
+        "key": "iconStyle",
+        "title": "Icon style",
+        "description": "White on black draws Messenger's logo in white on a black icon. Black on white draws it in black on a white one.",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "white-on-black",
+        "values": {
+          "Black on white": "black-on-white",
+          "White on black": "white-on-black"
+        }
+      }
+    ],
+    "name": "Custom launcher icon",
+    "description": "White on black draws Messenger's logo in white on a black icon. Black on white draws it in black on a white one",
+    "enabled": false
   },
   {
     "options": [
