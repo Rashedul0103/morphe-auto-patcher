@@ -22,7 +22,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1793220181
+    "updated_at": 1793260220
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -31,7 +31,6 @@
     "package": "com.google.android.youtube",
     "apk_arch": "auto",
     "manual_urls": [
-      "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-5-android-apk-download/",
       "https://youtube.en.uptodown.com/android/download/1225941246"
     ],
     "attempts": [
@@ -40,14 +39,6 @@
         "status": "rejected",
         "file": "com_google_android_youtube_21_16_256_1561068412_minAPI28arm64_v8a.apk",
         "error": "Wrong version: expected 21.40.161, found 21.16.256."
-      },
-      {
-        "provider": "apkmirror",
-        "version": "21.40.161",
-        "status": "seed_resolve_failed",
-        "via": "morphe_api:arm64-v8a",
-        "seed_url": "https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-5-android-apk-download/",
-        "error": "HTTP 403: https://www.apkmirror.com/apk/google-inc/youtube/youtube-21-40-161-release/youtube-21-40-161-5-android-apk-download/"
       },
       {
         "provider": "apkmirror",
