@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1793346878
+    "updated_at": 1793371344
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -43,23 +43,10 @@
       {
         "provider": "uptodown",
         "version": "580.0.0.49.91",
-        "status": "download_failed",
+        "status": "seed_resolve_failed",
         "via": "morphe_api:arm64-v8a",
-        "candidate": {
-          "page_url": "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x",
-          "download_page_url": "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x",
-          "download_url": "",
-          "architecture": "arm64-v8a",
-          "dpi": "",
-          "is_bundle": true,
-          "artifact_type": "xapk",
-          "details": {
-            "via": "morphe_api",
-            "post_download_token": "",
-            "page_download_error": "Uptodown direct download URL not found"
-          }
-        },
-        "error": "Uptodown direct download URL not found"
+        "seed_url": "https://facebook-messenger.en.uptodown.com/android/download/1222477556-x",
+        "error": "HTTP 410: https://facebook-messenger.en.uptodown.com/android/download/1222477556-x"
       },
       {
         "provider": "uptodown",

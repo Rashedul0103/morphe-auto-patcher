@@ -127,6 +127,18 @@
   },
   {
     "options": [],
+    "name": "Download post images",
+    "description": "Adds a button and a menu item to download the images and GIFs of posts",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Translate posts",
+    "description": "Adds a menu item to translate the text of posts",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Reload video",
     "description": "Adds an option to display reload video button in the video player",
     "enabled": true
@@ -134,7 +146,13 @@
   {
     "options": [],
     "name": "Save to Watch later",
-    "description": "Adds an option to display save to Watch later button in the video player",
+    "description": "Adds an option to display save to Watch later button in the video player, and adds a setting to redirect Watch later saves to a playlist of your choice",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Search comments",
+    "description": "Adds a button to the comments to show only the loaded comments that contain the searched words",
     "enabled": true
   },
   {
@@ -296,7 +314,7 @@
   {
     "options": [],
     "name": "Add to queue",
-    "description": "Overrides the feed flyout 'Play next in queue' with the Morphe video queue",
+    "description": "Adds a video queue to the feed flyout menu, using either the Morphe queue or a native queue that uses YouTube's playlist interface",
     "enabled": true
   },
   {
@@ -429,13 +447,19 @@
   {
     "options": [],
     "name": "Miniplayer",
-    "description": "Adds options to change the in-app minimized player. Patching 21.28.206 and lower has more miniplayer types to choose from",
+    "description": "Adds options to change the in-app minimized player. Patching 21.28.208 and lower has more miniplayer types to choose from",
     "enabled": true
   },
   {
     "options": [],
     "name": "Override YouTube Music buttons",
     "description": "Overrides YouTube Music buttons to open Morphe Music or any compatible third-party client",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Niconico comments",
+    "description": "Adds an option to show live chat and chat replay as comments that scroll across the video",
     "enabled": true
   },
   {
