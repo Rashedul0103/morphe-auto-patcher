@@ -75,13 +75,19 @@
   {
     "options": [],
     "name": "Hide stories and notes",
-    "description": "Hides the row of stories and notes above your chats. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Hides the row of stories and notes above your chats, and the story rings around profile pictures. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide the Instants button",
+    "description": "Hides the + button that slides in at the right edge of your chat list and the one under your chat heads. Both open Instants. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
     "options": [],
     "name": "Hide inbox tabs",
-    "description": "Hides the Home and Channels tabs inside your inbox. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Hides the All, Unread and Groups tabs above your chats. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -254,6 +260,12 @@
   },
   {
     "options": [],
+    "name": "Save voice messages you play",
+    "description": "Each voice message you play is also saved to Recordings/Messenger (Music/Messenger on Android 10 and 11), so your file manager and other players can open it. Playing it again doesn't save another copy. Needs Android 10 or newer. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide Your story when sharing",
     "description": "When you share a photo, video or link into Messenger from another app, the Send to list no longer offers Your story, so a tap on Add can't post it by mistake. Your chats and groups are still there. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -261,7 +273,7 @@
   {
     "options": [],
     "name": "Keep a message log",
-    "description": "Saves each message when its notification arrives, so you can still read it if it's unsent. Works in end-to-end encrypted chats too. Stays on your phone. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Saves each message when its notification arrives, so you can still read it if it's unsent, and marks the ones that were. Works in end-to-end encrypted chats too. Stays on your phone. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -273,7 +285,13 @@
   {
     "options": [],
     "name": "Quiet incoming calls",
-    "description": "Calls still come in, but Messenger doesn't ring, vibrate or pop the call up over your screen. The call waits in the notification shade with Answer and Decline. A call you miss still shows in the chat. If the Facebook app is on your phone, it can still ring for the same call. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Calls still come in, but Messenger doesn't ring, vibrate or pop the call up over your screen. The call waits in the notification shade with Answer and Decline. A call you miss still shows in the chat. Only chosen chats keeps this to the chats you pick, and every other call rings. If the Facebook app is on your phone, it can still ring for the same call. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Android Auto messages",
+    "description": "Lets Android Auto read your Messenger messages out loud and send the replies you speak, through its own messaging screen. Android Auto only shows apps installed from the Play Store until you turn on Unknown sources in its developer settings. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -286,6 +304,12 @@
     "options": [],
     "name": "Open your gallery app",
     "description": "The gallery button in a chat opens your phone's own gallery app. One photo or video opens in Messenger's editor for that chat, ready to send. Pick several and Messenger's Send to sheet opens with all of them and that chat at the top. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Put gallery picks in the chat",
+    "description": "With Open your gallery app on, what you pick goes into the chat's message box the way Messenger's own gallery puts it there, instead of the editor or the Send to sheet. Nothing goes out until you tap Send. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -345,7 +369,7 @@
   {
     "options": [],
     "name": "Keep unsent messages",
-    "description": "Keeps messages on screen after someone unsends them, in chats where it works. Encrypted chats aren't supported, and group chats aren't tested. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Keeps messages on screen after someone unsends them, in chats where it works. In end-to-end encrypted chats the message stays in its notification instead, since the chat itself can't keep it. Group chats aren't tested. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -429,6 +453,12 @@
     ],
     "name": "Custom new-message sound",
     "description": "Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound",
+    "enabled": false
+  },
+  {
+    "options": [],
+    "name": "GmsCore support",
+    "description": "Gets Messenger's push notifications through microG-RE instead of Google Play services. It also gives microG-RE the signature of Meta's own Messenger for the Google services that check one. Only for phones with microG-RE installed, since Messenger stops asking Google Play services. Pick it in Morphe Manager's Expert mode. Works as soon as you patch it in, with no switch",
     "enabled": false
   },
   {
