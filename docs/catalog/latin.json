@@ -1,8 +1,8 @@
 [
   {
     "options": [],
-    "name": "Keypress Vibration Intensity Control",
-    "description": "\u5c07\u6309\u9375\u9707\u52d5\u7531\u6301\u7e8c\u6642\u9593\u6539\u70ba\u529b\u5ea6\u63a7\u5236\u3002",
+    "name": "Zhuyin Slide Input",
+    "description": "\u6ce8\u97f3\u9375\u76e4\u652f\u6301\u4e0a\u4e0b\u6ed1\u8f38\u5165",
     "enabled": true
   },
   {
@@ -13,8 +13,8 @@
   },
   {
     "options": [],
-    "name": "Zhuyin Slide Input",
-    "description": "\u6ce8\u97f3\u9375\u76e4\u652f\u6301\u4e0a\u4e0b\u6ed1\u8f38\u5165",
+    "name": "Keypress Vibration Intensity Control",
+    "description": "\u5c07\u6309\u9375\u9707\u52d5\u7531\u6301\u7e8c\u6642\u9593\u6539\u70ba\u529b\u5ea6\u63a7\u5236\u3002",
     "enabled": true
   },
   {
@@ -32,7 +32,7 @@
   {
     "options": [],
     "name": "G Logo on Spacebar",
-    "description": "\u5728\u7a7a\u767d\u9375\u986f\u793a G Logo\uff0c\u4e26\u96b1\u85cf\u8a9e\u8a00\u540d\u7a31",
+    "description": "\u81ea\u8a02\u7a7a\u767d\u9375\u5716\u793a\u3001\u5716\u7247\u3001\u984f\u8272\u53ca\u5927\u5c0f\uff0c\u4e26\u96b1\u85cf\u8a9e\u8a00\u540d\u7a31",
     "enabled": true
   },
   {
