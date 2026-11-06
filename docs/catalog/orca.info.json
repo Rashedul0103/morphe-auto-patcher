@@ -1,8 +1,8 @@
 {
-  "patch_tag": "v0.28.0",
+  "patch_tag": "v0.29.0",
   "recommended_version": "580.0.0.49.91",
   "compatible_versions": [
-    "585.0.0.53.94"
+    "586.0.0.55.92"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=orca%20580.0.0.49.91",
   "patch_source": "SysAdminDoc/HushMessenger",
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1793971718
+    "updated_at": 1793995857
   },
   "apk_acquisition": {
     "status": "manual_required",
