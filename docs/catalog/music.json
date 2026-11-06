@@ -62,7 +62,7 @@
   {
     "options": [],
     "name": "Downloads",
-    "description": "Adds support to download songs using the in-app download button, either with an external downloader app or inside YouTube Music",
+    "description": "Adds support to download songs, albums and playlists using the in-app download button, either with an external downloader app or inside YouTube Music",
     "enabled": true
   },
   {
@@ -93,6 +93,12 @@
     "options": [],
     "name": "Scrobbling",
     "description": "Adds options to add played tracks to Last.fm and ListenBrainz",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "SoundProof",
+    "description": "Adds an option to skip tracks of artists reported as AI in the SoundProof community database",
     "enabled": true
   },
   {
@@ -199,7 +205,7 @@
   {
     "options": [],
     "name": "Third-party lyrics",
-    "description": "Adds an option to show synced lyrics with experience enhancement from 18+ providers in the lyrics panel",
+    "description": "Adds an option to show synced lyrics with experience enhancement from 19+ providers in the lyrics panel",
     "enabled": true
   },
   {
@@ -230,6 +236,12 @@
     "options": [],
     "name": "Force portrait orientation",
     "description": "Adds an option to keep the app in portrait orientation when the device is rotated",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Playlist tags",
+    "description": "Adds an option to tag playlists from their menu, and to filter the Library playlists by tag",
     "enabled": true
   },
   {
