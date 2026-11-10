@@ -56,7 +56,7 @@
   {
     "options": [],
     "name": "Disable continue watching prompt",
-    "description": "Adds an option to keep autoplay going instead of pausing with a \"Continue watching\" prompt after a period of inactivity",
+    "description": "Adds an option to keep autoplay going instead of pausing with a \"Continue watching\" prompt after a period of inactivity, or to always show the autoplay countdown at the end of the video",
     "enabled": true
   },
   {
@@ -115,6 +115,12 @@
   },
   {
     "options": [],
+    "name": "On-the-go player",
+    "description": "Adds an option to open a panel with large playback controls from the On-the-go item of the video player menu. While the panel is open, the lock screen media controls have seek buttons",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Change picture-in-picture actions",
     "description": "Adds options to change the buttons shown in picture-in-picture mode",
     "enabled": true
@@ -129,6 +135,12 @@
     "options": [],
     "name": "Play all",
     "description": "Adds an option to play all the videos from a channel and to display play all button in the video player",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Playlist improvements",
+    "description": "Adds options to widen playlist drag handles, reorder videos by long press, and hide removal confirmations",
     "enabled": true
   },
   {
@@ -164,7 +176,7 @@
   {
     "options": [],
     "name": "Seekbar",
-    "description": "Adds options to show old seekbar thumbnails, disable precise seeking when swiping up on the seekbar, slide to seek instead of playing at 2x speed when pressing and holding, tapping the player seekbar to seek, hiding the video player seekbar, enabling seeking in live streams, and expanding the live stream DVR duration",
+    "description": "Adds options to show old seekbar thumbnails, disable precise seeking when swiping up on the seekbar, slide to seek instead of playing at 2x speed when pressing and holding, tapping the player seekbar to seek, hiding the video player seekbar, enabling seeking in live streams, customizing the seekbar thumb with an image or GIF, and expanding the live stream DVR duration",
     "enabled": true
   },
   {
@@ -177,12 +189,6 @@
     "options": [],
     "name": "Swipe controls",
     "description": "Adds options to enable and configure volume and brightness swipe controls",
-    "enabled": true
-  },
-  {
-    "options": [],
-    "name": "Watch later improvements",
-    "description": "Adds options to widen the drag handles of the Watch later videos and to hide the snackbar shown after removing a video",
     "enabled": true
   },
   {
@@ -344,7 +350,7 @@
   {
     "options": [],
     "name": "Ambient mode",
-    "description": "Forces Ambient mode on and adds options to bypass power saving restrictions for Ambient mode and disable it entirely or in fullscreen",
+    "description": "Adds Enhanced Ambient mode and options to force Ambient mode on, bypass its power saving restrictions, and disable it entirely or in fullscreen",
     "enabled": true
   },
   {

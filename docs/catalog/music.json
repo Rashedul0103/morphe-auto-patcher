@@ -175,7 +175,7 @@
   {
     "options": [],
     "name": "Navigation bar",
-    "description": "Adds options to hide navigation bar, labels and buttons",
+    "description": "Adds options to hide navigation bar, labels and buttons, and to show the navigation bar as glass",
     "enabled": true
   },
   {

@@ -1,5 +1,5 @@
 {
-  "patch_tag": "v2.1.0",
+  "patch_tag": "v2.2.0",
   "recommended_version": "9.30.53",
   "compatible_versions": [
     "9.30.53",
@@ -21,7 +21,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1794311850
+    "updated_at": 1794338156
   },
   "apk_acquisition": {
     "status": "manual_required",
