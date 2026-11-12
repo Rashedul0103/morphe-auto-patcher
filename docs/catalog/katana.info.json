@@ -1,8 +1,8 @@
 {
-  "patch_tag": "v0.21.0",
+  "patch_tag": "v0.22.0",
   "recommended_version": "582.0.0.50.54",
   "compatible_versions": [
-    "585.0.0.47.54"
+    "586.0.0.52.53"
   ],
   "apkmirror_url": "https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=katana%20582.0.0.50.54",
   "patch_source": "SysAdminDoc/Hushfacebook",
@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1794493121
+    "updated_at": 1794520729
   },
   "apk_acquisition": {
     "status": "manual_required",
