@@ -49,6 +49,12 @@
   },
   {
     "options": [],
+    "name": "Autoplay control",
+    "description": "Adds a player button and a rule for the next video: playlists and queues go on, a Mix stops after a number of videos, a suggested video never plays",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Channel search",
     "description": "Adds an option to search inside the channel that is currently open instead of searching all of YouTube",
     "enabled": true
@@ -109,6 +115,12 @@
   },
   {
     "options": [],
+    "name": "Loop count",
+    "description": "Adds a player settings menu item to choose how many times the app loops a video, before it plays the next video. In a playlist, the loop count is remembered for each video",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Loop video",
     "description": "Adds an option to loop videos and display loop video button in the video player",
     "enabled": true
@@ -141,6 +153,12 @@
     "options": [],
     "name": "Playlist improvements",
     "description": "Adds options to widen playlist drag handles, reorder videos by long press, and hide removal confirmations",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Playlist button",
+    "description": "Adds an option to display a button in the video player that opens the playlist panel",
     "enabled": true
   },
   {
@@ -554,6 +572,12 @@
     "options": [],
     "name": "Custom player overlay opacity",
     "description": "Adds an option to change the opacity of the video player background when player controls are visible",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Fullscreen playlist panel",
+    "description": "Adds an option to show the playlist panel over the fullscreen player on tablets, instead of exiting fullscreen",
     "enabled": true
   },
   {

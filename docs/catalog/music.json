@@ -43,6 +43,12 @@
   },
   {
     "options": [],
+    "name": "Disable audio ducking",
+    "description": "Adds an option to keep the volume unchanged when another app plays a short sound, such as a notification",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Crossfade",
     "description": "Adds a true dual-player crossfade between consecutive tracks",
     "enabled": true
@@ -62,13 +68,25 @@
   {
     "options": [],
     "name": "Downloads",
-    "description": "Adds support to download songs, albums and playlists using the in-app download button, either with an external downloader app or inside YouTube Music",
+    "description": "Adds support to download songs, albums, and playlists using the in-app download button, either inside YouTube Music or with an external downloader app, and exports songs and videos saved by the app to the device",
     "enabled": true
   },
   {
     "options": [],
     "name": "Jam queue sharing",
     "description": "Shares the host queue and playback controls through an authenticated Jam bridge. Root installation is not supported",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "A-B loop",
+    "description": "Adds an option to loop part of a song by long-pressing the seekbar to set the loop start and end",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Pause when muted",
+    "description": "Adds an option to pause playback when the system volume is muted, and to resume it when the volume is raised",
     "enabled": true
   },
   {
@@ -175,7 +193,13 @@
   {
     "options": [],
     "name": "Navigation bar",
-    "description": "Adds options to hide navigation bar, labels and buttons, and to show the navigation bar as glass",
+    "description": "Adds options to hide navigation bar, labels and buttons, and to show the navigation bar and miniplayer as glass",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Disable auto captions",
+    "description": "Adds an option to disable captions from being automatically enabled",
     "enabled": true
   },
   {
@@ -392,6 +416,12 @@
   },
   {
     "options": [],
+    "name": "Open system share sheet",
+    "description": "Adds an option to always open the system share sheet instead of the in-app share sheet",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Spoof video streams",
     "description": "Adds options to spoof the client video streams to fix playback",
     "enabled": true
@@ -406,6 +436,12 @@
     "options": [],
     "name": "Skip silence",
     "description": "Adds an option to automatically skip silent pauses in audio playback",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Remember video quality",
+    "description": "Adds options to set default video qualities and remember the last selected video quality",
     "enabled": true
   },
   {
