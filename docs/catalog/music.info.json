@@ -21,7 +21,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1794978774
+    "updated_at": 1795013421
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -116,7 +116,7 @@
         "org": "com-google-android-apps-youtube-music",
         "artifact_type": "apk",
         "exit_code": 0,
-        "error": ",`\\r\n120 | `)}}).toArray()}var oU={};XI(oU,{extract:()=>Oz});function qz(A){var Q;if(typeof A===\"string\")return{selector:A,value:\"textContent\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nerror: Could not find any suitable variant\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:179906)"
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
