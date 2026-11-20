@@ -19,7 +19,7 @@
     "status": "failed",
     "stage": "apk_acquisition",
     "reason": "All automatic APK providers failed for the exact requested version.",
-    "updated_at": 1795128642
+    "updated_at": 1795150613
   },
   "apk_acquisition": {
     "status": "manual_required",
@@ -65,7 +65,8 @@
         "via": "apkcombo_cli",
         "org": "orca",
         "artifact_type": "apk",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'apk', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
@@ -74,7 +75,8 @@
         "via": "apkcombo_cli",
         "org": "orca",
         "artifact_type": "bundle",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'bundle', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
@@ -83,7 +85,8 @@
         "via": "apkcombo_cli",
         "org": "facebook-orca",
         "artifact_type": "apk",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'facebook-orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'apk', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
@@ -92,7 +95,8 @@
         "via": "apkcombo_cli",
         "org": "facebook-orca",
         "artifact_type": "bundle",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'facebook-orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'bundle', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
@@ -101,7 +105,8 @@
         "via": "apkcombo_cli",
         "org": "com-facebook-orca",
         "artifact_type": "apk",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'com-facebook-orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'apk', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       },
       {
         "provider": "apkcombo",
@@ -110,7 +115,8 @@
         "via": "apkcombo_cli",
         "org": "com-facebook-orca",
         "artifact_type": "bundle",
-        "error": "Command '['/home/runner/.bun/bin/bun', '/home/runner/.bun/bin/apkmd', 'download', 'com-facebook-orca', 'com.facebook.orca', '--version', '580.0.0.49.91', '--arch', 'universal', '--dpi', 'nodpi', '--type', 'bundle', '--outdir', '.work/orca/stock', '--outfile', 'apkcombo-orca', '--overwrite']' timed out after 60 seconds"
+        "exit_code": 0,
+        "error": "nt\"};return{selector:A.selector,value:(Q=A.value)!==null&&Q!==void 0?Q:\"textContent\"}}function Oz(A){let Q={};for(let B in A){let I=A[B],C=Array.isArray(I),{selector:E,value:g}=qz(C?I[0]:I),F=typeof g===\"function\"?g:typeof g===\"string\"?(J)=>this._make(J).prop(g):(J)=>this._make(J).extract(g);if(C)Q[B]=this._findBySelector(E,Number.POSITIVE_INFINITY).map((J,U)=>F(U,B,Q)).get();else{let J=this._findBySelector(E,1);Q[B]=J.length>0?F(J[0],B,Q):void 0}}return Q}class sC{constructor(A,Q,B){if(this.length=0,this.options=B,this._root=Q,A){for(let I=0;I<A.length;I++)this[I]=A[I];this.length=A.length}}}sC.prototype.cheerio=\"[cheerio object]\";sC.prototype.splice=Array.prototype.splice;sC.prototype[Symbol.iterator]=Array.prototype[Symbol.iterator];Object.assign(sC.prototype,KU,lU,sU,nU,aU,oU);function Y5(A,Q){return function B(I,C,E=!0){if(I==null)throw new Error(\"cheerio.load() expects a string\n\nTypeError: undefined is not an object (evaluating 'J.split')\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180023)\n      at <anonymous> (/home/runner/.bun/install/global/node_modules/@nirewen/apkcombo-downloader/dist/cli.js:120:180004)"
       }
     ],
     "error": "All automatic APK providers failed for the exact requested version.",
