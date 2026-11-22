@@ -1,14 +1,14 @@
 [
   {
     "options": [],
-    "name": "Dictionaries & Predictions",
-    "description": "\u53ef\u9078\u64c7\u5b57\u5178\u3001\u9810\u6e2c\u53ca\u8f38\u5165\u4fee\u6b63\u7684\u8cc7\u6e90\u7248\u672c",
+    "name": "Keypress Vibration Intensity Control",
+    "description": "\u5c07\u6309\u9375\u9707\u52d5\u7531\u6301\u7e8c\u6642\u9593\u6539\u70ba\u529b\u5ea6\u63a7\u5236\u3002",
     "enabled": true
   },
   {
     "options": [],
-    "name": "Keypress Vibration Intensity Control",
-    "description": "\u5c07\u6309\u9375\u9707\u52d5\u7531\u6301\u7e8c\u6642\u9593\u6539\u70ba\u529b\u5ea6\u63a7\u5236\u3002",
+    "name": "Dictionaries & Predictions",
+    "description": "\u53ef\u9078\u64c7\u5b57\u5178\u3001\u9810\u6e2c\u53ca\u8f38\u5165\u4fee\u6b63\u7684\u8cc7\u6e90\u7248\u672c",
     "enabled": true
   },
   {
@@ -63,6 +63,12 @@
     "options": [],
     "name": "Swipe Down to Dismiss Keyboard",
     "description": "\u5f9e\u5efa\u8b70\u5217\u6216\u5de5\u5177\u5217\u5411\u4e0b\u6ed1\u52d5\u4ee5\u95dc\u9589\u9375\u76e4\u3002",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Shift + Backspace Forward Delete",
+    "description": "\u6309\u4f4f Shift \u518d\u6309\u9000\u683c\u9375\uff0c\u6703\u522a\u9664\u6e38\u6a19\u53f3\u908a\u7684\u5b57\uff0c\u4f5c\u7528\u7b49\u540c\u96fb\u8166\u9375\u76e4\u7684 Delete \u9375\u3002",
     "enabled": true
   },
   {
@@ -273,10 +279,22 @@
           "Gboard Mod": "Gboard Mod",
           "GboardWu": "GboardWu"
         }
+      },
+      {
+        "key": "package_name",
+        "title": "\u5957\u4ef6\u540d\u7a31 / Package name",
+        "description": "\u5fc5\u9808\u662f\u6709\u6548\u7684 Android \u5957\u4ef6\u540d\u7a31\u3002\u9078\u5b98\u65b9\u5957\u4ef6\u540d\u7a31 com.google.android.inputmethod.latin \u6642\u53ea\u6539 App \u540d\u7a31\u3001\u4e0d\u6539\u5957\u4ef6\u540d\u7a31\uff0c\u7121\u6cd5\u8207\u5b98\u65b9 Gboard \u5171\u5b58\u5b89\u88dd\uff1b\u5176\u4ed6\u5de5\u5177\u6539\u904e\u7684\u5957\u4ef6\u540d\u7a31\u4e0d\u53d7\u652f\u63f4\u3002\nMust be a valid Android package name. Choosing the official package com.google.android.inputmethod.latin changes only the app name and keeps the package, so it cannot be installed alongside the official Gboard. Packages renamed by other tools are not supported.",
+        "required": true,
+        "type": "kotlin.String",
+        "default": "dev.jason.com.google.android.inputmethod.latin",
+        "values": {
+          "dev.jason.com.google.android.inputmethod.latin": "dev.jason.com.google.android.inputmethod.latin",
+          "com.google.android.inputmethod.latin": "com.google.android.inputmethod.latin"
+        }
       }
     ],
     "name": "Package Rename",
-    "description": "\u5c07\u5957\u4ef6\u540d\u7a31\u6539\u6210 dev.jason.com.google.android.inputmethod.latin\uff0c\u4e26\u53ef\u81ea\u8a02 App \u540d\u7a31\uff0c\u4ee5\u4fbf\u5171\u5b58\u5b89\u88dd\nRename the package to dev.jason.com.google.android.inputmethod.latin and allow a custom app name so it can be installed alongside the official Gboard.",
+    "description": "\u5fc5\u9808\u662f\u6709\u6548\u7684 Android \u5957\u4ef6\u540d\u7a31\u3002\u9078\u5b98\u65b9\u5957\u4ef6\u540d\u7a31 com.google.android.inputmethod.latin \u6642\u53ea\u6539 App \u540d\u7a31\u3001\u4e0d\u6539\u5957\u4ef6\u540d\u7a31\uff0c\u7121\u6cd5\u8207\u5b98\u65b9 Gboard \u5171\u5b58\u5b89\u88dd\uff1b\u5176\u4ed6\u5de5\u5177\u6539\u904e\u7684\u5957\u4ef6\u540d\u7a31\u4e0d\u53d7\u652f\u63f4\u3002",
     "enabled": true
   },
   {
