@@ -20,7 +20,7 @@
         "values": {}
       },
       {
-        "key": "clonePackageName",
+        "key": "packageName",
         "title": "Package name",
         "description": "The copy's unique app ID, like com.facebook.orca.hush. Use words joined by dots, each starting with a letter. It can't match Messenger or another Meta app.",
         "required": true,
@@ -41,6 +41,12 @@
   },
   {
     "options": [],
+    "name": "Keep a renamed copy working",
+    "description": "Keeps a copy of Messenger working when another patch gives it a new package name. Without it the copy stops at its loading screen, and its attachments and muted chats go to the Messenger it was copied from. HushMessenger's own Clone install already does this for the copies it makes. Works as soon as you patch it in, with no switch",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Restore screens on re-signed builds",
     "description": "Patching and signing Messenger yourself can break some of its screens. This makes Messenger's signature check pass again, including for a Facebook you patched with the same key, and lets Threads and Instagram video links open in a Threads or Instagram you patched yourself. Works as soon as you patch it in, with no switch",
     "enabled": true
@@ -48,7 +54,7 @@
   {
     "options": [],
     "name": "Fix videos in chat heads",
-    "description": "Draws videos in a chat head like the rest of the chat instead of on a separate layer, which some phones showed as a black box that stayed on screen after the chat head closed. Videos in the app itself are left as they are",
+    "description": "Draws videos in a chat head like the rest of the chat instead of on a separate layer, which some phones showed as a black box that stayed on screen after the chat head closed. On the Huawei and Honor phones where that layer also leaves a box behind in the chat itself, every video is drawn this way",
     "enabled": true
   },
   {
@@ -84,7 +90,7 @@
   {
     "options": [],
     "name": "Hide growth prompts",
-    "description": "Hides prompts to add more people, the tip sheets in notes (like Make my notes public), and the Share your own story card after someone else's stories. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Hides prompts to add more people, the tip sheets in notes (like Make my notes public), the Share your own story card after someone else's stories, and the Turn on active status line at the top of a chat. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -113,8 +119,20 @@
   },
   {
     "options": [],
+    "name": "Typing in your chat list",
+    "description": "Writes typing over a chat's last message in your list while the other person types, instead of only showing it once you're in the chat. Messenger carries this already and Meta's server keeps it off. Restart Messenger to see it start. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Keep the search bar",
     "description": "Brings back the search bar at the top of your chat list when Messenger has swapped it for a search icon. Restart Messenger after changing it. If Messenger never gave you the icon, nothing changes. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Write longer notes",
+    "description": "Type more than 60 characters in a note. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -161,6 +179,12 @@
   },
   {
     "options": [],
+    "name": "Hide profile menu items",
+    "description": "Hides the items you pick from the menu you get when you tap someone's picture beside their message in a chat. Tap one picture once, and that menu's items show up under this switch for you to pick. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide Facebook shortcuts",
     "description": "Hides Facebook buttons, profile and sharing shortcuts, and the Also from Meta and Subscriptions sections in the Menu tab. Handy if you only use Messenger. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -197,6 +221,18 @@
   },
   {
     "options": [],
+    "name": "Show settings tab",
+    "description": "Puts Messenger's own settings tab at the end of the bar at the bottom, with your picture on it, so your account settings are one tap away. Restart Messenger to see the tab. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Show Instants tab",
+    "description": "Puts Instants in the middle of the bar at the bottom, where Messenger has it on some accounts. Turn on Hide the Instants button too to take the + out of Chats. Restart Messenger to see the tab. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide Notifications tab",
     "description": "Hides the Notifications tab in the bar at the bottom. Restart Messenger to see the tab go. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -205,6 +241,18 @@
     "options": [],
     "name": "Hide Stories tab",
     "description": "Hides the Stories tab in the bar at the bottom. Restart Messenger to see the tab go. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide tab labels",
+    "description": "Takes the words off the tabs at the bottom and leaves the icons on their own. Screen readers still name every tab. Restart Messenger to see the change. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Your own tab icons",
+    "description": "Swaps the icons in the bar at the bottom for plain outlined ones, and lets you put your own picture on any tab. Restart Messenger to see the change. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -223,6 +271,12 @@
     "options": [],
     "name": "Floating tab bar",
     "description": "Switches the tab bar at the bottom to the floating style Messenger is trying out, which sits over your chats instead of below them. Messenger may keep its usual bar on some screens. Restart Messenger to see the change. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Swipe between tabs",
+    "description": "Swipe sideways on your chats to move to the next tab in the bar at the bottom, instead of reaching down for its button. Hidden tabs are skipped, and a list that scrolls sideways keeps the swipe. Restart Messenger after you turn it on. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -299,6 +353,12 @@
   },
   {
     "options": [],
+    "name": "Play video links in the chat",
+    "description": "Plays a shared YouTube, TikTok, Instagram or Facebook video in a window over the chat instead of sending you to the app or the browser. The video comes from the site's own player, so nothing is downloaded and the window keeps no cookies. Shortened links (youtu.be aside), Facebook stories and anything that isn't a video page open the way they always did. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Allow chat bubbles",
     "description": "Lets you pick Stock, Chat heads or Android bubbles for floating chats. Needs Android 11 or newer. Chat heads also needs Messenger's own Chat heads switch, and Android bubbles need Messenger's bubbles allowed in Android's notification settings. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -337,6 +397,12 @@
     "options": [],
     "name": "Customize message actions",
     "description": "Lets you choose the order of the actions you get by holding a message, and hide the ones you don't use, separately for messages you sent and messages you got. The first ones show in the row under the message and the rest under More. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Put your words above the photo",
+    "description": "Type something, attach a photo or video, and your words go out first, as their own message above it, instead of underneath. Mentions still work. With nothing typed, nothing changes. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -383,6 +449,12 @@
   },
   {
     "options": [],
+    "name": "Quiet mode",
+    "description": "A break from Messenger. Pick 15 minutes, an hour, two hours, eight hours or until you end it yourself, and nothing from Messenger makes a sound or vibrates for that long. Messages and calls still arrive and wait in the notification shade, so nothing goes missing. Every night, under it, does the same between two times you pick. Anyone on your Special contacts list still comes through. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Android Auto messages",
     "description": "Lets Android Auto read your Messenger messages out loud and send the replies you speak, through its own messaging screen. Android Auto only shows apps installed from the Play Store. Unknown sources in its developer settings opens that up on a desktop head unit, and a real car can still leave Messenger out. Playing a message aloud marks the chat read and shows Seen, even with Hide read receipts on. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -396,13 +468,19 @@
   {
     "options": [],
     "name": "Jump to the first message or a date",
-    "description": "Long press a chat's name at the top of the chat to jump to its first message or to a day you pick. Messenger loads a chat a page at a time, so it scrolls back with a count on screen until it gets there, and Cancel stops it. It can only go as far back as Messenger can load. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Long press a chat's name at the top of the chat to jump to its first message or to a day you pick. An arrow at the bottom left of a chat goes to its first message, and a long press on the arrow asks for a day. Tapping one of the dates between the messages opens the same day picker on that day. Messenger loads a chat a page at a time, so it scrolls back with a count on screen until it gets there, and Cancel stops it. It can only go as far back as Messenger can load. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
     "options": [],
     "name": "Allow landscape",
     "description": "Lets Messenger turn sideways with your phone, for a wider keyboard and bigger photos and videos. It follows your phone's auto-rotate setting. Calls, the camera, payments and a few other screens stay upright. Restart Messenger after you change it. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Chat bar buttons in the + menu",
+    "description": "Move the camera, gallery and mic buttons into the + menu. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -426,7 +504,7 @@
   {
     "options": [],
     "name": "Ask before a call",
-    "description": "Tapping an audio or video call button asks first, so a stray tap doesn't ring anyone. That covers a chat's top bar, business chats and the New message screen. Call starts it, Cancel doesn't. Calls coming in aren't affected. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Tapping an audio or video call button asks first, so a stray tap doesn't ring anyone. That covers a chat's top bar, the menu on someone's picture, business chats and the New message screen. Call starts it, Cancel doesn't. Calls coming in aren't affected. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -449,8 +527,20 @@
   },
   {
     "options": [],
+    "name": "Paste a photo into the chat",
+    "description": "A photo you paste into a chat goes into the chat's message box the way a pick from your gallery does, instead of going out on its own. Nothing is sent until you tap Send, so you can add a caption or change your mind. Pasted text and the keyboard's GIFs work as they did. Open the chat again after turning this on. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Send Instants from your gallery",
     "description": "Tapping the shutter in Instants opens your phone's gallery app instead of taking a photo. The photo you pick goes out as the Instant, cut to the camera's shape. Back out of the gallery and nothing is sent. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Offer View once in every chat",
+    "description": "Messenger's gallery shows the View once toggle in some chats only, so a group never gets it. This offers it everywhere the gallery opens. Whether the other side's Messenger treats it as View once is still up to Meta. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -469,6 +559,12 @@
     "options": [],
     "name": "Stop inbox and ad link logging",
     "description": "Stops two reports Messenger logs. One says which part of your chat list was on screen, which Messenger files under inbox ads. The other says which ad brought you in when a link from an ad opens a chat. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Stop attention time logging",
+    "description": "Stops the report Messenger files when you leave a screen, which says how long you looked at each thing on it, in what order, and how often you came back. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -497,8 +593,32 @@
   },
   {
     "options": [],
+    "name": "Block screenshots in chats",
+    "description": "Stops a screenshot or a screen recording of a chat you have open, on this phone, and leaves the chat out of the app switcher's preview. Android refuses the screenshot itself, so it works in every chat and not only the disappearing ones. A chat that was already open needs opening again. The person you're chatting with still has their own phone to screenshot on. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Skip passkey sign-in",
+    "description": "Signing in no longer offers a passkey from this phone, so Facebook falls back to approving the login from another device you're signed in on, the way it does for an account with no passkey. A patched Messenger can't pass Facebook's passkey check, and that's what leaves some logins going round the browser check again and again. While it's on, Messenger can't use a passkey for its encrypted backups either, so leave it off unless a login is stuck. Turn it on in HushMessenger settings > Controls. A long press on Messenger's home screen icon opens those settings when the login won't let you through. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Show the 40-character code option",
+    "description": "Bring back the 40-character recovery code row in Message storage. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide read receipts",
-    "description": "Opening a chat no longer tells people you read their message, and the chat stays unread on this phone. Marking it read yourself or replying in it marks it read and shows Seen, like Messenger does. Group chats aren't tested. Messenger's own Read receipts setting under Privacy & safety marks chats read without showing Seen. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Opening a chat no longer tells people you read their message, and the chat stays unread on this phone. Marking it read yourself, replying in it or reacting to a message marks it read and shows Seen, like Messenger does. Group chats aren't tested. Hide Delivered, under it, also holds back the Delivered tick in ordinary chats. Messenger's own Read receipts setting under Privacy & safety marks chats read without showing Seen. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Mark chats read on this phone",
+    "description": "Clears the unread look of a chat you've opened while Hide read receipts is on, so the chat list stops showing it bold with a count. Nothing goes to Messenger, so the other person still isn't told you read it. A new message in the chat brings the unread look back. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -515,6 +635,18 @@
   },
   {
     "options": [],
+    "name": "Hide messages with your words",
+    "description": "Hides messages that have words you choose, which you type below separated by commas. A message that arrives with one of them shows as [hidden] in the chat instead of its words, and no notification goes up for it. Nothing is sent back and nothing is deleted, so the message is still there for whoever sent it, and the messages you send go out as they always did. The chat list's last line still shows Messenger's own preview of the message. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Appear offline",
+    "description": "Stops Messenger from telling people you're active, while you keep seeing who else is. Messenger's own Active status setting stays on, so the green dots in your chat list and the People tab work as they always did, and only what Messenger reports about you changes. It takes effect the next time Messenger goes to the background or comes back, so restarting it makes the change land right away. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Hide pictures on the Blocked list",
     "description": "Hides people's profile pictures on the list of people you've blocked, under Privacy and safety. Their names and Unblock stay. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
@@ -527,20 +659,50 @@
   },
   {
     "options": [],
-    "name": "Unlock app icons",
-    "description": "Lets you pick any icon in Messenger's App icon setting without a subscription. Messenger still decides whether that setting shows for your account. Starts off. Turn it on in HushMessenger settings > Controls",
-    "enabled": true
-  },
-  {
-    "options": [],
-    "name": "Unlock app themes",
-    "description": "Lets you pick any theme in Messenger's Theme setting without a subscription, so light mode can get a color too. Messenger still decides which themes it offers your account. Starts off. Turn it on in HushMessenger settings > Controls",
+    "name": "Sound in the open chat",
+    "description": "Plays Messenger's in-app message sound when a message comes into the chat you have open. Messenger already does that for likes and stickers. A silent phone or Messenger's own In-app sounds switch still keeps it quiet. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
     "options": [],
     "name": "Square profile pictures",
     "description": "Shows profile pictures as squares instead of circles, or as rounded squares with Round the corners on. Restart Messenger after changing it. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Thin story rings",
+    "description": "Draws the colored ring around a profile picture with a story at half its usual width, so it takes less room. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Suggested in search",
+    "description": "Hides the suggested people at the top of search before you type anything. People still come up when you search for them. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide recent reels in search",
+    "description": "Hides the reels you watched lately from search before you type anything. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Block Meta AI chats",
+    "description": "Stops chats with Meta AI and other AI bots from opening, from search, a link or your chat list. A group with an AI in it still opens. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Hide Create story",
+    "description": "Takes the Create story tile off the start of the row of stories and notes above your chats. Your own story and note sit on that tile, so they go with it. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Show pinned messages",
+    "description": "Shows a chat's pinned messages in a bar under its name. Messenger has that bar already, but only turns it on in some chats. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -558,7 +720,25 @@
   {
     "options": [],
     "name": "Blur behind menus",
-    "description": "Blurs the screen behind the menu you get when you press and hold a chat, and behind Messenger's other pop-up menus and sheets, like on an iPhone. Needs Android 12 or newer. Starts off. Turn it on in HushMessenger settings > Controls",
+    "description": "Blurs the screen behind the menu you get when you press and hold a chat or a message, and behind Messenger's other pop-up menus and sheets, like on an iPhone. Needs Android 12 or newer. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Invisible buttons",
+    "description": "Makes buttons you pick invisible or partly see-through while they keep their place, their size and what they do, so a tap still lands. Works on the chat list, inside chats and in menus, HushMessenger's own buttons included. Good for a button you keep hitting by mistake or one you'd rather not look at. Pick them in HushMessenger settings, where every button Messenger has shown you is listed by the name a screen reader says for it. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Translucent chat bars",
+    "description": "The chat's top bar and message box go see-through, with the messages scrolling under them and showing through blurred, the way the bars on an iPhone do it. Needs Android 12 or newer. Starts off. Turn it on in HushMessenger settings > Controls",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Screen refresh rate",
+    "description": "Pick the refresh rate Messenger asks your screen for. Starts off. Turn it on in HushMessenger settings > Controls",
     "enabled": true
   },
   {
@@ -624,6 +804,40 @@
     ],
     "name": "Custom new-message sound",
     "description": "Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound",
+    "enabled": false
+  },
+  {
+    "options": [
+      {
+        "key": "inAppSoundFile",
+        "title": "In-app message sound",
+        "description": "Plays for a new message while Messenger is open. Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": {}
+      },
+      {
+        "key": "sendSoundFile",
+        "title": "Send sound",
+        "description": "Plays as you send a message. Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": {}
+      },
+      {
+        "key": "sentSoundFile",
+        "title": "Sent sound",
+        "description": "Plays once a message you sent has gone through. Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound.",
+        "required": false,
+        "type": "kotlin.String",
+        "default": null,
+        "values": {}
+      }
+    ],
+    "name": "Custom chat sounds",
+    "description": "Plays for a new message while Messenger is open. Your .ogg, .mp3, .m4a or .wav file, 1 MB or smaller. Leave it empty to keep Messenger's own sound",
     "enabled": false
   },
   {
