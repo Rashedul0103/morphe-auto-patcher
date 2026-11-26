@@ -61,6 +61,12 @@
   },
   {
     "options": [],
+    "name": "Comment search",
+    "description": "Adds a button to the comments to show only the loaded comments that contain the searched words",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Disable continue watching prompt",
     "description": "Adds an option to keep autoplay going instead of pausing with a \"Continue watching\" prompt after a period of inactivity, or to always show the autoplay countdown at the end of the video",
     "enabled": true
@@ -115,6 +121,12 @@
   },
   {
     "options": [],
+    "name": "Hold gesture",
+    "description": "Adds options to change the playback speed, to keep it and to run actions by dragging after tapping and holding the video player",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Loop count",
     "description": "Adds a player settings menu item to choose how many times the app loops a video, before it plays the next video. In a playlist, the loop count is remembered for each video",
     "enabled": true
@@ -163,6 +175,18 @@
   },
   {
     "options": [],
+    "name": "Playlist search",
+    "description": "Adds a button to playlist pages to search the videos of that playlist",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Open post images in fullscreen",
+    "description": "Adds an option to open the images of posts in fullscreen with one tap, instead of the posts feed",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Download post images",
     "description": "Adds a button and a menu item to download the images and GIFs of posts",
     "enabled": true
@@ -183,12 +207,6 @@
     "options": [],
     "name": "Save to Watch later",
     "description": "Adds an option to display save to Watch later button in the video player, and adds a setting to redirect Watch later saves to a playlist of your choice",
-    "enabled": true
-  },
-  {
-    "options": [],
-    "name": "Search comments",
-    "description": "Adds a button to the comments to show only the loaded comments that contain the searched words",
     "enabled": true
   },
   {
@@ -308,13 +326,13 @@
   {
     "options": [],
     "name": "Hide player overlay buttons",
-    "description": "Adds options to hide the Cast button, the player Autoplay, Captions, Previous & Next buttons, and to hide or change the opacity of the player control buttons background",
+    "description": "Adds options to hide the player Cast, Autoplay, Captions, Previous & Next buttons, and to hide or change the opacity of the player control buttons background",
     "enabled": true
   },
   {
     "options": [],
     "name": "Captions",
-    "description": "Adds options to disable captions from being automatically enabled, select a preferred and a secondary caption language, add more auto-translate languages, and show captions in stable blocks and in picture-in-picture. Stable blocks and bilingual captions work with YouTube 21.15 and newer, on Android 10 and newer",
+    "description": "Adds options to disable captions from being automatically enabled, select a preferred and a secondary caption language, add more auto-translate languages, show captions in stable blocks and in picture-in-picture, and copy the transcript. Stable blocks and bilingual captions work with YouTube 21.15 and newer, on Android 10 and newer",
     "enabled": true
   },
   {
@@ -362,7 +380,13 @@
   {
     "options": [],
     "name": "Change form factor",
-    "description": "Adds an option to change the UI appearance to a phone, tablet, or automotive device",
+    "description": "Adds options to change the UI appearance to a phone, tablet, or automotive device, and to use the automotive layout and auto-hide the navigation bar on a car display",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Glass menus",
+    "description": "Adds an option to show the menus as frosted glass, with the content behind the menu blurred. This patch works on Android 12 and newer",
     "enabled": true
   },
   {
@@ -506,6 +530,12 @@
   },
   {
     "options": [],
+    "name": "Ungroup notifications",
+    "description": "Adds an option to show every video of the notifications that YouTube groups by channel as its own notification",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Restore original titles",
     "description": "Adds an option to show the original video titles, video descriptions and channel descriptions instead of the auto-translated ones",
     "enabled": true
@@ -513,7 +543,7 @@
   {
     "options": [],
     "name": "Playback in feeds",
-    "description": "Adds the 'Playback in feeds' setting of YouTube to the Morphe settings, where it is always available even if YouTube hides it",
+    "description": "Adds the 'Playback in feeds' setting of YouTube to the Morphe settings, where it is always available even if YouTube hides it, and an option to show the seek buttons of the videos that play in feeds",
     "enabled": true
   },
   {
@@ -543,7 +573,7 @@
   {
     "options": [],
     "name": "Fullscreen video scale",
-    "description": "Adds options to stretch or zoom videos to fill the screen in fullscreen mode",
+    "description": "Adds options to stretch or zoom videos to fill the screen in fullscreen mode, or to align videos to the top or bottom of the screen",
     "enabled": true
   },
   {
@@ -588,8 +618,20 @@
   },
   {
     "options": [],
+    "name": "Reverse playlist autoplay",
+    "description": "Adds an option to autoplay playlists in reverse order, from the last video to the first",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Return YouTube Dislike",
     "description": "Adds an option to show the dislike count of videos with Return YouTube Dislike, and the like count and like ratio on the thumbnails of feed videos",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Return YouTube Username",
+    "description": "Adds an option to show channel names instead of handles in comments, below the video title and in Shorts",
     "enabled": true
   },
   {
@@ -726,7 +768,7 @@
   {
     "options": [],
     "name": "Wide search bar",
-    "description": "Adds a wide search bar to the top of the home and subscription feed",
+    "description": "Adds a wide search bar to the top of the home, subscription, notifications and You tabs",
     "enabled": true
   },
   {
@@ -779,6 +821,12 @@
   },
   {
     "options": [],
+    "name": "Android Auto parked app mode",
+    "description": "Declares YouTube a parked video app, so Android Auto (early access only) and DriveDeck (available now) list it on the car screen by themselves. Android Auto still needs Unknown sources in its developer settings for a patched app",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "PoToken provider",
     "description": "Adds option to get PoToken using an external PoToken minter app",
     "enabled": true
@@ -787,6 +835,12 @@
     "options": [],
     "name": "Sanitize sharing links",
     "description": "Removes the tracking query parameters from shared links",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Ghost mode",
+    "description": "Adds a ghost mode to watch videos without affecting YouTube watch history or recommendations",
     "enabled": true
   },
   {
@@ -834,7 +888,7 @@
   {
     "options": [],
     "name": "Disable DRC audio",
-    "description": "Adds an option to disable DRC (Dynamic Range Compression) audio",
+    "description": "Adds options to disable DRC (Dynamic Range Compression) audio and loudness normalization",
     "enabled": true
   },
   {
@@ -869,6 +923,12 @@
   },
   {
     "options": [],
+    "name": "Video effects",
+    "description": "Adds an option to change the colors of videos or add visual effects, such as black and white. This patch works with YouTube 20.51 and newer",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Remember live stream playback position",
     "description": "Adds an option to remember the playback position of an ongoing live stream and resume from there when reopening that live stream",
     "enabled": true
@@ -889,6 +949,12 @@
     "options": [],
     "name": "Playback speed",
     "description": "Adds options to customize available playback speeds, set a default playback speed, and show a speed dialog button in the video player",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Replay slower button",
+    "description": "Adds options to rewind and play part of the video at a slower speed, with a player button or by swiping left on the video",
     "enabled": true
   },
   {

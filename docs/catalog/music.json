@@ -79,6 +79,12 @@
   },
   {
     "options": [],
+    "name": "Queue likes filter",
+    "description": "Adds an option to remove songs with few likes from auto-generated mixes and radio, using the like counts of Return YouTube Dislike. Playlists and albums are left unchanged",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "A-B loop",
     "description": "Adds an option to loop part of a song by long-pressing the seekbar to set the loop start and end",
     "enabled": true
@@ -115,8 +121,26 @@
   },
   {
     "options": [],
+    "name": "Sonos Cast",
+    "description": "Adds an option to stream the audio to Sonos and other UPnP speakers on the same Wi-Fi network from the Cast button",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "SoundProof",
     "description": "Adds an option to skip tracks of artists reported as AI in the SoundProof community database",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Disable swipe to change track",
+    "description": "Adds options to disable changing the track by swiping left or right on the player or the miniplayer",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Apple Music animated artwork",
+    "description": "Adds an option to show the animated album artwork of Apple Music in the player",
     "enabled": true
   },
   {
@@ -180,12 +204,6 @@
   },
   {
     "options": [],
-    "name": "Hide buttons",
-    "description": "Adds options to hide the cast, history, notification, search, voice search, sound search, and Library New buttons",
-    "enabled": true
-  },
-  {
-    "options": [],
     "name": "Hide music action buttons",
     "description": "Adds options to hide action buttons under the player",
     "enabled": true
@@ -193,7 +211,7 @@
   {
     "options": [],
     "name": "Navigation bar",
-    "description": "Adds options to hide navigation bar, labels and buttons, and to show the navigation bar and miniplayer as glass",
+    "description": "Adds options to hide and change the bottom navigation bar (such as the Upgrade button) and the upper navigation toolbar",
     "enabled": true
   },
   {
@@ -206,6 +224,12 @@
     "options": [],
     "name": "Custom font",
     "description": "Adds an option to show the app with the device system font or a custom TTF or OTF font file instead of YouTube Sans",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Glass menus",
+    "description": "Adds an option to show the menus as frosted glass, with the content behind the menu blurred. This patch works on Android 12 and newer",
     "enabled": true
   },
   {
@@ -229,7 +253,7 @@
   {
     "options": [],
     "name": "Third-party lyrics",
-    "description": "Adds an option to show synced lyrics with experience enhancement from 19+ providers in the lyrics panel",
+    "description": "Adds an option to show synced lyrics with experience enhancement from 20+ providers in the lyrics panel",
     "enabled": true
   },
   {
@@ -320,8 +344,8 @@
   },
   {
     "options": [],
-    "name": "Play albums songs",
-    "description": "Adds an option to play the song version of album tracks instead of music videos",
+    "name": "Play album songs",
+    "description": "Adds an option to play the songs of albums instead of their music videos",
     "enabled": true
   },
   {
@@ -332,20 +356,14 @@
   },
   {
     "options": [],
-    "name": "Disable DRC audio",
-    "description": "Adds an option to disable DRC (Dynamic Range Compression) audio",
+    "name": "Android Auto third-party apps",
+    "description": "Allows third-party Android Auto apps, such as DriveDeck, Gearslip, AARE and Flywheel, to browse Home and Library. Any installed app can then browse YouTube Music",
     "enabled": true
   },
   {
     "options": [],
     "name": "Enable exclusive audio playback",
     "description": "Enables the option to play audio without video",
-    "enabled": true
-  },
-  {
-    "options": [],
-    "name": "Force original audio",
-    "description": "Adds an option to always use the original audio track",
     "enabled": true
   },
   {
@@ -434,8 +452,26 @@
   },
   {
     "options": [],
+    "name": "Disable DRC audio",
+    "description": "Adds options to disable DRC (Dynamic Range Compression) audio and loudness normalization",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Force original audio",
+    "description": "Adds an option to always use the original audio track",
+    "enabled": true
+  },
+  {
+    "options": [],
     "name": "Skip silence",
     "description": "Adds an option to automatically skip silent pauses in audio playback",
+    "enabled": true
+  },
+  {
+    "options": [],
+    "name": "Video effects",
+    "description": "Adds an option to change the colors of videos or add visual effects, such as black and white",
     "enabled": true
   },
   {
